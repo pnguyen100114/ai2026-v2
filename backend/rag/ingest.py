@@ -1,5 +1,8 @@
 import os
+import json
+import random
 import re
+import sys
 import uuid
 
 from pathlib import Path
@@ -7,14 +10,19 @@ from dotenv import load_dotenv
 from pypdf import PdfReader
 from pinecone import Pinecone
 
-from embeddings import create_embeddings
+try:
+    from backend.rag.books import find_book, lesson_at
+    from backend.rag.embeddings import create_embeddings
+except ImportError:  # pragma: no cover
+    from books import find_book, lesson_at
+    from embeddings import create_embeddings
 
 
 # ==========================================
 # LOAD ENV
 # ==========================================
 
-load_dotenv()
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / '.env')
 
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_INDEX = os.getenv("PINECONE_INDEX")
@@ -26,6 +34,7 @@ PINECONE_NAMESPACE = os.getenv(
 EMBEDDING_DIMENSION = int(
     os.getenv("EMBEDDING_DIMENSION", "1536")
 )
+BOOK_PAGE_OFFSETS = json.loads(os.getenv('BOOK_PAGE_OFFSETS', '{}') or '{}')
 
 
 # ==========================================
@@ -287,6 +296,19 @@ def detect_volume(filename):
     return 0
 
 
+def detect_book_type(filename):
+    name = filename.lower()
+    if 'nangcao' in name or 'nang-cao' in name or 'nâng cao' in name:
+        return 'nang_cao'
+    if 'sbt' in name or 'bai tap' in name or 'bài tập' in name:
+        return 'sbt'
+    return 'sgk'
+
+
+def get_page_offset(filename):
+    return int(BOOK_PAGE_OFFSETS.get(filename, 0))
+
+
 # ==========================================
 # DETECT CHAPTER
 # ==========================================
@@ -297,7 +319,11 @@ def detect_chapter(text):
 
         r"Chương\s+(\d+)",
 
-        r"CHƯƠNG\s+(\d+)"
+        r"CHƯƠNG\s+(\d+)",
+
+        r"Chương\s+([IVXLCDM]+)",
+
+        r"CHƯƠNG\s+([IVXLCDM]+)"
 
     ]
 
@@ -310,9 +336,18 @@ def detect_chapter(text):
 
         if match:
 
-            return int(
-                match.group(1)
-            )
+            chapter_value = match.group(1)
+            if chapter_value.isdigit():
+                return int(chapter_value)
+
+            roman_values = {'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100, 'D': 500, 'M': 1000}
+            total = 0
+            previous = 0
+            for symbol in reversed(chapter_value.upper()):
+                value = roman_values[symbol]
+                total += -value if value < previous else value
+                previous = max(previous, value)
+            return total
 
     return 0
 
@@ -415,6 +450,13 @@ def create_records(pdf_path):
     volume = detect_volume(
         pdf_path.name
     )
+    book_type = detect_book_type(pdf_path.name)
+    page_offset = get_page_offset(pdf_path.name)
+
+    # Books in backend/rag/books.py: subject, grade, pages and lessons come from the catalog, not the file name.
+    book = find_book(pdf_path.name)
+    if book is not None:
+        subject, grade, volume, page_offset = book.subject, book.grade, book.volume, book.page_offset
 
     print()
 
@@ -459,6 +501,15 @@ def create_records(pdf_path):
 
             continue
 
+        # Bìa, lời nói đầu, mục lục (trước bài đầu tiên), trang quảng cáo bộ sách ở cuối: không phải nội dung bài học
+        if book is not None:
+
+            printed_page = page_number + book.page_offset
+
+            if lesson_at(book, page_number) is None or (book.last_page is not None and printed_page > book.last_page):
+
+                continue
+
         # ------------------------------
         # DETECT CHAPTER
         # ------------------------------
@@ -487,6 +538,14 @@ def create_records(pdf_path):
                 detected_lesson
             )
 
+        catalog_lesson = lesson_at(book, page_number) if book is not None else None
+
+        if catalog_lesson is not None:
+
+            current_chapter = catalog_lesson.chapter
+
+            current_lesson = catalog_lesson.lesson
+
         # ------------------------------
         # SPLIT CHUNK
         # ------------------------------
@@ -503,8 +562,12 @@ def create_records(pdf_path):
             chunks
         ):
 
-            # ID gốc
+            # ID gốc: sách trong danh mục có ID cố định nên nạp lại sẽ ghi đè, không nhân đôi
             raw_id = (
+
+                f"{book.id}-p{page_number}-c{chunk_index}"
+
+            ) if book is not None else (
 
                 f"{subject}_"
 
@@ -544,6 +607,18 @@ def create_records(pdf_path):
 
                 "page":
                     page_number,
+
+                "page_offset":
+                    page_offset,
+
+                "book_type":
+                    book_type,
+
+                "title":
+                    catalog_lesson.title if catalog_lesson is not None else pdf_path.stem.replace("-", " ").replace("_", " "),
+
+                "book_title":
+                    book.title if book is not None else pdf_path.stem,
 
                 "source":
                     pdf_path.name,
@@ -712,6 +787,20 @@ def upload_records(records):
         )
 
 
+def already_ingested(filename):
+    """True when Pinecone already has chunks of this book, under this file name or a catalog alias."""
+    book = find_book(filename)
+    names = list(book.files) if book is not None else [filename]
+    probe = [random.uniform(-1, 1) for _ in range(EMBEDDING_DIMENSION)]
+    result = index.query(
+        vector=probe,
+        top_k=1,
+        filter={"source": {"$in": names}},
+        namespace=PINECONE_NAMESPACE,
+    )
+    return bool(getattr(result, "matches", None) or [])
+
+
 # ==========================================
 # MAIN
 # ==========================================
@@ -775,9 +864,32 @@ def main():
     # FIND PDF
     # ======================================
 
-    pdf_files = list(
+    # python -m backend.rag.ingest "TOAN -TAP 1.pdf"  -> chỉ nạp file đó
+    # python -m backend.rag.ingest --force            -> nạp cả sách đã có trên Pinecone
+    args = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
+    force = "--force" in sys.argv[1:]
+
+    pdf_files = [DATA_DIR / Path(arg).name for arg in args] if args else list(
         DATA_DIR.glob("*.pdf")
     )
+
+    missing = [path.name for path in pdf_files if not path.exists()]
+
+    if missing:
+
+        print("Không tìm thấy:", ", ".join(missing))
+
+        return
+
+    if not force:
+
+        skipped = [path for path in pdf_files if already_ingested(path.name)]
+
+        for path in skipped:
+
+            print("↷ Bỏ qua (đã có trên Pinecone, thêm --force để nạp lại):", path.name)
+
+        pdf_files = [path for path in pdf_files if path not in skipped]
 
     if len(pdf_files) == 0:
 

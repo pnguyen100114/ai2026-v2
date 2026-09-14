@@ -12,9 +12,14 @@ dist
 dist-ssr
 *.local
 .venv
-backend/.env
+.env
+.env*
+!.env.example
+backend/local.db*
+backend/.auth_secret
 __pycache__/
 *.py[cod]
+Anh_cac_giai_doan
 
 # Local datasets and generated training outputs
 data/

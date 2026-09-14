@@ -152,6 +152,22 @@ Sau khi đổi biến môi trường, cần khởi động lại `npm run dev`.
 9. Mở Tư thế học tập để bật camera nhận diện tự động.
 10. Mở Tiến độ để xem XP, chuỗi học, phiên Pomodoro và lịch sử.
 
+### Nạp dữ liệu curriculum vào Pinecone
+
+Roadmap và AI Tutor cần vector dữ liệu trong Pinecone. Sau khi đặt các PDF SGK vào thư mục `backend/data`, chạy từ thư mục gốc dự án:
+
+```powershell
+.venv\Scripts\python.exe -m backend.rag.ingest
+```
+
+Tên file PDF cần chứa môn và lớp, ví dụ `toan8_tap1.pdf`, để hệ thống tự nhận diện metadata. Kiểm tra kết quả bằng:
+
+```powershell
+Invoke-WebRequest http://127.0.0.1:8000/api/health | Select-Object -ExpandProperty Content
+```
+
+Trường `rag.vectors` phải lớn hơn `0`. Sau khi nạp xong, khởi động lại backend rồi tải lại trang roadmap.
+
 Dữ liệu demo được lưu trong `localStorage` của trình duyệt, chưa dùng cơ sở dữ liệu thật.
 
 ## 9. Kiểm tra dự án

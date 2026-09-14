@@ -1,0 +1,98 @@
+/* Welcome, email sign-in and onboarding survey (layout ported from the v1 project, v2 palette). */
+.gate-eyebrow{font-size:10px;letter-spacing:1.2px;font-weight:800;color:#c46651}
+.gate-eyebrow.light{color:#ffe1d9}
+.gate-button{border:0;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;font-size:13px;font-weight:700;transition:transform .2s,background .2s}
+.gate-button:hover:not(:disabled){transform:translateY(-2px)}
+.gate-button:disabled{opacity:.6;cursor:not-allowed}
+.gate-button.primary{color:#fff;background:var(--coral);box-shadow:0 8px 16px #ff735f38}
+.gate-button.primary:hover:not(:disabled){background:#e96250}
+.gate-button.outline{background:#fff;color:#bd5748;border:1px solid #ffd3c9}
+.gate-button.full{width:100%}
+
+.gate-auth{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;background:#fff}
+.gate-visual{background:linear-gradient(145deg,#ff735f,#ff9a7b 55%,#f8c64b);color:#fff;padding:35px 8%;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.gate-brand{display:flex;align-items:center;gap:11px;font:800 18px 'Plus Jakarta Sans';position:relative;z-index:1}
+.gate-brand .brand-mark{background:#fff;color:var(--coral)}
+.gate-brand.dark{color:var(--navy)}
+.gate-brand.dark .brand-mark{background:var(--coral);color:#fff}
+.gate-visual-copy{margin:auto 0;position:relative;z-index:1}
+.gate-visual-copy h1{font:800 42px/1.14 'Plus Jakarta Sans';letter-spacing:-1.8px;margin:15px 0}
+.gate-visual-copy h1 span{color:#fff7d6}
+.gate-visual-copy p{color:#fff1ec;max-width:390px;line-height:1.6;font-size:14px}
+.gate-quote{color:#fff1ec;font-size:12px;border-left:2px solid #ffe1d9;padding-left:12px;position:relative;z-index:1}
+.gate-orbit{position:absolute;right:8%;top:35%;width:220px;height:220px;border:1px dashed #ffe1d9;border-radius:50%;display:grid;place-items:center;opacity:.95}
+.gate-orbit::before{content:'';position:absolute;width:280px;height:280px;border:1px solid #ffffff55;border-radius:50%}
+.gate-bot{width:105px;height:105px;border-radius:31px;background:#fff;color:var(--coral);display:grid;place-items:center;box-shadow:0 15px 35px #a8402f40}
+.gate-spark{color:#fff7d6;position:absolute;top:-25px;right:12px}
+
+.gate-panel{display:grid;place-items:center;padding:38px 10%}
+.gate-welcome,.gate-form-panel{width:min(390px,100%)}
+.gate-mobile-brand{display:none}
+.gate-welcome-icon{width:53px;height:53px;border-radius:16px;display:grid;place-items:center;background:#fff1ed;color:var(--coral);margin-bottom:22px}
+.gate-welcome h2,.gate-form-panel h2{color:var(--navy);font:800 29px/1.2 'Plus Jakarta Sans';letter-spacing:-1px;margin:10px 0}
+.gate-welcome h2 span{color:var(--coral)}
+.gate-welcome p,.gate-form-panel>p{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 26px}
+.gate-welcome .gate-button{margin-bottom:10px}
+.gate-welcome small{display:block;text-align:center;color:#a5aebe;font-size:11px;margin-top:19px}
+.gate-back{display:block;background:transparent;padding:0;color:#929daf;font-size:12px;margin-bottom:38px}
+.gate-form-panel form label{display:block;color:#5d6d82;font-size:12px;font-weight:700;margin-bottom:14px}
+.gate-form-panel input,.gate-form-panel select,.gate-label select{width:100%;margin-top:6px;border:1px solid #dfe7f0;border-radius:9px;padding:11px 12px;outline:0;color:var(--navy);background:#fbfcfe;font:inherit;font-size:14px}
+.gate-form-panel input::placeholder{color:#aab4c2;font-weight:400}
+.gate-form-panel input:focus,.gate-form-panel select:focus,.gate-label select:focus{border-color:var(--coral);box-shadow:0 0 0 3px #ff735f22}
+.gate-form-panel .gate-button{margin-top:6px}
+.gate-hint{margin:14px 0 0!important;font-size:11px!important;text-align:center}
+.gate-error{background:#fff0ef;border:1px solid #ffd9d5;color:#b44a3b;border-radius:8px;padding:10px 12px;margin:4px 0 13px;font-size:12px;line-height:1.45}
+.gate-error button{display:block;margin-top:6px;padding:0;background:none;color:#bd5748;font-weight:700;font-size:12px;text-decoration:underline}
+.gate-switch{border-top:1px solid var(--line);margin-top:22px;padding-top:18px;text-align:center;color:#98a3b3;font-size:12px}
+.gate-switch button{background:transparent;color:#bd5748;font-weight:700;font-size:12px}
+
+.gate-onboarding{min-height:100vh;background:#f8fbff}
+.gate-onboarding-top{height:76px;padding:0 6%;display:flex;align-items:center;justify-content:space-between;background:#fff;border-bottom:1px solid var(--line)}
+.gate-skip{background:transparent;color:#949fb0;font-size:12px}
+.gate-skip:hover:not(:disabled){color:#bd5748}
+.gate-onboarding-content{width:min(720px,100%);margin:46px auto;padding:0 20px}
+.gate-progress{height:7px;background:#eaecf3;border-radius:10px;margin-bottom:35px;overflow:hidden}
+.gate-progress span{display:block;height:100%;background:linear-gradient(90deg,var(--coral),var(--yellow));border-radius:inherit;transition:width .25s}
+.gate-onboarding-content h1{color:var(--navy);font:800 30px/1.2 'Plus Jakarta Sans';margin:10px 0}
+.gate-onboarding-content>p{color:var(--muted);font-size:13px;margin:0}
+.gate-subject-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px}
+.gate-choice{background:#fff;border:1px solid var(--line);border-radius:13px;padding:18px 13px;text-align:left;position:relative;color:#8d99aa}
+.gate-choice.selected,.gate-option.selected,.gate-path button.selected{border-color:var(--coral);background:#fff8f6;box-shadow:0 5px 15px #ff735f15}
+.gate-choice-icon{width:37px;height:37px;display:grid;place-items:center;background:#fff1ed;color:var(--coral);border-radius:10px;font-weight:700;font-size:16px;margin-bottom:12px}
+.gate-choice strong,.gate-choice>span:not(.gate-choice-icon){display:block}
+.gate-choice strong{color:var(--navy);font-size:13px}
+.gate-choice>span:not(.gate-choice-icon){font-size:11px;margin-top:5px}
+.gate-choice-check{position:absolute;right:10px;top:11px;color:var(--teal)}
+.gate-label{display:block;color:#5d6d82;font-size:12px;font-weight:700;margin-top:28px;max-width:560px}
+.gate-goal-list,.gate-path{display:grid;gap:10px;max-width:590px;margin-top:27px}
+.gate-option,.gate-path button{width:100%;display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px;text-align:left;color:#8793a5}
+.gate-option.selected svg,.gate-path button.selected>svg{color:var(--coral)}
+.gate-option strong,.gate-path strong{color:var(--navy);font-size:13px;flex:1}
+.gate-path span{flex:1}
+.gate-path small{display:block;color:#9ca7b6;font-size:11px;margin-top:4px}
+.gate-minutes{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.gate-minutes button{border:1px solid var(--line);background:#fff;color:#8793a5;padding:9px 14px;border-radius:8px;font-size:12px}
+.gate-minutes button.selected{border-color:var(--coral);color:#bd5748;background:#fff1ed;font-weight:700}
+.gate-warning{display:flex;align-items:center;gap:10px;background:#fff8e6;border:1px solid #f7e8c3;color:#a17f42;border-radius:10px;padding:12px;margin-top:16px;font-size:12px;line-height:1.45;max-width:590px}
+.gate-warning svg{color:#e4ae4f;flex-shrink:0}
+.gate-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:30px}
+.gate-onboarding .gate-error{margin-top:20px}
+
+.gate-status{min-height:100vh;display:grid;place-items:center;align-content:center;gap:14px;padding:24px;text-align:center;color:var(--muted);font-size:14px;background:#f8fbff}
+.sidebar-logout{display:flex;align-items:center;gap:9px;width:100%;margin-top:14px;padding:10px 14px;border-radius:11px;background:transparent;color:#7a889c;font-size:13px;font-weight:600}
+.sidebar-logout:hover{background:#fff1ed;color:#bd5748}
+
+@media(max-width:900px){.gate-subject-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){
+  .gate-auth{grid-template-columns:1fr}
+  .gate-visual{display:none}
+  .gate-panel{padding:32px 20px;align-items:start}
+  .gate-mobile-brand{display:flex;align-items:center;gap:9px;font:800 17px 'Plus Jakarta Sans';margin-bottom:34px;color:var(--navy)}
+  .gate-mobile-brand .brand-mark{background:var(--coral);color:#fff}
+  .gate-onboarding-top{padding:0 16px}
+  .gate-onboarding-content{margin-top:28px}
+  .gate-onboarding-content h1{font-size:24px}
+  .gate-actions{justify-content:stretch}
+  .gate-actions .gate-button{flex:1}
+}
+.gate-password{position:relative;display:block}.gate-password input{padding-right:42px}.gate-password button{position:absolute;right:6px;top:calc(50% + 3px);transform:translateY(-50%);background:none;color:#8594a6;padding:6px;display:grid;place-items:center}

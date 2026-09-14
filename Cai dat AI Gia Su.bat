@@ -99,7 +99,9 @@ if errorlevel 1 goto :install_failed
 echo.
 echo [3/5] Dang tao moi truong Python...
 if not exist ".venv\Scripts\python.exe" (
-  py -3 -m venv ".venv" >nul 2>nul
+  rem PyMuPDF co wheel on CPython thuong; uu tien Python 3.13 neu may da cai.
+  py -3.13 -m venv ".venv" >nul 2>nul
+  if errorlevel 1 py -3 -m venv ".venv" >nul 2>nul
   if errorlevel 1 python -m venv ".venv"
   if errorlevel 1 goto :install_failed
 )

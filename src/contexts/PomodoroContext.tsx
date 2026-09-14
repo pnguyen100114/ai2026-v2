@@ -1,90 +1,141 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { readStorage, storageKeys, writeStorage } from '../services/storageService'
+import { readStorage, writeStorage } from '../services/storageService'
 
 export type PomodoroMode = 'FOCUS' | 'BREAK'
 export type PomodoroStatus = 'IDLE' | 'RUNNING' | 'PAUSED' | 'COMPLETED'
 export type PomodoroSession = {
   mode: PomodoroMode
+  focusMinutes: number
+  breakMinutes: number
   startedAt: number | null
+  /** Length of the current run: a full phase, or what was left when it was paused. */
   duration: number
-  pausedAt: number | null
   pausedRemaining: number | null
   isRunning: boolean
+  /** Focus phases finished today. */
   sessionCount: number
   totalSessions: number
+  /** Position inside the current cycle of `totalSessions` focus phases. */
   currentSession: number
   linkedLesson: string | null
+  /** Milliseconds of focus time today, including unfinished phases. */
   todayFocusTime: number
+  /** Local date (YYYY-MM-DD) the daily counters belong to. */
+  day: string
   status: PomodoroStatus
   updatedAt: number
 }
 
 type PomodoroContextValue = PomodoroSession & {
   remainingTime: number
+  todayFocusMinutes: number
   start: (lesson?: string | null) => void
   pause: () => void
-  reset: () => void
   stop: () => void
-  setDurations: (focusMinutes: number, breakMinutes: number, totalSessions?: number) => void
-  linkLesson: (lesson: string | null) => void
+  setDurations: (focusMinutes: number, breakMinutes: number) => void
+  switchMode: (mode: PomodoroMode) => void
 }
 
-const defaultSession: PomodoroSession = { mode: 'FOCUS', startedAt: null, duration: 25 * 60 * 1000, pausedAt: null, pausedRemaining: null, isRunning: false, sessionCount: 0, totalSessions: 4, currentSession: 1, linkedLesson: null, todayFocusTime: 0, status: 'IDLE', updatedAt: Date.now() }
+const MINUTE = 60 * 1000
+const localDay = () => new Date().toLocaleDateString('sv-SE')
+const phaseLength = (session: Pick<PomodoroSession, 'mode' | 'focusMinutes' | 'breakMinutes'>, mode = session.mode) => (mode === 'FOCUS' ? session.focusMinutes : session.breakMinutes) * MINUTE
+
+const defaultSession = (): PomodoroSession => ({ mode: 'FOCUS', focusMinutes: 25, breakMinutes: 5, startedAt: null, duration: 25 * MINUTE, pausedRemaining: null, isRunning: false, sessionCount: 0, totalSessions: 4, currentSession: 1, linkedLesson: null, todayFocusTime: 0, day: localDay(), status: 'IDLE', updatedAt: Date.now() })
 const PomodoroContext = createContext<PomodoroContextValue | null>(null)
 
-function safeSession(): PomodoroSession {
-  const stored = readStorage<Partial<PomodoroSession>>(storageKeys.pomodoro, {})
-  return { ...defaultSession, ...stored, duration: stored.duration || defaultSession.duration, totalSessions: stored.totalSessions || 4 }
+// Daily counters start from zero on a new day.
+function forToday(session: PomodoroSession): PomodoroSession {
+  return session.day === localDay() ? session : { ...session, day: localDay(), sessionCount: 0, todayFocusTime: 0 }
 }
 
-function elapsedRemaining(session: PomodoroSession, now: number) {
+function restore(storageKey: string): PomodoroSession {
+  const stored = readStorage<Partial<PomodoroSession>>(storageKey, {})
+  const base = defaultSession()
+  return forToday({ ...base, ...stored, focusMinutes: stored.focusMinutes || base.focusMinutes, breakMinutes: stored.breakMinutes || base.breakMinutes, duration: stored.duration || base.duration, totalSessions: stored.totalSessions || 4, day: stored.day || base.day })
+}
+
+function remainingOf(session: PomodoroSession, now: number) {
   if (!session.isRunning || !session.startedAt) return session.pausedRemaining ?? session.duration
   return Math.max(0, session.duration - (now - session.startedAt))
 }
 
-export function GlobalPomodoroProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<PomodoroSession>(safeSession)
+// Focus time spent in the run that is ending now (pause, stop), counted towards today.
+function withElapsedFocus(session: PomodoroSession, now: number): PomodoroSession {
+  if (!session.isRunning || session.mode !== 'FOCUS') return session
+  return { ...session, todayFocusTime: session.todayFocusTime + (session.duration - remainingOf(session, now)) }
+}
+
+export function GlobalPomodoroProvider({ storageKey, children }: { storageKey: string; children: ReactNode }) {
+  const [session, setSession] = useState<PomodoroSession>(() => restore(storageKey))
   const [now, setNow] = useState(Date.now)
 
-  useEffect(() => writeStorage(storageKeys.pomodoro, session), [session])
+  useEffect(() => writeStorage(storageKey, session), [storageKey, session])
   useEffect(() => {
     if (!session.isRunning) return
     const interval = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(interval)
   }, [session.isRunning])
 
-  const remaining = elapsedRemaining(session, now)
+  const remaining = remainingOf(session, now)
   useEffect(() => {
     if (!session.isRunning || remaining > 0) return
-    setSession((current) => {
-      if (!current.isRunning) return current
-      const completedFocus = current.mode === 'FOCUS'
-      const nextSession = completedFocus ? current.sessionCount + 1 : current.sessionCount
-      const completedAll = completedFocus && current.sessionCount + 1 >= current.totalSessions
-      const nextMode: PomodoroMode = completedFocus ? 'BREAK' : 'FOCUS'
-      const nextDuration = nextMode === 'FOCUS' ? 25 * 60 * 1000 : 5 * 60 * 1000
-      if (completedAll) {
-        notify('🎉 Bạn đã hoàn thành buổi học!')
-        return { ...current, isRunning: false, status: 'COMPLETED', sessionCount: nextSession, pausedRemaining: 0, updatedAt: Date.now() }
+    setSession((previous) => {
+      if (!previous.isRunning) return previous
+      const current = forToday(previous)
+      const at = Date.now()
+      if (current.mode === 'FOCUS') {
+        const counted = { ...current, todayFocusTime: current.todayFocusTime + current.duration, sessionCount: current.sessionCount + 1 }
+        if (current.currentSession >= current.totalSessions) {
+          notify('🎉 Em đã hoàn thành cả buổi học rồi, giỏi quá!')
+          return { ...counted, isRunning: false, status: 'COMPLETED', startedAt: null, pausedRemaining: null, duration: phaseLength(current, 'FOCUS'), updatedAt: at }
+        }
+        notify('☕ Hết giờ tập trung! Em nghỉ ngơi một chút nhé.')
+        return { ...counted, mode: 'BREAK', duration: phaseLength(current, 'BREAK'), startedAt: at, pausedRemaining: null, status: 'RUNNING', updatedAt: at }
       }
-      notify(completedFocus ? '☕ Đã hết giờ tập trung! Đến giờ nghỉ.' : '🚀 Hết giờ nghỉ! Tiếp tục học nhé.')
-      return { ...current, mode: nextMode, duration: nextDuration, startedAt: Date.now(), pausedAt: null, pausedRemaining: null, isRunning: true, status: 'RUNNING', sessionCount: nextSession, currentSession: completedFocus ? current.currentSession : current.currentSession + 1, updatedAt: Date.now() }
+      notify('🚀 Hết giờ nghỉ! Mình học tiếp nhé.')
+      return { ...current, mode: 'FOCUS', duration: phaseLength(current, 'FOCUS'), startedAt: at, pausedRemaining: null, status: 'RUNNING', currentSession: current.currentSession + 1, updatedAt: at }
     })
   }, [remaining, session.isRunning])
 
-  const value = useMemo<PomodoroContextValue>(() => ({
-    ...session,
-    remainingTime: remaining,
-    start: (lesson = session.linkedLesson) => setSession((current) => {
-      const duration = current.status === 'COMPLETED' ? 25 * 60 * 1000 : current.pausedRemaining ?? current.duration
-      return { ...current, linkedLesson: lesson, duration, startedAt: Date.now(), pausedAt: null, pausedRemaining: null, isRunning: true, status: 'RUNNING', updatedAt: Date.now() }
-    }),
-    pause: () => setSession((current) => current.isRunning ? { ...current, isRunning: false, status: 'PAUSED', pausedAt: Date.now(), pausedRemaining: elapsedRemaining(current, Date.now()), updatedAt: Date.now() } : current),
-    reset: () => setSession((current) => ({ ...defaultSession, totalSessions: current.totalSessions, linkedLesson: current.linkedLesson, updatedAt: Date.now() })),
-    stop: () => setSession((current) => ({ ...current, isRunning: false, status: 'COMPLETED', pausedRemaining: elapsedRemaining(current, Date.now()), updatedAt: Date.now() })),
-    setDurations: (focusMinutes, breakMinutes, totalSessions = session.totalSessions) => setSession((current) => ({ ...current, duration: current.mode === 'FOCUS' ? focusMinutes * 60 * 1000 : breakMinutes * 60 * 1000, totalSessions, updatedAt: Date.now() })),
-    linkLesson: (linkedLesson) => setSession((current) => ({ ...current, linkedLesson, updatedAt: Date.now() })),
-  }), [session, remaining])
+  const value = useMemo<PomodoroContextValue>(() => {
+    const today = forToday(session)
+    const liveFocus = session.isRunning && session.mode === 'FOCUS' ? session.duration - remaining : 0
+    return {
+      ...today,
+      remainingTime: remaining,
+      todayFocusMinutes: Math.floor((today.todayFocusTime + liveFocus) / MINUTE),
+      start: (lesson = session.linkedLesson) => {
+        // Asked on a click, which browsers require for the permission prompt.
+        if ('Notification' in window && Notification.permission === 'default') void Notification.requestPermission()
+        setSession((previous) => {
+          const current = forToday(previous)
+          if (current.isRunning) return current
+          const at = Date.now()
+          if (current.status === 'COMPLETED') return { ...current, linkedLesson: lesson, mode: 'FOCUS', currentSession: 1, duration: phaseLength(current, 'FOCUS'), startedAt: at, pausedRemaining: null, isRunning: true, status: 'RUNNING', updatedAt: at }
+          return { ...current, linkedLesson: lesson, duration: current.pausedRemaining ?? current.duration, startedAt: at, pausedRemaining: null, isRunning: true, status: 'RUNNING', updatedAt: at }
+        })
+      },
+      pause: () => setSession((previous) => {
+        if (!previous.isRunning) return previous
+        const at = Date.now()
+        return { ...withElapsedFocus(forToday(previous), at), isRunning: false, status: 'PAUSED', startedAt: null, pausedRemaining: remainingOf(previous, at), updatedAt: at }
+      }),
+      stop: () => setSession((previous) => {
+        const at = Date.now()
+        const current = withElapsedFocus(forToday(previous), at)
+        return { ...current, isRunning: false, status: 'IDLE', mode: 'FOCUS', currentSession: 1, startedAt: null, pausedRemaining: null, duration: phaseLength(current, 'FOCUS'), updatedAt: at }
+      }),
+      setDurations: (focusMinutes, breakMinutes) => setSession((previous) => {
+        if (previous.isRunning) return previous
+        const next = { ...forToday(previous), focusMinutes, breakMinutes }
+        return { ...next, duration: phaseLength(next), pausedRemaining: null, status: 'IDLE', updatedAt: Date.now() }
+      }),
+      switchMode: (mode) => setSession((previous) => {
+        if (previous.isRunning) return previous
+        return { ...forToday(previous), mode, duration: phaseLength(previous, mode), pausedRemaining: null, status: 'IDLE', updatedAt: Date.now() }
+      }),
+    }
+  }, [session, remaining])
 
   return <PomodoroContext.Provider value={value}>{children}</PomodoroContext.Provider>
 }
@@ -92,6 +143,31 @@ export function GlobalPomodoroProvider({ children }: { children: ReactNode }) {
 function notify(message: string) {
   window.dispatchEvent(new CustomEvent('ai-tutor-notification', { detail: message }))
   if ('Notification' in window && Notification.permission === 'granted') new Notification(message)
+  playChime()
+}
+
+// A short two-note chime, so the end of a phase is noticed even without notifications.
+function playChime() {
+  try {
+    const AudioContextClass = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    if (!AudioContextClass) return
+    const audio = new AudioContextClass()
+    ;[660, 880].forEach((frequency, index) => {
+      const oscillator = audio.createOscillator()
+      const gain = audio.createGain()
+      const startAt = audio.currentTime + index * 0.22
+      oscillator.frequency.value = frequency
+      gain.gain.setValueAtTime(0.0001, startAt)
+      gain.gain.exponentialRampToValueAtTime(0.25, startAt + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.2)
+      oscillator.connect(gain).connect(audio.destination)
+      oscillator.start(startAt)
+      oscillator.stop(startAt + 0.22)
+    })
+    window.setTimeout(() => void audio.close(), 800)
+  } catch {
+    // Sound is a nice-to-have.
+  }
 }
 
 export function usePomodoro() {

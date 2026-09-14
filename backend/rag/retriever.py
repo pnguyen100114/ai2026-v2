@@ -1,4 +1,5 @@
 import os
+import json
 import re
 from typing import Any, Dict, List, Optional
 
@@ -6,6 +7,11 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from pinecone import Pinecone
+
+try:
+    from backend.rag.books import enrich_match, subject_variants
+except ImportError:  # pragma: no cover
+    from rag.books import enrich_match, subject_variants
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
@@ -15,7 +21,8 @@ PINECONE_NAMESPACE = os.getenv('PINECONE_NAMESPACE') or ''
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'gemini-embedding-001')
 EMBEDDING_DIMENSION = int(os.getenv('EMBEDDING_DIMENSION', '1536'))
-RAG_SCORE_THRESHOLD = float(os.getenv('RAG_SCORE_THRESHOLD', '0.70'))
+RAG_SCORE_THRESHOLD = float(os.getenv('RAG_SCORE_THRESHOLD', '0.60'))
+BOOK_PAGE_OFFSETS = json.loads(os.getenv('BOOK_PAGE_OFFSETS', '{}') or '{}')
 
 if not PINECONE_API_KEY or not PINECONE_INDEX:
     raise RuntimeError('Pinecone chưa được cấu hình trong backend/.env')
@@ -42,14 +49,17 @@ def _normalize_grade(value: Any) -> Optional[int]:
         return None
 
 
-def _make_filter(subject: Optional[str] = None, grade: Optional[int] = None, volume: Optional[int] = None) -> Optional[Dict[str, Any]]:
+def _make_filter(subject: Optional[str] = None, grade: Optional[int] = None, volume: Optional[int] = None, extra: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
     filters: Dict[str, Any] = {}
     if subject:
-        filters['subject'] = str(subject)
+        # Books were ingested with either the short code or the full subject name in metadata.
+        variants = subject_variants(subject)
+        filters['subject'] = variants[0] if len(variants) == 1 else {'$in': variants}
     if grade is not None:
         filters['grade'] = int(grade)
     if volume is not None:
         filters['volume'] = int(volume)
+    filters.update(extra or {})
     return filters or None
 
 
@@ -79,6 +89,10 @@ def create_embedding(text: str) -> List[float]:
 
 def _record_to_output(match: Dict[str, Any]) -> Dict[str, Any]:
     metadata = match.get('metadata') or {}
+    pdf_page = _normalize_grade(metadata.get('page'))
+    page_offset = _normalize_grade(metadata.get('page_offset'))
+    if page_offset is None:
+        page_offset = int(BOOK_PAGE_OFFSETS.get(str(metadata.get('source') or ''), 0))
     payload = {
         'id': match.get('id'),
         'score': float(match.get('score', 0.0)),
@@ -87,16 +101,20 @@ def _record_to_output(match: Dict[str, Any]) -> Dict[str, Any]:
         'volume': _normalize_grade(metadata.get('volume')),
         'chapter': _normalize_grade(metadata.get('chapter')),
         'lesson': _normalize_grade(metadata.get('lesson')),
-        'page': _normalize_grade(metadata.get('page')),
+        'page': (pdf_page + page_offset) if pdf_page is not None else None,
+        'pdf_page': pdf_page,
+        'page_offset': page_offset,
         'source': metadata.get('source'),
+        'book_type': metadata.get('book_type', 'sgk'),
         'content_type': metadata.get('content_type', 'theory'),
         'text': metadata.get('text') or '',
         'title': metadata.get('title') or metadata.get('lesson_name') or '',
     }
-    return payload
+    # Books in the catalog get their real lesson, chapter and printed page instead of the OCR guesses.
+    return enrich_match(payload)
 
 
-def search_knowledge(query: str, subject: Optional[str] = None, grade: Optional[int] = None, top_k: int = 5, volume: Optional[int] = None) -> List[Dict[str, Any]]:
+def search_knowledge(query: str, subject: Optional[str] = None, grade: Optional[int] = None, top_k: int = 5, volume: Optional[int] = None, extra_filter: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     if not query or not str(query).strip():
         return []
     if index is None:
@@ -106,14 +124,16 @@ def search_knowledge(query: str, subject: Optional[str] = None, grade: Optional[
     if not query_vector:
         raise RuntimeError('Embedding query thất bại. Vui lòng kiểm tra GEMINI_API_KEY hoặc mô hình embedding.')
 
+    query_filter = _make_filter(subject=subject, grade=grade, volume=volume, extra=extra_filter)
     result = index.query(
         vector=query_vector,
         top_k=max(1, int(top_k)),
         include_metadata=True,
-        filter=_make_filter(subject=subject, grade=grade, volume=volume),
+        filter=query_filter,
         namespace=PINECONE_NAMESPACE,
     )
-    matches = result.get('matches', []) if isinstance(result, dict) else []
+    matches = result.get('matches', []) if hasattr(result, 'get') else getattr(result, 'matches', [])
+
     filtered = []
     for match in matches:
         payload = _record_to_output(match)
