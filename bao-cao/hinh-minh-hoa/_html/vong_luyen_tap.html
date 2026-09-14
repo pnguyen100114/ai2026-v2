@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><style>
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #fff; }
+body { font-family: 'Segoe UI', Arial, sans-serif; color: #1B2A4A; }
+.canvas { padding: 32px; }
+.ic { display: grid; place-items: center; border-radius: 18px; flex: none; }
+.coral { background: #FDE7E0; color: #F2704F; }
+.navy { background: #E6EBF3; color: #1B2A4A; }
+.green { background: #DDF3EA; color: #16875F; }
+.amber { background: #FDF1D6; color: #B7791F; }
+.violet { background: #ECE8FB; color: #6247C9; }
+.solid { background: #F2704F; color: #fff; }
+h3 { margin: 0; font-size: 22px; }
+p { margin: 0; }
+
+.loop { display: grid; grid-template-columns: 1fr 170px 1fr; grid-template-rows: auto auto; gap: 18px 22px; align-items: center; }
+.lc { display: flex; gap: 16px; align-items: center; background: #FAFBFD; border: 2px solid #EEF1F6; border-radius: 22px; padding: 18px; }
+.lc h4 { margin: 0 0 4px; font-size: 20px; }
+.lc p { font-size: 15px; color: #4B5563; line-height: 1.4; }
+.center { grid-column: 2; grid-row: 1 / span 2; justify-self: center; width: 150px; height: 150px; border-radius: 50%; background: #FDE7E0; color: #F2704F; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; text-align: center; font-weight: 700; font-size: 15px; }
+</style><body><div class="canvas"><div class="loop">
+  <div class="lc" style="grid-column:1;grid-row:1"><div class="ic solid" style="width:60px;height:60px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/></svg></div><div><h4>1. Mimo soạn câu hỏi</h4><p>đúng bài em đang học, độ khó từ 1 đến 5</p></div></div>
+  <div class="center"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg><div>lặp lại<br>mỗi câu</div></div>
+  <div class="lc" style="grid-column:3;grid-row:1"><div class="ic navy" style="width:60px;height:60px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg></div><div><h4>2. Em chọn đáp án</h4><p>có thể xem gợi ý nếu bí</p></div></div>
+  <div class="lc" style="grid-column:1;grid-row:2"><div class="ic green" style="width:60px;height:60px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/></svg></div><div><h4>4. Chỉnh độ khó</h4><p>đúng liên tiếp thì khó hơn, sai thì ôn lại</p></div></div>
+  <div class="lc" style="grid-column:3;grid-row:2"><div class="ic amber" style="width:60px;height:60px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></svg></div><div><h4>3. Chấm và ghi lỗi sai</h4><p>mức nắm bài tăng hoặc giảm 10%</p></div></div>
+</div></div></body>

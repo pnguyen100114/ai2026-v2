@@ -9,6 +9,7 @@ export type HistoryMessage = {
   role: 'user' | 'assistant'
   content: string
   prompt: string | null
+  imageText: string | null
   sources: unknown[]
   quickReplies: string[]
   understanding: string | null

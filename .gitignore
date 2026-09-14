@@ -39,3 +39,6 @@ sitting posture.v4-sitting_posture_4keypoint.yolov8/**/*.cache
 *.njsproj
 *.sln
 *.sw?
+
+# Word/Office lock files
+~$*

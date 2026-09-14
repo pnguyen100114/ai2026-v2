@@ -264,6 +264,27 @@ def test_image_is_sent_to_gemini_as_bytes(client, app_mod, monkeypatch):
     assert (image_part.inline_data.data, image_part.inline_data.mime_type) == (b'hello', 'image/png')
 
 
+def test_image_text_is_returned_persisted_and_used_in_later_turns(client, app_mod, monkeypatch):
+    fake = FakeGemini(chunks=[f'Em điền chỗ trống trước nhé. {MARKER}{{"quick_replies":["Tiếp"],"understanding":"hiểu sơ","image_text":"Bài 1: Thể mà trong môi âm ....."}}'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+
+    events = stream(client, message='giúp em giải', image_data='data:image/png;base64,aGVsbG8=', image_mime_type='image/png',
+                    session={'id': 's1'}, user_message_id='u1', assistant_message_id='a1')
+
+    assert 'image_text' in fake.calls[0]['contents'][0].text
+    assert events[-1]['image_text'] == 'Bài 1: Thể mà trong môi âm .....'
+    (_, kwargs), = app_mod.save_chat_turn.calls
+    assert kwargs['user_message']['image_text'] == 'Bài 1: Thể mà trong môi âm .....'
+
+    stream(client, message='câu 2 làm sao ạ', messages=[
+        {'role': 'user', 'content': 'giúp em giải\n\n📷 Ảnh đề bài đã đính kèm.', 'image_text': 'Bài 1: Thể mà trong môi âm .....'},
+        {'role': 'assistant', 'content': 'Em điền chỗ trống trước nhé.'},
+    ])
+    follow_up = fake.calls[-1]['contents']
+    assert isinstance(follow_up, str) and 'Nội dung đề bài trong ảnh em đã gửi: Bài 1: Thể mà trong môi âm .....' in follow_up
+    assert 'image_text' not in follow_up
+
+
 def test_rate_limit_returns_429(client, monkeypatch):
     import backend.db as db_module
     monkeypatch.setattr(db_module, 'CHAT_RATE_PER_MINUTE', 2)

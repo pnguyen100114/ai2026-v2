@@ -1,0 +1,31 @@
+<!doctype html><meta charset="utf-8"><style>
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #fff; }
+body { font-family: 'Segoe UI', Arial, sans-serif; color: #1B2A4A; }
+.canvas { padding: 32px; }
+.ic { display: grid; place-items: center; border-radius: 18px; flex: none; }
+.coral { background: #FDE7E0; color: #F2704F; }
+.navy { background: #E6EBF3; color: #1B2A4A; }
+.green { background: #DDF3EA; color: #16875F; }
+.amber { background: #FDF1D6; color: #B7791F; }
+.violet { background: #ECE8FB; color: #6247C9; }
+.solid { background: #F2704F; color: #fff; }
+h3 { margin: 0; font-size: 22px; }
+p { margin: 0; }
+
+.row { display: grid; gap: 24px; }
+.card { background: #FAFBFD; border: 2px solid #EEF1F6; border-radius: 26px; padding: 28px; display: flex; flex-direction: column; gap: 14px; }
+.card p { font-size: 18px; line-height: 1.5; color: #4B5563; }
+
+.label { font-size: 17px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #9AA3AF; margin: 0 0 14px 4px; }
+.tile { display: flex; gap: 18px; align-items: flex-start; background: #FAFBFD; border: 2px solid #EEF1F6; border-radius: 22px; padding: 20px; }
+.tile h4 { margin: 0 0 6px; font-size: 20px; }
+.tile p { font-size: 16px; line-height: 1.45; color: #4B5563; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+</style><body><div class="canvas"><div class="grid3"><div class="tile"><div class="ic navy" style="width:62px;height:62px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg></div>
+      <div><h4>Đăng ký & khảo sát</h4><p>Nhập tên, email, lớp; chọn môn, mục tiêu, số phút học mỗi ngày</p></div></div><div class="tile"><div class="ic amber" style="width:62px;height:62px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v8l3-3 3 3V2"/><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/></svg></div>
+      <div><h4>Lộ trình học</h4><p>Theo đúng mục lục sách; bài có trạng thái chưa học, đã học, đã vững</p></div></div><div class="tile"><div class="ic solid" style="width:62px;height:62px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="M7 11h10"/><path d="M7 15h6"/><path d="M7 7h8"/></svg></div>
+      <div><h4>Hỏi Mimo</h4><p>Gõ, chụp ảnh đề hoặc nói; câu trả lời có nguồn trong sách</p></div></div><div class="tile"><div class="ic coral" style="width:62px;height:62px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+      <div><h4>Luyện tập vừa sức</h4><p>Câu hỏi soạn riêng, có gợi ý, chỉ ra lỗi sai</p></div></div><div class="tile"><div class="ic green" style="width:62px;height:62px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg></div>
+      <div><h4>Pomodoro</h4><p>Hẹn giờ học và nghỉ, giữ chuỗi ngày học</p></div></div><div class="tile"><div class="ic violet" style="width:62px;height:62px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/></svg></div>
+      <div><h4>Nghe giảng</h4><p>Bấm loa để Mimo đọc bài bằng giọng Việt</p></div></div></div></div></body>

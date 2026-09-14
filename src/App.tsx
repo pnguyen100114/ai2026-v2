@@ -76,6 +76,8 @@ type ChatMessage = {
   failed?: boolean
   /** The attached photo, kept in memory only for this visit (never cached or stored on the server). */
   imagePreview?: string
+  /** The problem Mimo copied out of that photo; sent with later turns so Mimo keeps the context after the photo is gone. */
+  imageText?: string
 }
 // `lesson` is the roadmap lesson label the chat is about; the backend uses it to add that lesson's pages and earlier chats.
 type ChatSession = { id: string; title: string; subject: string; grade: string; lesson?: string; createdAt: number; updatedAt: number; messages: ChatMessage[] }
@@ -218,6 +220,11 @@ function inChatScope(student: StudentProfile, session?: { subject: string; grade
   return session ? { ...student, subject: session.subject, grade: gradeFromLabel(session.grade, student.grade) } : student
 }
 
+// A chat is only kept (cached, listed) once the student has asked something in it.
+function hasQuestion(session: ChatSession) {
+  return session.messages.some((message) => message.role === 'user')
+}
+
 // Photos live in memory only; caching them would fill localStorage quickly.
 function withoutImages(messages: ChatMessage[]) {
   return messages.some((message) => message.imagePreview) ? messages.map(({ imagePreview: _image, ...message }) => message) : messages
@@ -291,6 +298,7 @@ function sessionsFromHistory(history: repository.History, student: StudentProfil
       text: message.content,
       content: message.content,
       prompt: message.prompt ?? undefined,
+      imageText: message.imageText ?? undefined,
       timestamp: Date.parse(message.createdAt),
       sources: message.sources as SourceRef[],
       quickReplies: message.quickReplies,
@@ -368,6 +376,27 @@ function App() {
   const dailyMinutes = account.onboarding.dailyMinutes || 25
 
   const showToast = useCallback((message: string) => setToast(message), [])
+
+  // While Mimo is answering (or preparing/grading a practice question) the student stays on this page until it is done.
+  const busyMessage = chatLoading ? 'Mimo đang trả lời câu hỏi của em.' : quizLoading ? 'Mimo đang chuẩn bị câu luyện tập.' : ''
+  const [busyNotice, setBusyNotice] = useState('')
+  const stayWhileBusy = () => {
+    if (!busyMessage) return false
+    setBusyNotice(busyMessage)
+    return true
+  }
+  useEffect(() => {
+    if (busyMessage || !busyNotice) return
+    setBusyNotice('')
+    showToast('Mimo xong rồi, em chuyển trang được rồi nhé!')
+  }, [busyMessage, busyNotice, showToast])
+  useEffect(() => {
+    if (!busyMessage) return
+    // Closing or reloading the tab would lose the answer: ask the browser to confirm.
+    const onBeforeUnload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = '' }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [busyMessage])
   useEffect(() => {
     if (!toast) return
     const timer = window.setTimeout(() => setToast(''), 5000)
@@ -438,7 +467,7 @@ function App() {
   }, [currentSessionId, sessions])
 
   useEffect(() => {
-    writeStorage(storageKey('gia-su-ai-sessions'), sessions.map((session) => ({ ...session, messages: withoutImages(session.messages) })))
+    writeStorage(storageKey('gia-su-ai-sessions'), sessions.filter(hasQuestion).map((session) => ({ ...session, messages: withoutImages(session.messages) })))
     writeStorage(storageKey('gia-su-ai-current-session'), currentSessionId)
   }, [sessions, currentSessionId])
 
@@ -523,15 +552,16 @@ function App() {
     const userMessage: ChatMessage = { id: messageId(), sender: 'user', text: userContent, timestamp: Date.now(), role: 'user', content: userContent, prompt: submittedMessage, imagePreview: imageData }
     const assistantMessage: ChatMessage = { id: messageId(), sender: 'assistant', text: '', timestamp: Date.now(), role: 'assistant', content: '' }
     if (imageData) lastImageRef.current = { userId: userMessage.id, data: imageData, mime: imageMimeType }
-    // Patch the answer by id in both the open chat and the stored sessions: the student may switch chats while Mimo is still writing.
-    const patchAnswer = (patch: (item: ChatMessage) => ChatMessage) => {
-      const apply = (messages: ChatMessage[]) => messages.some((item) => item.id === assistantMessage.id) ? messages.map((item) => item.id === assistantMessage.id ? patch(item) : item) : messages
+    // Patch a message by id in both the open chat and the stored sessions: the student may switch chats while Mimo is still writing.
+    const patchMessage = (id: string, patch: (item: ChatMessage) => ChatMessage) => {
+      const apply = (messages: ChatMessage[]) => messages.some((item) => item.id === id) ? messages.map((item) => item.id === id ? patch(item) : item) : messages
       setChat(apply)
       setSessions((current) => current.map((session) => {
         const messages = apply(session.messages)
         return messages === session.messages ? session : { ...session, messages }
       }))
     }
+    const patchAnswer = (patch: (item: ChatMessage) => ChatMessage) => patchMessage(assistantMessage.id, patch)
     setChat([...baseChat, userMessage, assistantMessage])
     setChatLoading(true)
     setChatError('')
@@ -558,7 +588,7 @@ function App() {
             subject: chatSubject,
             grade: chatGrade,
           },
-          messages: baseChat.filter((item) => item.content.trim()).map((item) => ({ role: item.role, content: item.content })),
+          messages: baseChat.filter((item) => item.content.trim()).map((item) => ({ role: item.role, content: item.content, ...(item.imageText ? { image_text: item.imageText } : {}) })),
           image_data: imageData,
           image_mime_type: imageMimeType,
         }),
@@ -575,13 +605,17 @@ function App() {
       const processEvent = (event: string) => {
         const line = event.split(/\r?\n/).find((item) => item.startsWith('data: '))
         if (!line) return
-        const payload = JSON.parse(line.slice(6)) as { type: string; text?: string; content?: string; sources?: SourceRef[]; quick_replies?: string[]; understanding?: ChatMessage['understanding'] | null; message?: string }
+        const payload = JSON.parse(line.slice(6)) as { type: string; text?: string; content?: string; sources?: SourceRef[]; quick_replies?: string[]; understanding?: ChatMessage['understanding'] | null; image_text?: string; message?: string }
         if (payload.type === 'error') throw new Error(payload.message || 'Mimo chưa trả lời được lượt này.')
         if (payload.type === 'chunk' && payload.text) {
           const text = payload.text
           patchAnswer((item) => ({ ...item, content: item.content + text, text: item.text + text }))
         }
         // The server sends a cleaned copy of the answer (stray citations removed) to replace the streamed text.
+        if (payload.type === 'done' && payload.image_text) {
+          const imageText = payload.image_text
+          patchMessage(userMessage.id, (item) => ({ ...item, imageText }))
+        }
         if (payload.type === 'done') patchAnswer((item) => ({ ...item, content: payload.content ?? item.content, text: payload.content ?? item.text, sources: payload.sources || [], understanding: payload.understanding || undefined, quickReplies: payload.quick_replies || [], quick_replies: payload.quick_replies || [] }))
       }
       while (true) {
@@ -616,15 +650,24 @@ function App() {
     void sendMessage(prompt, image?.data, image?.mime, chat.slice(0, userIndex), userMessage.id)
   }
 
-  const createNewChat = () => {
-    const session = newSession(student)
-    setSessions((current) => [session, ...current])
+  // A new chat replaces any other chat nobody has asked anything in yet, so empty chats never pile up.
+  const startChat = (title?: string, lesson?: string) => {
+    const session = newSession(student, title, lesson)
+    setSessions((current) => [session, ...current.filter(hasQuestion)])
     setCurrentSessionId(session.id)
     setChat(session.messages)
     setPage('tutor')
   }
 
+  const createNewChat = () => {
+    if (stayWhileBusy()) return
+    startChat()
+  }
+
   const selectChat = (session: ChatSession) => {
+    if (stayWhileBusy()) return
+    // Leaving an empty chat drops it.
+    setSessions((current) => current.filter((item) => item.id === session.id || hasQuestion(item)))
     setCurrentSessionId(session.id)
     setChat(session.messages)
     setPage('tutor')
@@ -638,23 +681,22 @@ function App() {
   // Studying a lesson starts a fresh chat titled with the lesson; earlier chats of that lesson still reach Mimo
   // through the backend's lesson history. An untouched chat of the same lesson is reused instead of piling up empty ones.
   const openLessonChat = (lesson: string) => {
+    if (stayWhileBusy()) return
     const grade = `Lớp ${student.grade}`
-    const unused = sessions.find((session) => session.lesson === lesson && session.subject === student.subject && session.grade === grade && !session.messages.some((message) => message.role === 'user'))
-    if (unused) {
-      selectChat(unused)
-      return
-    }
-    const session = newSession(student, lesson, lesson)
-    setSessions((current) => [session, ...current])
-    setCurrentSessionId(session.id)
-    setChat(session.messages)
-    setPage('tutor')
+    const unused = sessions.find((session) => session.lesson === lesson && session.subject === student.subject && session.grade === grade && !hasQuestion(session))
+    if (unused) selectChat(unused)
+    else startChat(lesson, lesson)
   }
 
+  // The open chat is kept only if it belongs to the selected subject, grade and lesson; otherwise switch to (or start) one that does.
   const openTutor = () => {
-    const currentLesson = sessions.find((session) => session.id === currentSessionId)?.lesson
-    if (student.currentLesson && currentLesson !== student.currentLesson) openLessonChat(student.currentLesson)
-    else setPage('tutor')
+    if (stayWhileBusy()) return
+    const open = sessions.find((session) => session.id === currentSessionId)
+    const inScope = open?.subject === student.subject && open.grade === `Lớp ${student.grade}`
+    if (inScope && (!student.currentLesson || open?.lesson === student.currentLesson)) setPage('tutor')
+    else if (student.currentLesson) openLessonChat(student.currentLesson)
+    // The new roadmap (and so the lesson) is not loaded yet: start a chat for this subject/grade.
+    else startChat()
   }
 
   const startRenameChat = (event: React.MouseEvent, session: ChatSession) => {
@@ -677,7 +719,7 @@ function App() {
   }
 
   const deleteChat = async (sessionId: string) => {
-    if (!window.confirm('Xóa cuộc trò chuyện này?')) return
+    if (stayWhileBusy() || !window.confirm('Xóa cuộc trò chuyện này?')) return
     try {
       await repository.deleteSession(sessionId)
     } catch {
@@ -742,6 +784,7 @@ function App() {
   }
 
   const signOut = () => {
+    if (stayWhileBusy()) return
     if (window.confirm('Đăng xuất khỏi Gia Sư AI? Lịch sử học của em vẫn được lưu, lần sau em đăng nhập bằng email và mật khẩu nhé.')) auth.signOut()
   }
 
@@ -752,7 +795,8 @@ function App() {
     void repository.saveFeedback(message.id, rating, comment).catch((err) => console.error('Không lưu được đánh giá', err))
   }
 
-  const sortedSessions = useMemo(() => [...sessions].sort((left, right) => right.updatedAt - left.updatedAt), [sessions])
+  // Only chats with a question are listed; the open empty chat is not saved yet.
+  const sortedSessions = useMemo(() => sessions.filter(hasQuestion).sort((left, right) => right.updatedAt - left.updatedAt), [sessions])
   const subjectSessions = useMemo(() => sortedSessions.filter((session) => session.subject === student.subject && session.grade === `Lớp ${student.grade}`), [sortedSessions, student.subject, student.grade])
 
   const renderSessionItem = (session: ChatSession) => (
@@ -814,7 +858,7 @@ function App() {
 
         <nav>
           {navItems.map(({ id, label, icon: Icon }) => (
-            <button key={id} className={`nav-item ${page === id ? 'active' : ''}`} onClick={() => { setMenuOpen(false); if (id === 'tutor' && page !== 'tutor') openTutor(); else setPage(id) }}>
+            <button key={id} className={`nav-item ${page === id ? 'active' : ''}`} onClick={() => { setMenuOpen(false); if (id === 'tutor' && page !== 'tutor') openTutor(); else if (id === page || !stayWhileBusy()) setPage(id) }}>
               <Icon size={19} />
               <span>{label}</span>
             </button>
@@ -846,7 +890,7 @@ function App() {
               <div className="account-menu-panel">
                 <strong>{student.name}</strong>
                 <small>{account.email}</small>
-                <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); setPage('profile') }}><UserRound size={14} /> Hồ sơ & mật khẩu</button>
+                <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); if (page === 'profile' || !stayWhileBusy()) setPage('profile') }}><UserRound size={14} /> Hồ sơ & mật khẩu</button>
                 <button type="button" onClick={signOut}><LogOut size={14} /> Đăng xuất</button>
               </div>
             </details>
@@ -870,6 +914,16 @@ function App() {
         {page === 'pomodoro' && <PomodoroState streak={stats.streak} lesson={student.currentLesson} dailyMinutes={dailyMinutes} />}
       </main>
       {toast && <div className="app-toast" role="status"><span>{toast}</span><button type="button" onClick={() => setToast('')} aria-label="Đóng thông báo"><X size={14} /></button></div>}
+      {busyNotice && (
+        <div className="source-modal-backdrop busy-backdrop" role="presentation" onClick={() => setBusyNotice('')}>
+          <div className="source-modal busy-modal" role="alertdialog" aria-modal="true" aria-labelledby="busy-title" onClick={(event) => event.stopPropagation()}>
+            <div className="busy-spinner" aria-hidden="true" />
+            <strong id="busy-title">Em đợi Mimo một chút nhé!</strong>
+            <p>{busyNotice} Khi Mimo xong, em chuyển trang được ngay, câu trả lời sẽ không bị mất.</p>
+            <button type="button" className="primary-btn" autoFocus onClick={() => setBusyNotice('')}>Em đợi</button>
+          </div>
+        </div>
+      )}
       {showAllChats && <AllChatsModal sessions={sortedSessions} currentGroup={`${student.subject} · Lớp ${student.grade}`} renderItem={renderSessionItem} onClose={() => setShowAllChats(false)} onNewChat={() => { createNewChat(); setShowAllChats(false) }} />}
     </div>
   )

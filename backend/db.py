@@ -120,6 +120,8 @@ messages = Table(
     Column('content', Text, nullable=False),
     Column('prompt', Text),
     Column('has_image', Boolean, nullable=False, default=False),
+    # The problem copied out of the attached photo: the photo itself is not stored.
+    Column('image_text', Text),
     Column('sources', JSON, nullable=False, default=list),
     Column('quick_replies', JSON, nullable=False, default=list),
     Column('understanding', String(20)),
@@ -188,6 +190,9 @@ def init_db() -> None:
     if 'password_hash' not in {column['name'] for column in inspect(engine).get_columns('users')}:
         with engine.begin() as conn:
             conn.exec_driver_sql('ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)')
+    if 'image_text' not in {column['name'] for column in inspect(engine).get_columns('messages')}:
+        with engine.begin() as conn:
+            conn.exec_driver_sql('ALTER TABLE messages ADD COLUMN image_text TEXT')
     with engine.begin() as conn:
         # Idempotent cleanup: clear the old hardcoded lesson for students who are not in grade-8 math.
         conn.execute(update(users).where(
@@ -391,7 +396,7 @@ def load_history(user_id: str, session_limit: int = 50) -> dict[str, Any]:
     return {
         'sessions': [{'id': row.id, 'title': row.title, 'subject': row.subject, 'grade': row.grade, 'lesson': row.lesson or '', 'createdAt': _iso(row.created_at), 'updatedAt': _iso(row.updated_at)} for row in session_rows],
         'messages': [{
-            'id': row.id, 'sessionId': row.session_id, 'role': row.role, 'content': row.content, 'prompt': row.prompt,
+            'id': row.id, 'sessionId': row.session_id, 'role': row.role, 'content': row.content, 'prompt': row.prompt, 'imageText': row.image_text,
             'sources': [_resign_source(source) for source in row.sources or []], 'quickReplies': row.quick_replies or [], 'understanding': row.understanding,
             'createdAt': _iso(row.created_at), 'feedback': ratings.get(row.id),
         } for row in message_rows],

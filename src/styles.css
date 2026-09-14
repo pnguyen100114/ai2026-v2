@@ -134,3 +134,11 @@ textarea{font:inherit}
 
 /* Chat history: let the date + (subject - grade) line wrap instead of being cut off */
 .chat-history-select small{white-space:normal;line-height:1.35}
+
+/* "Em đợi Mimo" popup: shown when the student tries to leave while Mimo is still working */
+.busy-backdrop{z-index:40}
+.busy-modal{width:min(380px,100%);padding:26px 22px 20px;text-align:center;display:grid;justify-items:center;gap:10px}
+.busy-modal strong{font-size:17px;color:var(--navy)}
+.busy-modal p{margin:0;font-size:14px;line-height:1.55;color:#5b6b80}
+.busy-modal .primary-btn{margin-top:6px;min-width:120px;justify-content:center}
+.busy-spinner{width:34px;height:34px;border-radius:50%;border:3px solid #ffe1d8;border-top-color:#f26b4f;animation:spin .9s linear infinite}

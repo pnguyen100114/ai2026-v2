@@ -88,11 +88,17 @@ if not exist "backend\.env" (
 )
 
 echo.
+echo Dang dung Gia Su AI dang chay (neu co) de tranh khoa file...
+call :stop_running_app
+
+echo.
 echo [2/5] Dang cai thu vien giao dien...
-if exist "package-lock.json" (
-  call npm ci --no-audit --no-fund
-) else (
-  call npm install --no-audit --no-fund
+call :npm_install
+if errorlevel 1 (
+  echo Cai lan 1 that bai, doi 5 giay roi thu lai...
+  call :stop_running_app
+  timeout /t 5 /nobreak >nul
+  call :npm_install
 )
 if errorlevel 1 goto :install_failed
 
@@ -125,6 +131,20 @@ echo Dang khoi dong san pham...
 echo ============================================================
 call "%INSTALL_DIR%\Chay AI Gia Su.bat"
 exit /b %errorlevel%
+
+:npm_install
+if exist "package-lock.json" (
+  call npm ci --no-audit --no-fund
+) else (
+  call npm install --no-audit --no-fund
+)
+exit /b %errorlevel%
+
+:stop_running_app
+rem Dung frontend (cong 5173), backend (cong 8000) va moi tien trinh chay tu thu muc project
+rem (vd. .venv\Scripts\python.exe), vi chung khoa file trong node_modules va .venv.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$d=(Resolve-Path $env:INSTALL_DIR).Path.TrimEnd('\'); $ids=@(); $ids+=Get-NetTCPConnection -State Listen -LocalPort 5173,8000 -ErrorAction SilentlyContinue | Where-Object { (Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue).ProcessName -match '^(node|python|py)$' } | Select-Object -ExpandProperty OwningProcess; $ids+=Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith($d, [StringComparison]::OrdinalIgnoreCase) } | Select-Object -ExpandProperty ProcessId; $ids | Where-Object { $_ -gt 0 } | Sort-Object -Unique | ForEach-Object { taskkill /PID $_ /T /F 2>$null | Out-Null }; Start-Sleep -Seconds 1"
+exit /b 0
 
 :download_failed
 echo [LOI] Khong tai duoc project tu GitHub.
