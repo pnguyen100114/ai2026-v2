@@ -224,8 +224,8 @@ def test_quota_error_emits_fallback_answer(client, app_mod, monkeypatch):
 class QuotaThenAnswer(FakeGemini):
     """First model is out of quota, the next one answers."""
 
-    def generate_content_stream(self, model, contents):
-        self.calls.append({'model': model, 'contents': contents})
+    def generate_content_stream(self, model, contents, config=None):
+        self.calls.append({'model': model, 'contents': contents, 'config': config})
         if model == 'gemini-test':
             raise RuntimeError('429 RESOURCE_EXHAUSTED')
         for chunk in self.chunks:
@@ -290,3 +290,14 @@ def test_rate_limit_returns_429(client, monkeypatch):
     monkeypatch.setattr(db_module, 'CHAT_RATE_PER_MINUTE', 2)
     codes = [client.post('/api/chat/stream', json={'message': 'hi'}).status_code for _ in range(3)]
     assert codes == [200, 200, 429]
+
+
+def test_chat_answer_is_capped_so_one_reply_cannot_run_away(client, app_mod, monkeypatch):
+    # Output tokens are billed 4-25x input, so every answer must carry a ceiling.
+    monkeypatch.setattr(app_mod, 'MAX_OUTPUT_TOKENS', 800)
+    fake = FakeGemini(chunks=['Xong rồi.'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+
+    stream(client, message='giải giúp em bài 1')
+
+    assert fake.calls[0]['config'].max_output_tokens == 800

@@ -82,10 +82,18 @@ init_db()
 app.include_router(accounts_router)
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-# Default to a lighter model: the free tier of the newest one allows very few requests.
-GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.5-flash')
+# Cheapest model that still tutors well and still cites its sources ([1] is what builds the
+# "Xem trang" links). $0.25/1M in, $1.50/1M out against gemini-3.5-flash's $1.50/$9.00 - about
+# 6x cheaper per answer. gemini-2.5-flash-lite is cheaper still but 404s for new projects.
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.1-flash-lite')
 # Free-tier quota is counted per model, so when one runs out the next one usually still answers.
-GEMINI_FALLBACK_MODELS = [model.strip() for model in os.getenv('GEMINI_FALLBACK_MODELS', 'gemini-3.5-flash-lite,gemini-3.6-flash').split(',') if model.strip()]
+GEMINI_FALLBACK_MODELS = [model.strip() for model in os.getenv('GEMINI_FALLBACK_MODELS', 'gemini-3.5-flash-lite,gemini-3.5-flash').split(',') if model.strip()]
+
+# A tutoring answer needs a few hundred tokens; without a ceiling one rambling reply can cost
+# several times a normal one. Structured replies get their own, larger budget because a cut-off
+# JSON is not a shorter answer, it is an unparseable one.
+MAX_OUTPUT_TOKENS = int(os.getenv('MAX_OUTPUT_TOKENS', '800'))
+MAX_JSON_OUTPUT_TOKENS = int(os.getenv('MAX_JSON_OUTPUT_TOKENS', '4096'))
 QUOTA_COOLDOWN_SECONDS = 300
 # Stricter than retrieval: greetings and off-topic chat still score ~0.60-0.66 against cover/intro pages.
 CHAT_SOURCE_MIN_SCORE = float(os.getenv('CHAT_SOURCE_MIN_SCORE', str(max(RAG_SCORE_THRESHOLD, 0.68))))
@@ -337,7 +345,17 @@ def _mark_quota_exhausted(model: str, exc: Exception) -> None:
     _quota_exhausted_until[model] = time.monotonic() + QUOTA_COOLDOWN_SECONDS
 
 
+def _with_output_cap(config: Any, limit: int) -> Any:
+    """Give a request an output ceiling, keeping whatever else the caller asked for."""
+    if config is None:
+        return types.GenerateContentConfig(max_output_tokens=limit)
+    if getattr(config, 'max_output_tokens', None) is None:
+        config.max_output_tokens = limit
+    return config
+
+
 def _generate_content(**kwargs: Any) -> Any:
+    kwargs['config'] = _with_output_cap(kwargs.get('config'), MAX_OUTPUT_TOKENS)
     last_quota_error: Exception | None = None
     for model in _gemini_models():
         try:
@@ -356,7 +374,11 @@ def _stream_gemini_text(contents: Any):
     for model in _gemini_models():
         started = False
         try:
-            for chunk in gemini_client.models.generate_content_stream(model=model, contents=contents):
+            for chunk in gemini_client.models.generate_content_stream(
+                model=model,
+                contents=contents,
+                config=types.GenerateContentConfig(max_output_tokens=MAX_OUTPUT_TOKENS),
+            ):
                 text = getattr(chunk, 'text', None) or ''
                 if text:
                     started = True
@@ -455,7 +477,7 @@ def next_quiz(request: QuizNextRequest, user: dict[str, Any] = Depends(current_u
     try:
         response = _generate_content(
             contents=prompt,
-            config=types.GenerateContentConfig(response_mime_type='application/json'),
+            config=types.GenerateContentConfig(response_mime_type='application/json', max_output_tokens=MAX_JSON_OUTPUT_TOKENS),
         )
         question = parse_generated_question(getattr(response, 'text', None) or '', subject=subject, concept_id=concept_id, concept=topic, difficulty=difficulty)
     except ValueError as exc:
@@ -721,7 +743,7 @@ def _ai_roadmap(user: dict[str, Any], subject: str, grade: int) -> dict[str, Any
     try:
         response = _generate_content(
             contents=build_roadmap_prompt(subject, grade),
-            config=types.GenerateContentConfig(response_mime_type='application/json'),
+            config=types.GenerateContentConfig(response_mime_type='application/json', max_output_tokens=MAX_JSON_OUTPUT_TOKENS),
         )
         roadmap = parse_generated_roadmap(getattr(response, 'text', None) or '', subject, grade)
     except ValueError as exc:

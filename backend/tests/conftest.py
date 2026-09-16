@@ -60,8 +60,8 @@ class FakeGemini:
             raise self.error
         return SimpleNamespace(text=self.text)
 
-    def generate_content_stream(self, model: str, contents: Any):
-        self.calls.append({'model': model, 'contents': contents})
+    def generate_content_stream(self, model: str, contents: Any, config: Any = None):
+        self.calls.append({'model': model, 'contents': contents, 'config': config})
         for chunk in self.chunks:
             yield SimpleNamespace(text=chunk)
         if self.error:
@@ -85,6 +85,10 @@ def app_mod(monkeypatch):
     monkeypatch.setattr(app_module, 'GEMINI_FALLBACK_MODELS', [])
     monkeypatch.setattr(app_module, '_quota_exhausted_until', {})
     monkeypatch.setattr(app_module, '_lesson_pages_cache', {})
+    # Without this, a machine that has SUPABASE_* filled in backend/.env makes the page endpoint
+    # redirect to Supabase, TestClient follows it and the test sees that host's 404 instead of
+    # the locally rendered page. Tests must not depend on the developer's .env.
+    monkeypatch.setattr(app_module.page_store, 'signed_url', lambda *a, **k: None)
     monkeypatch.setattr(app_module, 'lesson_history', lambda *a, **k: [])
     monkeypatch.setattr(app_module, 'search_knowledge', lambda *a, **k: [])
     monkeypatch.setattr(app_module, 'save_chat_turn', Recorder())
