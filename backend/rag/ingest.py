@@ -1,8 +1,9 @@
 import os
+import hashlib
 import json
-import random
 import re
 import sys
+import time
 import uuid
 
 from pathlib import Path
@@ -11,11 +12,11 @@ from pypdf import PdfReader
 from pinecone import Pinecone
 
 try:
-    from backend.rag.books import find_book, lesson_at
-    from backend.rag.embeddings import create_embeddings
+    from backend.rag.books import find_book, find_course, lesson_at
+    from backend.rag.embeddings import DailyQuotaExhausted, cache_size, create_embeddings
 except ImportError:  # pragma: no cover
-    from books import find_book, lesson_at
-    from embeddings import create_embeddings
+    from books import find_book, find_course, lesson_at
+    from embeddings import DailyQuotaExhausted, cache_size, create_embeddings
 
 
 # ==========================================
@@ -35,6 +36,18 @@ EMBEDDING_DIMENSION = int(
     os.getenv("EMBEDDING_DIMENSION", "1536")
 )
 BOOK_PAGE_OFFSETS = json.loads(os.getenv('BOOK_PAGE_OFFSETS', '{}') or '{}')
+
+# Bigger chunks than the original 1000/150: ~40% fewer vectors for the same book, and a
+# 1800-character window holds a whole SGK section instead of half of one.
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1800"))
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
+
+# Which books are already on Pinecone. Kept on disk on purpose: the old check ran a Pinecone
+# query per file, and reads are what exhaust the free tier's 1 GB/month egress.
+MANIFEST_PATH = Path(
+    os.getenv("INGEST_MANIFEST_PATH", "")
+    or Path(__file__).resolve().parent / ".ingest_manifest.json"
+)
 
 
 # ==========================================
@@ -115,14 +128,46 @@ def make_safe_id(text):
 
 
 # ==========================================
+# STRIP WATERMARKS
+# ==========================================
+
+# Lines every page of a re-shared scan carries. Some PDFs in backend/data are image-only and
+# the watermark is the ONLY text pypdf can extract, so without this they would upload hundreds
+# of identical junk chunks. retriever.py used to filter these at query time, which is too late:
+# the vectors are already stored and already competing with real content for top_k slots.
+WATERMARK_PATTERNS = [
+    r"https?://\S*blogtailieu\S*",
+    r"\bblogtailieu\.com\S*",
+    r"S[áa]ch\s+chia\s+s[ẻe]\s+t[ạa]i\b.*",
+    r"\bgiao-an-lop-\d+\b",
+    r"\bday-va-hoc\b",
+]
+
+# A page holding less than this many real characters is a cover, a photo or watermark-only.
+MIN_PAGE_CHARS = int(os.getenv("MIN_PAGE_CHARS", "120"))
+
+
+def strip_watermarks(text):
+    """Remove re-sharing watermarks so they never reach an embedding."""
+    for pattern in WATERMARK_PATTERNS:
+        text = re.sub(pattern, " ", text, flags=re.IGNORECASE)
+
+    return re.sub(r"[ \t]+", " ", text)
+
+
+# ==========================================
 # CHUNK TEXT
 # ==========================================
 
 def split_text(
     text,
-    chunk_size=1000,
-    overlap=150
+    chunk_size=None,
+    overlap=None
 ):
+
+    chunk_size = CHUNK_SIZE if chunk_size is None else chunk_size
+
+    overlap = CHUNK_OVERLAP if overlap is None else overlap
 
     text = text.replace(
         "\r\n",
@@ -458,6 +503,16 @@ def create_records(pdf_path):
     if book is not None:
         subject, grade, volume, page_offset = book.subject, book.grade, book.volume, book.page_offset
 
+    course = find_course(book.subject, book.grade) if book is not None else None
+
+    # Printed pages the MỤC LỤC knows about for THIS volume. A course can cover both volumes
+    # while only one of them has page numbers (the other's are None), and lesson_at() then
+    # matches nothing - filtering on it would drop every page of that volume.
+    outline_pages = [
+        item.page for item in course.lessons()
+        if course is not None and item.volume == book.volume and item.page is not None
+    ] if course is not None else []
+
     print()
 
     print("Thông tin PDF:")
@@ -481,7 +536,23 @@ def create_records(pdf_path):
         pdf_path
     )
 
+    # Only filter by the outline when it actually covers this PDF. A scan often gets replaced by
+    # a longer one while the catalog still holds the old partial book's pages; trusting a stale
+    # outline then silently drops most of the book (Toán 8 tập 1: 88 of 125 printed pages).
+    printed_last = len(pages) + (book.page_offset if book is not None else 0)
+    outline_last = max(outline_pages) if outline_pages else 0
+    covered = min(outline_last, book.last_page or outline_last) if book is not None else 0
+    has_outline = bool(outline_pages) and covered >= printed_last * 0.7
+
+    if outline_pages and not has_outline:
+        print(
+            f"  ⚠ Mục lục chỉ có tới trang {outline_last} (last_page={book.last_page}) "
+            f"trong khi sách in tới trang {printed_last} → nạp cả quyển, không lọc theo mục lục."
+        )
+
     records = []
+
+    skipped_pages = 0
 
     current_chapter = 0
 
@@ -493,16 +564,21 @@ def create_records(pdf_path):
             "page"
         ]
 
-        text = page_data[
-            "text"
-        ]
+        text = strip_watermarks(
+            page_data["text"]
+        )
 
-        if not text.strip():
+        # Image-only scans extract nothing but the watermark, so what is left is empty here.
+        if len(text.strip()) < MIN_PAGE_CHARS:
+
+            skipped_pages += 1
 
             continue
 
-        # Bìa, lời nói đầu, mục lục (trước bài đầu tiên), trang quảng cáo bộ sách ở cuối: không phải nội dung bài học
-        if book is not None:
+        # Bìa, lời nói đầu, mục lục (trước bài đầu tiên), trang quảng cáo bộ sách ở cuối: không phải nội dung bài học.
+        # Chỉ lọc được khi sách đã có MỤC LỤC trong catalog; sách mới chưa có thì nạp cả quyển
+        # (nếu lọc theo lesson_at khi chưa có mục lục thì mọi trang đều bị bỏ, ra 0 chunk).
+        if book is not None and has_outline:
 
             printed_page = page_number + book.page_offset
 
@@ -538,7 +614,10 @@ def create_records(pdf_path):
                 detected_lesson
             )
 
-        catalog_lesson = lesson_at(book, page_number) if book is not None else None
+        # Only trust the catalog's lesson when its outline covers this book. With a stale partial
+        # outline, lesson_at() returns the last lesson it knows for every page past its end, which
+        # would label the whole rest of the book as that one lesson.
+        catalog_lesson = lesson_at(book, page_number) if (book is not None and has_outline) else None
 
         if catalog_lesson is not None:
 
@@ -644,6 +723,14 @@ def create_records(pdf_path):
 
             })
 
+    # A scan that is really just images: pypdf finds a watermark and nothing else on every page.
+    if skipped_pages and skipped_pages >= len(pages) * 0.8:
+
+        print(
+            f"  ⚠ {skipped_pages}/{len(pages)} trang không có chữ thật "
+            f"(PDF là bản scan ảnh hoặc chỉ có watermark) → quyển này cần OCR hoặc bản PDF khác."
+        )
+
     return records
 
 
@@ -653,8 +740,8 @@ def create_records(pdf_path):
 
 def upload_records(records):
 
-    # Giảm batch để hạn chế lỗi quota
-    batch_size = 20
+    # 100 vectors ~ 800 KB, well inside Pinecone's 2 MB request limit.
+    batch_size = int(os.getenv("UPSERT_BATCH_SIZE", "100"))
 
     total = len(records)
 
@@ -787,18 +874,109 @@ def upload_records(records):
         )
 
 
-def already_ingested(filename):
-    """True when Pinecone already has chunks of this book, under this file name or a catalog alias."""
-    book = find_book(filename)
-    names = list(book.files) if book is not None else [filename]
-    probe = [random.uniform(-1, 1) for _ in range(EMBEDDING_DIMENSION)]
-    result = index.query(
-        vector=probe,
-        top_k=1,
-        filter={"source": {"$in": names}},
-        namespace=PINECONE_NAMESPACE,
+def load_manifest():
+    """{book key: {chunks, model, dimension, chunk_size, ingested_at}} of what is already uploaded."""
+    try:
+        return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def save_manifest(manifest):
+    MANIFEST_PATH.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
-    return bool(getattr(result, "matches", None) or [])
+
+
+def manifest_key(filename):
+    """One key per book, so re-running under a file alias does not upload it twice."""
+    book = find_book(filename)
+    return book.id if book is not None else Path(filename).name
+
+
+def file_fingerprint(pdf_path):
+    """Cheap content fingerprint: size plus the head and tail of the file.
+
+    Books get re-scanned and re-saved under new names, and a book id alone cannot tell that
+    the PDF behind it changed - which would make ingest skip a book that never went up.
+    """
+    path = Path(pdf_path)
+
+    try:
+        size = path.stat().st_size
+    except OSError:
+        return ''
+
+    digest = hashlib.sha256(str(size).encode())
+
+    with path.open('rb') as handle:
+        digest.update(handle.read(1 << 20))
+        if size > (2 << 20):
+            handle.seek(-(1 << 20), os.SEEK_END)
+            digest.update(handle.read(1 << 20))
+
+    return digest.hexdigest()[:32]
+
+
+def already_ingested(pdf_path):
+    """True when the local manifest says this exact PDF is on Pinecone with the current settings.
+
+    Deliberately reads no data from Pinecone: the previous version ran a query per file, and
+    on the free tier reads are metered (1 GB/month) while writes are not. When that budget ran
+    out every ingest died with 429 before uploading anything.
+    """
+    entry = load_manifest().get(manifest_key(Path(pdf_path).name))
+
+    if not entry:
+        return False
+
+    # Anything that changes the vectors - a different scan, model, dimension or chunk size -
+    # means this book has to be built again.
+    return (
+        entry.get("fingerprint") == file_fingerprint(pdf_path)
+        and entry.get("model") == os.getenv("EMBEDDING_MODEL", "gemini-embedding-001")
+        and int(entry.get("dimension", 0)) == EMBEDDING_DIMENSION
+        and int(entry.get("chunk_size", 0)) == CHUNK_SIZE
+    )
+
+
+def record_ingested(pdf_path, chunk_count):
+    manifest = load_manifest()
+
+    manifest[manifest_key(Path(pdf_path).name)] = {
+        "file": Path(pdf_path).name,
+        "fingerprint": file_fingerprint(pdf_path),
+        "chunks": chunk_count,
+        "model": os.getenv("EMBEDDING_MODEL", "gemini-embedding-001"),
+        "dimension": EMBEDDING_DIMENSION,
+        "chunk_size": CHUNK_SIZE,
+        "ingested_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+    save_manifest(manifest)
+
+
+def delete_book_vectors(filename, page_count):
+    """Remove a book's old vectors before re-uploading it.
+
+    IDs are deterministic (`<book id>-p<page>-c<chunk>`), so they can be deleted without
+    listing anything - deletes are writes, which the free tier does not meter.
+    """
+    book = find_book(filename)
+
+    if book is None:
+        return
+
+    # Generous upper bound on chunks per page; a smaller chunk_size than today never exceeded this.
+    ids = [
+        make_safe_id(f"{book.id}-p{page}-c{chunk}")
+        for page in range(1, page_count + 1)
+        for chunk in range(0, 24)
+    ]
+
+    for start in range(0, len(ids), 1000):
+        index.delete(ids=ids[start:start + 1000], namespace=PINECONE_NAMESPACE)
 
 
 # ==========================================
@@ -883,7 +1061,7 @@ def main():
 
     if not force:
 
-        skipped = [path for path in pdf_files if already_ingested(path.name)]
+        skipped = [path for path in pdf_files if already_ingested(path)]
 
         for path in skipped:
 
@@ -910,12 +1088,25 @@ def main():
     )
 
     # ======================================
-    # CREATE RECORDS
+    # INGEST ONE BOOK AT A TIME
     # ======================================
 
-    all_records = []
+    # Each book is built, uploaded and recorded before the next one starts, so stopping
+    # halfway (quota, network, Ctrl+C) keeps everything already uploaded.
 
-    for pdf_file in pdf_files:
+    total_uploaded = 0
+
+    failed = []
+
+    for position, pdf_file in enumerate(pdf_files, start=1):
+
+        print()
+
+        print("==========================================")
+
+        print(f"[{position}/{len(pdf_files)}] {pdf_file.name}")
+
+        print("==========================================")
 
         try:
 
@@ -929,9 +1120,50 @@ def main():
                 "chunks"
             )
 
-            all_records.extend(
-                records
-            )
+            if not records:
+
+                print("⚠ Không lấy được chữ từ PDF này (có thể là bản scan, cần OCR). Bỏ qua.")
+
+                failed.append((pdf_file.name, "không có text"))
+
+                continue
+
+            if force:
+
+                pages = max(record["metadata"]["page"] for record in records)
+
+                print("Xoá vector cũ của quyển này trước khi nạp lại...")
+
+                delete_book_vectors(pdf_file.name, pages)
+
+            upload_records(records)
+
+            record_ingested(pdf_file, len(records))
+
+            total_uploaded += len(records)
+
+            print(f"✓ Xong {pdf_file.name}: {len(records)} chunks đã lên Pinecone.")
+
+        except KeyboardInterrupt:
+
+            print()
+
+            print("⏹ Dừng theo yêu cầu. Các quyển đã xong vẫn giữ nguyên trên Pinecone.")
+
+            break
+
+        except DailyQuotaExhausted as error:
+
+            # Stop the whole run: the next book would only re-parse a huge PDF and fail the same way.
+            print()
+
+            print("⏹", error)
+
+            print(f"   Còn {len(pdf_files) - position} quyển chưa nạp. Mai chạy lại lệnh này là đi tiếp.")
+
+            failed.append((pdf_file.name, "hết hạn mức trong ngày"))
+
+            break
 
         except Exception as error:
 
@@ -946,52 +1178,17 @@ def main():
                 error
             )
 
-    # ======================================
-    # CHECK RECORDS
-    # ======================================
+            failed.append((pdf_file.name, str(error)[:150]))
 
-    if len(all_records) == 0:
+    if failed:
 
         print()
 
-        print(
-            "❌ Không lấy được "
-            "nội dung PDF."
-        )
+        print("Các quyển chưa nạp được:")
 
-        print()
+        for name, reason in failed:
 
-        print(
-            "Nếu PDF là bản scan/hình ảnh,"
-        )
-
-        print(
-            "cần thêm OCR."
-        )
-
-        return
-
-    # ======================================
-    # UPLOAD
-    # ======================================
-
-    print()
-
-    print(
-        "=========================================="
-    )
-
-    print(
-        "BẮT ĐẦU GEMINI → PINECONE"
-    )
-
-    print(
-        "=========================================="
-    )
-
-    upload_records(
-        all_records
-    )
+            print(f"  - {name}: {reason}")
 
     # ======================================
     # DONE
@@ -1015,8 +1212,14 @@ def main():
 
     print(
         "Đã upload",
-        len(all_records),
+        total_uploaded,
         "chunks vào Pinecone."
+    )
+
+    print(
+        "Cache embedding:",
+        cache_size(),
+        "vector (chạy lại sẽ không tốn quota cho phần này)."
     )
 
 

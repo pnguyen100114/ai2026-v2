@@ -35,6 +35,51 @@ def test_find_book_follows_aliases(source):
     assert books.find_book(source).id == 'khtn6'
 
 
+@pytest.mark.parametrize('source, book_id', [
+    # Spellings no alias lists: the same scans keep arriving under new names.
+    ('khtn-6.pdf', 'khtn6'),
+    ('TOAN 7 - Tap 2.pdf', 'toan7-tap2'),
+    ('NV9_Tap1.pdf', 'nv9-tap1'),
+    ('TA 8.pdf', 'ta8'),
+    ('toan6 tap 1.pdf', 'toan6-tap1'),
+])
+def test_find_book_falls_back_to_reading_the_file_name(source, book_id):
+    assert books.find_book(source).id == book_id
+
+
+@pytest.mark.parametrize('source', ['ghi chu.pdf', 'Toan.pdf', ''])
+def test_find_book_returns_none_when_the_name_says_nothing(source):
+    assert books.find_book(source) is None
+
+
+@pytest.mark.parametrize('raw', [
+    'https://blogtailieu.com/day -va-hoc/ Sách chia sẻ tại blogtailieu.com/day-va-hoc',
+    'https://blogtailieu.com/giao-an-lop-8 https://blogtailieu.com/giao-an-lop-8',
+])
+def test_watermark_only_page_has_no_real_text_left(raw):
+    from backend.rag import ingest
+
+    # Image-only scans extract nothing but this; it must never become a vector.
+    assert len(ingest.strip_watermarks(raw).strip()) < ingest.MIN_PAGE_CHARS
+
+
+def test_strip_watermarks_keeps_the_lesson_text_around_it():
+    from backend.rag import ingest
+
+    page = 'Sách chia sẻ tại blogtailieu.com/day-va-hoc\nBài 1. Đơn thức là biểu thức đại số chỉ gồm một số, hoặc một biến.'
+    cleaned = ingest.strip_watermarks(page)
+    assert 'blogtailieu' not in cleaned
+    assert 'Đơn thức là biểu thức đại số' in cleaned
+
+
+def test_every_pdf_name_maps_to_exactly_one_book():
+    ids = [book.id for book in books.BOOKS]
+    assert len(ids) == len(set(ids))
+    for book in books.BOOKS:
+        for name in book.files:
+            assert books.find_book(name).id == book.id, name
+
+
 def test_enrich_match_replaces_ocr_lesson_and_page():
     # Stored by the old ingest: every KHTN chunk was labelled "Bài 40" and pages were not offset.
     payload = {'source': 'KHTN 6.pdf', 'pdf_page': 103, 'page': 103, 'lesson': 8, 'chapter': 0, 'subject': 'Khoa học tự nhiên', 'title': 'Bài 40. Lực là gì?'}
@@ -67,8 +112,9 @@ def test_catalog_roadmap_accepts_subject_alias():
 
 @pytest.mark.parametrize('topic', ['Lực là gì?', 'Bài 40: Lực là gì?', 'luc la gi?'])
 def test_lesson_page_filter_limits_search_to_the_lesson_pages(topic):
+    # Every spelling the book has been ingested under, so older vectors stay reachable.
     assert books.lesson_page_filter('KHTN', 6, topic) == {
-        'source': {'$in': ['KHTN.pdf', 'KHTN 6.pdf']},
+        'source': {'$in': ['KHTN 6.pdf', 'KHTN6.pdf', 'KHTN.pdf']},
         'page': {'$gte': 145, '$lte': 147},  # printed 144-146 -> PDF pages
     }
 

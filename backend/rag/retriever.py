@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import time
 from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
@@ -9,9 +10,9 @@ from google.genai import types
 from pinecone import Pinecone
 
 try:
-    from backend.rag.books import enrich_match, subject_variants
+    from backend.rag.books import COURSES, canonical_subject, course_book, enrich_match, find_course, subject_variants
 except ImportError:  # pragma: no cover
-    from rag.books import enrich_match, subject_variants
+    from rag.books import COURSES, canonical_subject, course_book, enrich_match, find_course, subject_variants
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
@@ -23,6 +24,14 @@ EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'gemini-embedding-001')
 EMBEDDING_DIMENSION = int(os.getenv('EMBEDDING_DIMENSION', '1536'))
 RAG_SCORE_THRESHOLD = float(os.getenv('RAG_SCORE_THRESHOLD', '0.60'))
 BOOK_PAGE_OFFSETS = json.loads(os.getenv('BOOK_PAGE_OFFSETS', '{}') or '{}')
+
+# Pinecone's free tier meters READS (1 GB/month), and every match carries its full chunk text
+# (~2 KB). A single uncapped top_k=100 curriculum query costs ~150 KB, so a few thousand of
+# them exhaust the month. Cap every query and cache the expensive one.
+RAG_MAX_TOP_K = int(os.getenv('RAG_MAX_TOP_K', '24'))
+CURRICULUM_CACHE_TTL = float(os.getenv('CURRICULUM_CACHE_TTL', '3600'))
+
+_curriculum_cache: Dict[Any, Any] = {}
 
 if not PINECONE_API_KEY or not PINECONE_INDEX:
     raise RuntimeError('Pinecone chưa được cấu hình trong backend/.env')
@@ -125,9 +134,11 @@ def search_knowledge(query: str, subject: Optional[str] = None, grade: Optional[
         raise RuntimeError('Embedding query thất bại. Vui lòng kiểm tra GEMINI_API_KEY hoặc mô hình embedding.')
 
     query_filter = _make_filter(subject=subject, grade=grade, volume=volume, extra=extra_filter)
+    # Hard cap: every extra match is ~2 KB off the metered read budget.
+    effective_top_k = max(1, min(int(top_k), RAG_MAX_TOP_K))
     result = index.query(
         vector=query_vector,
-        top_k=max(1, int(top_k)),
+        top_k=effective_top_k,
         include_metadata=True,
         filter=query_filter,
         namespace=PINECONE_NAMESPACE,
@@ -161,9 +172,56 @@ def search_topic(topic: str, subject: Optional[str] = None, grade: Optional[int]
     return search_knowledge(f"{topic}", subject=subject, grade=grade, top_k=top_k)
 
 
-def get_curriculum(subject: Optional[str] = None, grade: Optional[int] = None, top_k: int = 100) -> List[Dict[str, Any]]:
+def _curriculum_from_catalog(subject: Any, grade: Any) -> List[Dict[str, Any]]:
+    """The table of contents as curriculum rows, with no Pinecone read at all.
+
+    books.py already holds every chapter, lesson and printed page copied from each book's
+    MỤC LỤC, which is both more accurate than what a similarity search recovers and free.
+    """
+    course = find_course(subject, grade)
+    if course is None:
+        return []
+
+    rows: List[Dict[str, Any]] = []
+    for lesson in course.lessons():
+        book = course_book(course, lesson.volume)
+        rows.append({
+            'id': f'catalog_{course.grade}_{lesson.chapter}_{lesson.lesson}',
+            'score': 1.0,
+            'subject': course.subject,
+            'grade': course.grade,
+            'volume': lesson.volume,
+            'chapter': lesson.chapter,
+            'chapter_title': lesson.chapter_title,
+            'lesson': lesson.lesson,
+            'page': lesson.page,
+            'pdf_page': (lesson.page - book.page_offset) if (lesson.page is not None and book) else None,
+            'page_offset': book.page_offset if book else 0,
+            'source': (book.files[0] if book else ''),
+            'book_title': book.title if book else '',
+            'book_type': 'sgk',
+            'content_type': 'theory',
+            'title': lesson.title,
+            'lesson_title': f'Bài {lesson.lesson}. {lesson.title}',
+            'text': f'Bài {lesson.lesson}. {lesson.title} — {lesson.chapter_title}',
+        })
+    return rows
+
+
+def get_curriculum(subject: Optional[str] = None, grade: Optional[int] = None, top_k: int = 24) -> List[Dict[str, Any]]:
     subject_filter = str(subject).strip() if subject else None
     grade_filter = int(grade) if grade is not None else None
+
+    # Books we have a catalog for never touch Pinecone.
+    catalog = _curriculum_from_catalog(subject_filter, grade_filter)
+    if catalog:
+        return catalog
+
+    cache_key = (canonical_subject(subject_filter), grade_filter, min(int(top_k), RAG_MAX_TOP_K))
+    cached = _curriculum_cache.get(cache_key)
+    if cached is not None and (time.monotonic() - cached[0]) < CURRICULUM_CACHE_TTL:
+        return cached[1]
+
     query = f"Chương trình {subject_filter or 'môn học'} lớp {grade_filter or ''} bài học SGK curriculum"
     matches = search_knowledge(query, subject=subject_filter, grade=grade_filter, top_k=top_k)
     deduped: Dict[str, Dict[str, Any]] = {}
@@ -184,6 +242,7 @@ def get_curriculum(subject: Optional[str] = None, grade: Optional[int] = None, t
         item.get('page') or 0,
         item.get('source') or '',
     ))
+    _curriculum_cache[cache_key] = (time.monotonic(), ordered)
     return ordered
 
 
@@ -243,7 +302,7 @@ def build_roadmap_from_curriculum(curriculum: List[Dict[str, Any]], subject: Opt
 
 
 def get_curriculum_from_rag(subject: str, grade: int) -> List[Dict[str, Any]]:
-    return get_curriculum(subject=subject, grade=grade, top_k=80)
+    return get_curriculum(subject=subject, grade=grade)
 
 
 __all__ = [

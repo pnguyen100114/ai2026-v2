@@ -85,13 +85,79 @@ class Course:
         ]
 
 
+# `page_offset` is printed page - PDF page; it was measured from the folio numbers in each scan
+# and falls back to -1 (one cover page) where the folios were not extractable.
+# `last_page` is only for partial scans that stop mid-book; a complete PDF leaves it None.
 BOOKS: list[Book] = [
+    # --- Toán ---
     Book(id='toan6-tap1', subject='Toán', grade=6, volume=1, title='Toán 6 – Tập một',
-         files=('TOAN -TAP 1.pdf', 'toan6-tap1.pdf'), page_offset=-1, last_page=62),
+         files=('TOAN6 -TAP 1.pdf', 'TOAN -TAP 1.pdf', 'toan6-tap1.pdf'), page_offset=-1, last_page=62),
+    Book(id='toan6-tap2', subject='Toán', grade=6, volume=2, title='Toán 6 – Tập hai',
+         files=('TOAN6-TAP 2.pdf',), page_offset=-1),
+    Book(id='toan7-tap1', subject='Toán', grade=7, volume=1, title='Toán 7 – Tập một',
+         files=('TOAN7 - TAP 1.pdf',), page_offset=-1),
+    Book(id='toan7-tap2', subject='Toán', grade=7, volume=2, title='Toán 7 – Tập hai',
+         files=('TOAN7- TAP 2.pdf',), page_offset=-1),
     Book(id='toan8-tap1', subject='Toán', grade=8, volume=1, title='Toán 8 – Tập một',
-         files=('toan8-tap1.pdf',), page_offset=-1, last_page=37),
+         files=('TOAN8-Tap1.pdf', 'toan8-tap1.pdf'), page_offset=-1, last_page=37),
+    Book(id='toan8-tap2', subject='Toán', grade=8, volume=2, title='Toán 8 – Tập hai',
+         files=('TOAN8-Tap2.pdf',), page_offset=-1),
+    Book(id='toan9-tap1', subject='Toán', grade=9, volume=1, title='Toán 9 – Tập một',
+         files=('TOAN9-Tap1.pdf',), page_offset=-1),
+    Book(id='toan9-tap2', subject='Toán', grade=9, volume=2, title='Toán 9 – Tập hai',
+         files=('Toan9-tap2.pdf', 'TOAN9-Tap2.pdf'), page_offset=-1),
+
+    # --- Ngữ văn ---
+    # "NV - TAP 1/2.pdf" carries no grade in the name; identified as grade 6 from its contents
+    # ("Bài 1. Tôi và các bạn", "Bài học đường đời đầu tiên").
+    Book(id='nv6-tap1', subject='Ngữ văn', grade=6, volume=1, title='Ngữ văn 6 – Tập một',
+         files=('NV - TAP 1.pdf', 'NV6 - TAP 1.pdf'), page_offset=-1),
+    Book(id='nv6-tap2', subject='Ngữ văn', grade=6, volume=2, title='Ngữ văn 6 – Tập hai',
+         files=('NV - TAP 2.pdf', 'NV6 - TAP 2.pdf'), page_offset=-1),
+    Book(id='nv7-tap1', subject='Ngữ văn', grade=7, volume=1, title='Ngữ văn 7 – Tập một',
+         files=('NV7 - TAP 1.pdf',), page_offset=-1),
+    Book(id='nv7-tap2', subject='Ngữ văn', grade=7, volume=2, title='Ngữ văn 7 – Tập hai',
+         files=('NV7 - TAP 2.pdf',), page_offset=-1),
+    Book(id='nv8-tap1', subject='Ngữ văn', grade=8, volume=1, title='Ngữ văn 8 – Tập một',
+         files=('NV8-Tap1.pdf',), page_offset=-1),
+    Book(id='nv8-tap2', subject='Ngữ văn', grade=8, volume=2, title='Ngữ văn 8 – Tập hai',
+         files=('NV8-Tap2.pdf',), page_offset=-1),
+    Book(id='nv9-tap1', subject='Ngữ văn', grade=9, volume=1, title='Ngữ văn 9 – Tập một',
+         files=('NV9-Tap1.pdf',), page_offset=0),
+    Book(id='nv9-tap2', subject='Ngữ văn', grade=9, volume=2, title='Ngữ văn 9 – Tập hai',
+         files=('NV9-Tap2.pdf',), page_offset=-1),
+
+    # --- Tiếng Anh (Global Success) ---
+    Book(id='ta6-tap1', subject='Tiếng Anh', grade=6, volume=1, title='Tiếng Anh 6 – Tập một',
+         files=('TA6 -TAP 1.pdf',), page_offset=-1),
+    Book(id='ta6-tap2', subject='Tiếng Anh', grade=6, volume=2, title='Tiếng Anh 6 – Tập hai',
+         files=('TA6 -TAP 2.pdf',), page_offset=-1),
+    Book(id='ta7', subject='Tiếng Anh', grade=7, volume=0, title='Tiếng Anh 7',
+         files=('TA7.pdf',), page_offset=-1),
+    Book(id='ta8', subject='Tiếng Anh', grade=8, volume=0, title='Tiếng Anh 8',
+         files=('TA8.pdf',), page_offset=-1),
+    Book(id='ta9', subject='Tiếng Anh', grade=9, volume=0, title='Tiếng Anh 9',
+         files=('TA9.pdf',), page_offset=-1),
+
+    # --- KHTN ---
     Book(id='khtn6', subject='KHTN', grade=6, volume=0, title='Khoa học tự nhiên 6',
-         files=('KHTN.pdf', 'KHTN 6.pdf'), page_offset=-1, last_page=192),
+         files=('KHTN 6.pdf', 'KHTN6.pdf', 'KHTN.pdf'), page_offset=-1, last_page=192),
+    Book(id='khtn7', subject='KHTN', grade=7, volume=0, title='Khoa học tự nhiên 7',
+         files=('KHTN 7.pdf',), page_offset=-1),
+    Book(id='khtn8', subject='KHTN', grade=8, volume=0, title='Khoa học tự nhiên 8',
+         files=('KHTN 8.pdf',), page_offset=-1),
+    Book(id='khtn9', subject='KHTN', grade=9, volume=0, title='Khoa học tự nhiên 9',
+         files=('KHTN 9.pdf',), page_offset=-1),
+
+    # --- Lịch sử và Địa lí ---
+    Book(id='lsdl6', subject='LSDL', grade=6, volume=0, title='Lịch sử và Địa lí 6',
+         files=('LSDL 6.pdf',), page_offset=-1),
+    Book(id='lsdl7', subject='LSDL', grade=7, volume=0, title='Lịch sử và Địa lí 7',
+         files=('LSDL 7.pdf',), page_offset=-1),
+    Book(id='lsdl8', subject='LSDL', grade=8, volume=0, title='Lịch sử và Địa lí 8',
+         files=('LSDL 8.pdf',), page_offset=-1),
+    Book(id='lsdl9', subject='LSDL', grade=9, volume=0, title='Lịch sử và Địa lí 9',
+         files=('LSDL 9.pdf',), page_offset=-1),
 ]
 
 COURSES: list[Course] = [
@@ -230,12 +296,60 @@ COURSES: list[Course] = [
 ]
 
 
+# Subject codes as they appear in PDF file names, longest first so "lsdl" wins over "ls".
+_FILENAME_SUBJECTS: list[tuple[str, str]] = [
+    ('khtn', 'KHTN'),
+    ('lsdl', 'LSDL'),
+    ('toan', 'Toán'),
+    ('nv', 'Ngữ văn'),
+    ('ta', 'Tiếng Anh'),
+]
+
+
+def parse_book_filename(source: Any) -> tuple[str, int, int] | None:
+    """(subject, grade, volume) read from a file name like "TOAN7 - TAP 1.pdf".
+
+    Keeps the catalog working when the same book is re-saved under another spelling, which
+    happens every time a new batch of scans is dropped into backend/data.
+    """
+    key = _fold(str(source or '').replace('\\', '/').rsplit('/', 1)[-1])
+    if not key:
+        return None
+    key = re.sub(r'\.pdf$', '', key)
+
+    subject = next((name for code, name in _FILENAME_SUBJECTS if key.startswith(code)), None)
+    if subject is None:
+        return None
+
+    grade_match = re.search(r'([6-9])', key)
+    if grade_match is None:
+        return None
+    grade = int(grade_match.group(1))
+
+    volume_match = re.search(r'tap\s*([12])', key)
+    volume = int(volume_match.group(1)) if volume_match else 0
+
+    return subject, grade, volume
+
+
 def find_book(source: Any) -> Book | None:
     """Book for a PDF file name as stored in Pinecone metadata or passed in a preview link."""
     key = _fold(str(source or '').replace('\\', '/').rsplit('/', 1)[-1])
     if not key:
         return None
-    return next((book for book in BOOKS if key in (_fold(name) for name in book.files)), None)
+    exact = next((book for book in BOOKS if key in (_fold(name) for name in book.files)), None)
+    if exact is not None:
+        return exact
+
+    # No alias matched: fall back to what the file name says it is.
+    parsed = parse_book_filename(source)
+    if parsed is None:
+        return None
+    subject, grade, volume = parsed
+    return next(
+        (book for book in BOOKS if book.subject == subject and book.grade == grade and book.volume == volume),
+        None,
+    )
 
 
 def find_course(subject: Any, grade: Any) -> Course | None:

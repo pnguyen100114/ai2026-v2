@@ -17,6 +17,10 @@ dist-ssr
 !.env.example
 backend/local.db*
 backend/.auth_secret
+# Derived ingest state: the embedding cache is large and rebuildable, the manifest
+# describes one machine's Pinecone index.
+backend/rag/.embed_cache.sqlite3
+backend/rag/.ingest_manifest.json
 __pycache__/
 *.py[cod]
 Anh_cac_giai_doan

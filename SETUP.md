@@ -154,13 +154,29 @@ Sau khi đổi biến môi trường, cần khởi động lại `npm run dev`.
 
 ### Nạp dữ liệu curriculum vào Pinecone
 
-Roadmap và AI Tutor cần vector dữ liệu trong Pinecone. Sau khi đặt các PDF SGK vào thư mục `backend/data`, chạy từ thư mục gốc dự án:
+Roadmap và AI Tutor cần vector dữ liệu trong Pinecone. Đặt các PDF SGK vào thư mục `backend/data`.
+
+**Bước 1 — kiểm tra PDF trước khi nạp.** Nhiều bản SGK tải trên mạng là scan ảnh: người đọc được nhưng máy không trích được chữ nào. Nạp loại này chỉ tốn quota và làm bẩn kết quả tìm kiếm.
 
 ```powershell
-.venv\Scripts\python.exe -m backend.rag.ingest
+.venv\Scripts\python.exe -m backend.rag.check_pdf
 ```
 
-Tên file PDF cần chứa môn và lớp, ví dụ `toan8_tap1.pdf`, để hệ thống tự nhận diện metadata. Kiểm tra kết quả bằng:
+Quyển nào báo `SCAN ẢNH` thì phải tìm bản PDF khác. Cách tự kiểm tra: mở PDF rồi thử bôi đen một dòng chữ trong bài học — bôi được là dùng được.
+
+**Bước 2 — nạp.** Chạy từ thư mục gốc dự án:
+
+```powershell
+.venv\Scripts\python.exe -m backend.rag.ingest                  # chỉ nạp quyển chưa có
+.venv\Scripts\python.exe -m backend.rag.ingest "KHTN 6.pdf"     # nạp một quyển
+.venv\Scripts\python.exe -m backend.rag.ingest --force          # nạp lại cả quyển đã có
+```
+
+Nạp theo từng quyển và ghi nhận vào `backend/rag/.ingest_manifest.json`, nên dừng giữa chừng (hết quota, mất mạng, Ctrl+C) vẫn giữ nguyên các quyển đã xong. Mọi vector tạo ra đều được lưu vào `backend/rag/.embed_cache.sqlite3`, vì vậy chạy lại gần như không tốn quota.
+
+Gói miễn phí Gemini giới hạn **100 text/phút** (mỗi chunk tính là 1 request), nên khoảng 100 chunk mỗi phút. Bật billing thì tăng `EMBED_RPM` trong `.env`.
+
+Tên file PDF cần chứa môn và lớp, ví dụ `TOAN8-Tap1.pdf`, `KHTN 7.pdf`. Sách nên được khai báo trong `backend/rag/books.py` trước khi nạp — thiếu khai báo thì bìa, mục lục và trang quảng cáo cũng bị nạp theo. Kiểm tra kết quả bằng:
 
 ```powershell
 Invoke-WebRequest http://127.0.0.1:8000/api/health | Select-Object -ExpandProperty Content
