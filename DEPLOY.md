@@ -45,20 +45,26 @@ GitHub repo ──► Vercel   (frontend React)   VITE_API_BASE_URL
 
 ### 2. Backend lên Render
 
-1. https://render.com → **New → Web Service** → chọn repo GitHub.
-2. Build command: `pip install -r backend/requirements.txt`
-   Start command: `uvicorn backend.app:app --host 0.0.0.0 --port $PORT --no-proxy-headers`
-   (`--no-proxy-headers`: IP thật của học sinh do backend tự đọc theo `TRUSTED_PROXY_HOPS`, không để uvicorn tin header giả)
-3. **Environment**: nhập các biến trong [backend/.env.example](backend/.env.example):
-   - `DATABASE_URL`: chuỗi ở bước 1
-   - `AUTH_SECRET`: chuỗi ngẫu nhiên dài, tạo bằng `python -c "import secrets; print(secrets.token_urlsafe(48))"`
-   - `ALLOWED_ORIGINS=https://<ten-app>.vercel.app`
-   - `TRUSTED_PROXY_HOPS=1` (Render có 1 proxy phía trước; để giới hạn đăng nhập tính đúng IP thật của học sinh)
-   - `GEMINI_API_KEY`, `PINECONE_*` như file `.env` local
-   - `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`: để hiện ảnh trang SGK (bước 3)
-4. Mở `https://<ten-backend>.onrender.com/api/health` và kiểm tra thấy `"status": "ok"`.
+Repo đã có sẵn [render.yaml](render.yaml) nên **không phải gõ tay tên biến nào** — gõ sai một ký tự trong tên biến là lỗi rất khó tìm: backend vẫn chạy, chỉ im lặng cư xử sai.
 
-Gói free của Render "ngủ" sau 15 phút không có truy cập, nên lần mở đầu tiên mất khoảng 30–50 giây.
+1. https://render.com → **New → Blueprint** (không phải "Web Service") → chọn repo GitHub.
+2. Render đọc `render.yaml` và tự điền: build/start command, health check `/api/health`, vùng Singapore, gói Free,
+   `TRUSTED_PROXY_HOPS=1`, `ALLOWED_ORIGINS=*`, `PAGE_BUCKET=sgk-pages`, và **tự sinh `AUTH_SECRET`**.
+3. Render hỏi 7 giá trị, sáu trong số đó copy thẳng từ `backend/.env` ở máy:
+
+   | Render hỏi | Lấy ở đâu |
+   |---|---|
+   | `DATABASE_URL` | chuỗi Session pooler ở bước 1 |
+   | `SUPABASE_URL` · `SUPABASE_SERVICE_KEY` | `backend/.env` (xem bước 3 bên dưới) |
+   | `GEMINI_API_KEY` | `backend/.env` |
+   | `PINECONE_API_KEY` · `PINECONE_INDEX` | `backend/.env` |
+   | `BOOK_PAGE_OFFSETS` | `backend/.env` |
+
+4. Mở `https://<ten-backend>.onrender.com/api/health`, phải thấy `"status": "ok"` và `"vectors"` lớn hơn 0.
+
+`render.yaml` cố ý **không** khai `PINECONE_NAMESPACE`, `EMBEDDING_MODEL`, `EMBEDDING_DIMENSION`: mặc định trong code đã khớp với lúc nạp sách, khai thêm rồi điền số khác là hỏng toàn bộ tìm kiếm SGK.
+
+Gói free của Render "ngủ" sau 15 phút không có truy cập, nên lần mở đầu tiên mất khoảng 30–50 giây. Build lỗi vì Python thì sửa `PYTHON_VERSION` trong `render.yaml` thành một phiên bản Render liệt kê rồi push lại.
 
 ### 3. Ảnh trang SGK lên Supabase Storage
 
