@@ -1,0 +1,59 @@
+# Cấu hình backend cho Render. Trên Render chọn New → Blueprint và trỏ vào repo này,
+# nó đọc file này rồi dựng sẵn service, chỉ còn hỏi bạn những giá trị bí mật.
+#
+# Biến có "sync: false" = Render hỏi bạn lúc tạo, không lưu trong Git.
+# Lấy giá trị từ backend/.env ở máy (trừ DATABASE_URL, lấy ở Supabase → Connect → Session pooler).
+
+services:
+  - type: web
+    name: gia-su-ai-api
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r backend/requirements.txt
+    # --no-proxy-headers là cố ý: backend tự đọc IP thật của học sinh theo TRUSTED_PROXY_HOPS,
+    # không để uvicorn tin header do người khác gửi lên.
+    startCommand: uvicorn backend.app:app --host 0.0.0.0 --port $PORT --no-proxy-headers
+    healthCheckPath: /api/health
+
+    envVars:
+      # Nếu Render báo không có bản Python này, sửa thành một phiên bản nó liệt kê (vd 3.13.4).
+      - key: PYTHON_VERSION
+        value: "3.13"
+
+      # Render có đúng 1 proxy đứng trước; đặt sai số này thì kẻ xấu giả được IP để né
+      # giới hạn số lần đăng nhập.
+      - key: TRUSTED_PROXY_HOPS
+        value: "1"
+
+      # Tạm mở cho mọi domain vì chưa deploy frontend. Giai đoạn 5 phải sửa lại thành
+      # đúng địa chỉ Vercel, nếu không ai cũng gọi được API của bạn.
+      - key: ALLOWED_ORIGINS
+        value: "*"
+
+      - key: PAGE_BUCKET
+        value: sgk-pages
+
+      # Render tự sinh chuỗi ngẫu nhiên, bạn không phải tạo. Đổi về sau = mọi học sinh bị đăng xuất.
+      - key: AUTH_SECRET
+        generateValue: true
+
+      # --- Những giá trị Render sẽ hỏi bạn ---
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: PINECONE_INDEX
+        sync: false
+      - key: BOOK_PAGE_OFFSETS
+        sync: false
+
+      # Cố ý KHÔNG khai báo ở đây: PINECONE_NAMESPACE (bạn để trống), EMBEDDING_MODEL,
+      # EMBEDDING_DIMENSION — code đã có sẵn giá trị mặc định đúng với lúc nạp sách.
+      # Khai thừa ra chỉ tổ phải điền, điền sai còn hỏng tìm kiếm.
