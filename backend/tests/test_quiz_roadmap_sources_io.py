@@ -312,3 +312,48 @@ def test_source_page_thumbnail_is_small_jpeg(client, book_dir):
 ])
 def test_source_page_invalid_input(client, book_dir, params, status):
     assert client.get('/api/sources/page', params=params).status_code == status
+
+
+# ---------------------------------------------------------------- ảnh trang render sẵn
+
+def test_source_page_redirects_to_uploaded_image(client, book_dir, app_mod, monkeypatch):
+    """Deployed there is no PDF on disk, so a signed request is sent on to the image in the bucket."""
+    asked: list[tuple] = []
+    monkeypatch.setattr(app_mod.page_store, 'signed_url',
+                        lambda source, page, thumb=False: asked.append((source, page, thumb)) or 'https://x.supabase.co/signed.jpg')
+
+    response = client.get('/api/sources/page', params=signed('Toan 8.pdf', 2, thumb='true'), follow_redirects=False)
+
+    assert response.status_code == 307
+    assert response.headers['location'] == 'https://x.supabase.co/signed.jpg'
+    assert asked == [('Toan 8.pdf', 2, True)]
+
+
+def test_source_page_falls_back_to_pdf_when_image_missing(client, book_dir, app_mod, monkeypatch):
+    """A book added after the last render run still renders locally instead of 404-ing."""
+    monkeypatch.setattr(app_mod.page_store, 'signed_url', lambda source, page, thumb=False: None)
+
+    response = client.get('/api/sources/page', params=signed('Toan 8.pdf', 1))
+
+    assert response.status_code == 200
+    assert response.content.startswith(b'\x89PNG')
+
+
+def test_source_page_checks_signature_before_signing_an_image(client, book_dir, app_mod, monkeypatch):
+    """An unsigned request must not reach the bucket at all: that is what stops scraping the book."""
+    monkeypatch.setattr(app_mod.page_store, 'signed_url',
+                        lambda source, page, thumb=False: pytest.fail('đã ký link dù request không có chữ ký'))
+
+    assert client.get('/api/sources/page', params={'source': 'Toan 8.pdf', 'page': 1}).status_code == 403
+
+
+@pytest.mark.parametrize('source, page, thumb, expected', [
+    ('KHTN 6.pdf', 42, False, 'khtn6/p0042.jpg'),
+    ('KHTN.pdf', 42, False, 'khtn6/p0042.jpg'),      # alias cùng cuốn -> cùng một ảnh
+    ('TOAN6 -TAP 1.pdf', 7, True, 'toan6-tap1/p0007t.jpg'),
+    ('Sach La.pdf', 3, False, 'sach-la/p0003.jpg'),  # ngoài danh mục: đặt tên theo file
+])
+def test_page_store_object_key(source, page, thumb, expected):
+    from backend.rag import page_store
+
+    assert page_store.object_key(source, page, thumb) == expected

@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Query
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import RedirectResponse, Response, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from google.genai import types
@@ -54,10 +54,12 @@ except ImportError:  # pragma: no cover
     from speech import TRANSCRIBE_PROMPT, speakable_text, synthesize_mp3
 
 try:
+    from backend.rag import page_store
     from backend.rag.books import build_catalog_roadmap, canonical_subject, lesson_page_filter, resolve_book_file
     from backend.rag.curriculum import build_roadmap, get_curriculum
     from backend.rag.retriever import RAG_SCORE_THRESHOLD, search_knowledge
 except ImportError:  # pragma: no cover
+    from rag import page_store
     from rag.books import build_catalog_roadmap, canonical_subject, lesson_page_filter, resolve_book_file
     from rag.curriculum import build_roadmap, get_curriculum
     from rag.retriever import RAG_SCORE_THRESHOLD, search_knowledge
@@ -174,6 +176,16 @@ def source_page(source: str = Query(..., min_length=1), page: int = Query(..., g
     # Only pages Mimo cited to a signed-in student (signed links) can be rendered: no scraping the book, no render floods.
     if not verify_source_signature(source, page, exp, sig):
         raise HTTPException(status_code=403, detail='Link xem trang sách đã hết hạn, em tải lại trang nhé.')
+
+    # Deployed there are no PDFs on disk (2.1 GB that never reach GitHub), only the pages
+    # rendered ahead of time by rag/render_pages.py. Hand the browser a signed Supabase link:
+    # the bucket is private, so the student's own request is still the only one that opens it.
+    remote_url = page_store.signed_url(source, page, thumb)
+    if remote_url is not None:
+        # 307 keeps <img src> following along; the cache window stays well inside PAGE_URL_TTL.
+        return RedirectResponse(remote_url, status_code=307, headers={'Cache-Control': 'private, max-age=600'})
+
+    # Local machine (or a book uploaded later than the last render run): render from the PDF.
     pdf_path = _source_pdf(source)
     if pdf_path is None:
         raise HTTPException(status_code=404, detail='Không tìm thấy sách trong thư mục dữ liệu.')
