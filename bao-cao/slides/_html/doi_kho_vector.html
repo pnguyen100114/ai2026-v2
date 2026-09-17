@@ -1,0 +1,87 @@
+<!doctype html><meta charset="utf-8"><style>
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1920px; height: 1080px; background: #fff; overflow: hidden; }
+body { font-family: 'Segoe UI', Arial, sans-serif; color: #1B2A4A; }
+.slide { width: 1920px; height: 1080px; padding: 72px; display: flex; flex-direction: column; }
+.ic { display: grid; place-items: center; border-radius: 26px; flex: none; }
+.coral { background: #FDE7E0; color: #F2704F; }
+.navy { background: #E6EBF3; color: #1B2A4A; }
+.green { background: #DDF3EA; color: #16875F; }
+.amber { background: #FDF1D6; color: #B7791F; }
+.violet { background: #ECE8FB; color: #6247C9; }
+.solid { background: #F2704F; color: #fff; }
+
+.eyebrow { font-size: 24px; font-weight: 800; letter-spacing: .16em; color: #F2704F; margin-bottom: 12px; }
+h1 { margin: 0; font-size: 58px; line-height: 1.12; letter-spacing: -.01em; }
+h1 em { font-style: normal; color: #F2704F; }
+
+.band { margin-top: 34px; }
+.band-label { display: flex; align-items: center; gap: 14px; font-size: 23px; font-weight: 800;
+  letter-spacing: .1em; color: #8E97A5; margin-bottom: 20px; }
+.band-label .tag { background: #F1F3F7; border-radius: 999px; padding: 7px 18px; font-size: 20px;
+  letter-spacing: .04em; color: #6B7280; font-weight: 700; }
+
+.row { display: grid; grid-template-columns: 1fr 90px 1fr 90px 1fr 90px 1fr; align-items: start; }
+.arrow { color: #C3CAD5; display: grid; place-items: center; padding-top: 30px; }
+.node { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; }
+.node .ic { width: 104px; height: 104px; }
+.node h4 { margin: 0; font-size: 29px; line-height: 1.2; }
+.node p { margin: 0; font-size: 20px; line-height: 1.45; color: #4B5563; max-width: 330px; }
+.node.key h4 { color: #F2704F; }
+
+.bypass { position: relative; height: 104px; }
+.bypass svg.path { position: absolute; left: 0; top: 0; }
+.bypass .stamp { position: absolute; display: flex; align-items: center; gap: 12px;
+  background: #fff; padding: 0 16px; font-size: 25px; font-weight: 800; color: #F2704F; }
+.bypass .stamp .x { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  background: #F2704F; color: #fff; flex: none; }
+
+.foot { margin-top: auto; padding-top: 34px; display: flex; align-items: center; gap: 16px; }
+.chip { display: flex; align-items: center; gap: 12px; background: #FAFBFD; border: 2px solid #EEF1F6;
+  border-radius: 999px; padding: 12px 24px; font-size: 22px; font-weight: 600; color: #4B5563; }
+.chip svg { color: #8E97A5; }
+.foot .note { margin-left: auto; font-size: 22px; color: #9AA3AF; }
+
+.cmp { display: grid; grid-template-columns: 1fr 108px 1fr; align-items: stretch; margin-top: 58px; }
+.cmp .mid { display: grid; place-items: center; color: #C3CAD5; }
+.card { border: 3px solid #EEF1F6; border-radius: 30px; padding: 40px 42px; background: #FAFBFD; }
+.card.now { border-color: #FBD5C8; background: #FFF8F5; }
+.card .head { display: flex; align-items: center; gap: 20px; margin-bottom: 34px; }
+.card .head .ic { width: 88px; height: 88px; border-radius: 26px; }
+.card .tag { font-size: 19px; font-weight: 800; letter-spacing: .14em; color: #9AA3AF; }
+.card.now .tag { color: #F2704F; }
+.card h3 { margin: 4px 0 0; font-size: 36px; line-height: 1.15; }
+.li { display: flex; align-items: flex-start; gap: 15px; font-size: 27px; line-height: 1.45;
+  color: #374151; margin-bottom: 26px; }
+.li svg { flex: none; margin-top: 5px; color: #9AA3AF; }
+.card.now .li svg { color: #16875F; }
+.li b { color: #1B2A4A; }
+.tail { margin-top: auto; display: flex; align-items: center; gap: 16px; justify-content: center;
+  font-size: 24px; color: #4B5563; background: #F1F3F7; border-radius: 999px; padding: 18px 32px; }
+.tail svg { color: #8E97A5; flex: none; }
+</style><body><div class="slide">
+  <div>
+    <div class="eyebrow">MỘT CHỖ PHẢI SỬA LỚN</div>
+    <h1>Đổi kho vector: từ dịch vụ thuê ngoài <em>về cơ sở dữ liệu của mình</em></h1>
+  </div>
+  <div class="cmp">
+    <div class="card">
+      <div class="head"><div class="ic navy"><svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.94 5.274A7 7 0 0 1 15.71 10h1.79a4.5 4.5 0 0 1 4.222 6.057"/><path d="M18.796 18.81A4.5 4.5 0 0 1 17.5 19H9A7 7 0 0 1 5.79 5.78"/><path d="m2 2 20 20"/></svg></div>
+        <div><div class="tag">TRƯỚC</div><h3>Pinecone</h3></div></div>
+      <div class="li"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg><span>Gói miễn phí tính tiền theo <b>lượt đọc</b>, 1 GB mỗi tháng</span></div>
+      <div class="li"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg><span>Mỗi câu hỏi kéo về vài chục đoạn sách, mỗi đoạn khoảng 2 KB</span></div>
+      <div class="li"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg><span>Hỏi vài nghìn câu là hết hạn mức — <b>Mimo ngừng trả lời</b></span></div>
+      <div class="li"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg><span>Kho sách nằm ở dịch vụ ngoài, phải giữ thêm khóa API</span></div>
+    </div>
+    <div class="mid"><svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
+    <div class="card now">
+      <div class="head"><div class="ic solid"><svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg></div>
+        <div><div class="tag">SAU</div><h3>Kho vector trong cơ sở dữ liệu của sản phẩm</h3></div></div>
+      <div class="li"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></svg><span>4.765 vector chỉ nặng khoảng <b>30 MB</b>, nằm chung database sẵn có</span></div>
+      <div class="li"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></svg><span>Không thuê thêm dịch vụ nào: <b>0 đồng, không còn hạn mức</b></span></div>
+      <div class="li"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></svg><span>Khớp vector bằng PostgreSQL + pgvector, chỉ mất vài mili giây</span></div>
+      <div class="li"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></svg><span>Kho sách và dữ liệu học của học sinh nằm cùng một chỗ</span></div>
+    </div>
+  </div>
+  <div class="tail"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="9" y2="9"/><line x1="5" x2="19" y1="15" y2="15"/></svg> Cách tìm kiếm không đổi — vẫn so nghĩa bằng cosine, câu trả lời vẫn kèm đúng tên sách và số trang.</div>
+</div></body>

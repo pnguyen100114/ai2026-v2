@@ -146,7 +146,7 @@ SO_DO = f'''<div class="slide">
       (node('file-text', 'amber', 'Sách giáo khoa PDF', '29 cuốn · 5 môn · lớp 6 đến lớp 9', 2), 2),
       (node('scissors', 'violet', 'Tách trang, cắt đoạn', 'mỗi đoạn khoảng 1.000 ký tự', 2), 2),
       (node('layers', 'coral', 'Nhúng thành vector', 'Gemini Embedding', 2), 2),
-      (node('database', 'green', 'Lưu vào Pinecone', '4.765 đoạn, kèm môn – lớp – bài – trang', 2), 2),
+      (node('database', 'green', 'Lưu vào kho vector', '4.765 đoạn nằm ngay trong cơ sở dữ liệu của sản phẩm', 2), 2),
     ])}
   </div>
 
@@ -172,6 +172,62 @@ SO_DO = f'''<div class="slide">
 for step in range(1, 6):
     render(f'so_do_kien_truc_b{step}', SO_DO, stage=step, last=5)
 render('so_do_kien_truc', SO_DO)
+
+# ---------------------------------------------------------------- Cảnh 6 · vì sao đổi kho vector
+DOI_CSS = f'''
+.cmp {{ display: grid; grid-template-columns: 1fr 108px 1fr; align-items: stretch; margin-top: 58px; }}
+.cmp .mid {{ display: grid; place-items: center; color: #C3CAD5; }}
+.card {{ border: 3px solid #EEF1F6; border-radius: 30px; padding: 40px 42px; background: #FAFBFD; }}
+.card.now {{ border-color: #FBD5C8; background: #FFF8F5; }}
+.card .head {{ display: flex; align-items: center; gap: 20px; margin-bottom: 34px; }}
+.card .head .ic {{ width: 88px; height: 88px; border-radius: 26px; }}
+.card .tag {{ font-size: 19px; font-weight: 800; letter-spacing: .14em; color: #9AA3AF; }}
+.card.now .tag {{ color: {CORAL}; }}
+.card h3 {{ margin: 4px 0 0; font-size: 36px; line-height: 1.15; }}
+.li {{ display: flex; align-items: flex-start; gap: 15px; font-size: 27px; line-height: 1.45;
+  color: #374151; margin-bottom: 26px; }}
+.li svg {{ flex: none; margin-top: 5px; color: #9AA3AF; }}
+.card.now .li svg {{ color: #16875F; }}
+.li b {{ color: {NAVY}; }}
+.tail {{ margin-top: auto; display: flex; align-items: center; gap: 16px; justify-content: center;
+  font-size: 24px; color: #4B5563; background: #F1F3F7; border-radius: 999px; padding: 18px 32px; }}
+.tail svg {{ color: #8E97A5; flex: none; }}
+'''
+
+
+def li(ic, text):
+    return f'<div class="li">{icon(ic, 26, 2.4)}<span>{text}</span></div>'
+
+
+DOI = f'''<div class="slide">
+  <div>
+    <div class="eyebrow">MỘT CHỖ PHẢI SỬA LỚN</div>
+    <h1>Đổi kho vector: từ dịch vụ thuê ngoài <em>về cơ sở dữ liệu của mình</em></h1>
+  </div>
+  <div class="cmp">
+    <div class="card">
+      <div class="head"><div class="ic navy">{icon('cloud-off', 38)}</div>
+        <div><div class="tag">TRƯỚC</div><h3>Pinecone</h3></div></div>
+      {li('circle-alert', 'Gói miễn phí tính tiền theo <b>lượt đọc</b>, 1 GB mỗi tháng')}
+      {li('circle-alert', 'Mỗi câu hỏi kéo về vài chục đoạn sách, mỗi đoạn khoảng 2 KB')}
+      {li('circle-alert', 'Hỏi vài nghìn câu là hết hạn mức — <b>Mimo ngừng trả lời</b>')}
+      {li('circle-alert', 'Kho sách nằm ở dịch vụ ngoài, phải giữ thêm khóa API')}
+    </div>
+    <div class="mid">{icon('arrow-right', 52, 2.5)}</div>
+    <div class="card now">
+      <div class="head"><div class="ic solid">{icon('database', 38)}</div>
+        <div><div class="tag">SAU</div><h3>Kho vector trong cơ sở dữ liệu của sản phẩm</h3></div></div>
+      {li('circle-check', '4.765 vector chỉ nặng khoảng <b>30 MB</b>, nằm chung database sẵn có')}
+      {li('circle-check', 'Không thuê thêm dịch vụ nào: <b>0 đồng, không còn hạn mức</b>')}
+      {li('circle-check', 'Khớp vector bằng PostgreSQL + pgvector, chỉ mất vài mili giây')}
+      {li('circle-check', 'Kho sách và dữ liệu học của học sinh nằm cùng một chỗ')}
+    </div>
+  </div>
+  <div class="tail">{icon('equal', 28)} Cách tìm kiếm không đổi — vẫn so nghĩa bằng cosine, câu trả lời vẫn kèm đúng tên sách và số trang.</div>
+</div>'''
+
+CSS += DOI_CSS
+render('doi_kho_vector', DOI)
 
 # ---------------------------------------------------------------- Cảnh 7 · slide kết
 DOI = 'LD-14'

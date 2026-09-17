@@ -42,6 +42,24 @@ h1 em { font-style: normal; color: #F2704F; }
 .chip svg { color: #8E97A5; }
 .foot .note { margin-left: auto; font-size: 22px; color: #9AA3AF; }
 
+.cmp { display: grid; grid-template-columns: 1fr 108px 1fr; align-items: stretch; margin-top: 58px; }
+.cmp .mid { display: grid; place-items: center; color: #C3CAD5; }
+.card { border: 3px solid #EEF1F6; border-radius: 30px; padding: 40px 42px; background: #FAFBFD; }
+.card.now { border-color: #FBD5C8; background: #FFF8F5; }
+.card .head { display: flex; align-items: center; gap: 20px; margin-bottom: 34px; }
+.card .head .ic { width: 88px; height: 88px; border-radius: 26px; }
+.card .tag { font-size: 19px; font-weight: 800; letter-spacing: .14em; color: #9AA3AF; }
+.card.now .tag { color: #F2704F; }
+.card h3 { margin: 4px 0 0; font-size: 36px; line-height: 1.15; }
+.li { display: flex; align-items: flex-start; gap: 15px; font-size: 27px; line-height: 1.45;
+  color: #374151; margin-bottom: 26px; }
+.li svg { flex: none; margin-top: 5px; color: #9AA3AF; }
+.card.now .li svg { color: #16875F; }
+.li b { color: #1B2A4A; }
+.tail { margin-top: auto; display: flex; align-items: center; gap: 16px; justify-content: center;
+  font-size: 24px; color: #4B5563; background: #F1F3F7; border-radius: 999px; padding: 18px 32px; }
+.tail svg { color: #8E97A5; flex: none; }
+
 .slide.dark { position: relative; background: #1B2A4A;
   background-image: radial-gradient(900px 620px at 82% 16%, rgba(242,112,79,.22), transparent 70%);
   color: #fff; align-items: center; justify-content: center; text-align: center; }

@@ -6,6 +6,29 @@ from pathlib import Path
 import matplotlib.image as mpimg
 
 ROOT = Path(__file__).resolve().parent.parent
+
+import sqlite3
+import statistics
+_db = sqlite3.connect(ROOT / 'backend' / 'local.db')
+
+# Mọi con số dưới đây lấy từ dữ liệu, KHÔNG gõ tay. Bản trước gõ cứng "4765 đoạn", "52 câu
+# hỏi", "194/194 ca" nên hồ sơ lạc hậu ngay khi nạp thêm sách hay thêm test mà không ai biết.
+import json as _json
+
+_man = _json.loads((ROOT / 'backend' / 'rag' / '.ingest_manifest.json').read_text(encoding='utf-8'))
+N_VECTORS = sum(b['chunks'] for b in _man.values())
+N_BOOKS = len(_man)
+
+# Kết quả bộ kiểm thử chạy trên bản đã triển khai (bao-cao/bo-test/).
+_test = _json.loads((ROOT / 'bao-cao' / 'bo-test' / 'ket_qua.json').read_text(encoding='utf-8'))
+_ket = _test['ket_qua']
+N_TEST = len(_ket)
+N_TEST_DAT = sum(1 for k in _ket if k['dat_may_cham'])
+N_TEST_MON = len({k['mon'] for k in _ket})
+_giay = sorted(k['giay'] for k in _ket)
+LAT_MED = _giay[len(_giay) // 2]
+N_QUESTIONS = _db.execute("select count(*) from messages where role='user'").fetchone()[0]
+
 OUT = ROOT / 'bao-cao' / 'hinh-minh-hoa'
 TMP = OUT / '_html'
 OUT.mkdir(parents=True, exist_ok=True)
@@ -102,10 +125,10 @@ def tiles(items):
 render('cong_cu', 1300, 560, f'''<div class="canvas">
   <div class="label">Dữ liệu và AI bên trong Mimo</div>
   <div class="grid3">{tiles([
-    ('library', 'amber', 'Sách giáo khoa', '29 cuốn, 5 môn, lớp 6 đến 9, bộ Kết nối tri thức'),
+    ('library', 'amber', 'Sách giáo khoa', f'{N_BOOKS} cuốn, 5 môn, lớp 6 đến 9, bộ Kết nối tri thức'),
     ('scan-line', 'navy', 'OCR', 'Đọc chữ từ các trang sách scan'),
     ('layers', 'violet', 'Gemini Embedding', 'Biến đoạn sách và câu hỏi thành vector để so nghĩa'),
-    ('database', 'green', 'Kho vector', '4765 đoạn sách, tìm đúng trang trong tích tắc'),
+    ('database', 'green', 'Kho vector', f'{N_VECTORS} đoạn sách, tìm đúng trang trong tích tắc'),
     ('sparkles', 'solid', 'Gemini 3.5 Flash', 'Giảng bài, đọc ảnh đề, nghe giọng nói, soạn câu luyện tập'),
     ('volume-2', 'coral', 'Edge TTS', 'Đọc bài giảng bằng giọng tiếng Việt'),
   ])}</div>
@@ -127,11 +150,11 @@ PIPE_CSS = '''
 .arrow { color: #C3CAD5; }
 '''
 steps = [
-    ('file-text', 'amber', 'Sách PDF', '29 cuốn, lớp 6 đến 9'),
+    ('file-text', 'amber', 'Sách PDF', f'{N_BOOKS} cuốn, lớp 6 đến 9'),
     ('scan-line', 'navy', 'OCR', 'đọc chữ từ trang scan'),
     ('scissors', 'violet', 'Cắt đoạn', 'mỗi đoạn khoảng 1.000 ký tự'),
     ('layers', 'coral', 'Vector hóa', 'Gemini Embedding'),
-    ('database', 'green', 'Kho vector', '4765 đoạn kèm môn, lớp, bài, trang'),
+    ('database', 'green', 'Kho vector', f'{N_VECTORS} đoạn kèm môn, lớp, bài, trang'),
 ]
 nodes = f'<span class="arrow">{icon("arrow-right", 40, 2.5)}</span>'.join(
     f'<div class="node"><div class="ic {t}" style="width:96px;height:96px;border-radius:28px">{icon(i, 48)}</div><h4>{h}</h4><p>{d}</p></div>'
@@ -177,7 +200,7 @@ render('dau_vao_xu_ly_dau_ra', 1300, 620, f'''<div class="canvas"><div class="fl
     ('camera', 'navy', 'Ảnh chụp đề bài', 'chụp từ điện thoại, máy tính'),
     ('mic', 'navy', 'Giọng nói', 'bấm micro và nói'),
     ('user-round', 'amber', 'Hồ sơ của em', 'lớp, bài đang học, lỗi hay sai'),
-    ('database', 'green', 'Kho vector SGK', '4765 đoạn sách giáo khoa'),
+    ('database', 'green', 'Kho vector SGK', f'{N_VECTORS} đoạn sách giáo khoa'),
   ])}</div>
   {arrow_mid}
   <div><div class="col-title" style="color:{CORAL}">MIMO XỬ LÝ</div><div class="brain">
@@ -235,11 +258,6 @@ KPI_CSS = TOOL_CSS + f'''
 '''
 
 
-import sqlite3
-import statistics
-_db = sqlite3.connect(ROOT / 'backend' / 'local.db')
-N_QUESTIONS = _db.execute("select count(*) from messages where role='user'").fetchone()[0]
-LAT_MED = statistics.median(r[0] / 1000 for r in _db.execute("select latency_ms from messages where role='assistant' and latency_ms is not null"))
 
 
 def kpi(i, t, v, text):
@@ -247,11 +265,57 @@ def kpi(i, t, v, text):
 
 
 render('con_so', 1300, 260, f'''<div class="canvas"><div class="kpis">
-  {kpi('database', 'green', '4765', 'đoạn sách của 29 cuốn SGK trong kho để Mimo tra cứu')}
-  {kpi('message-circle', 'coral', str(N_QUESTIONS), 'câu hỏi thử ở 3 môn Toán, KHTN, Ngữ văn')}
+  {kpi('database', 'green', f'{N_VECTORS}', f'đoạn sách của {N_BOOKS} cuốn SGK trong kho để Mimo tra cứu')}
+  {kpi('message-circle', 'coral', f'{N_TEST}', f'ca kiểm thử trên {N_TEST_MON} môn, lớp 6 đến lớp 9')}
   {kpi('timer', 'amber', f"{LAT_MED:.1f} giây".replace('.', ','), 'một nửa số câu Mimo trả lời xong trong khoảng này')}
-  {kpi('circle-check', 'navy', '194/194', 'ca kiểm thử tự động đều chạy đúng')}
+  {kpi('circle-check', 'navy', f'{N_TEST_DAT}/{N_TEST}', 'ca đạt phần máy chấm được')}
 </div></div>''', KPI_CSS)
+
+# ---------------------------------------------------------------- 4b. bộ kiểm thử
+# Hồ sơ trước không có hình nào cho phần kiểm thử, mà đây lại là mục ban giám khảo yêu cầu:
+# "bộ test gồm ca dễ, ca khó, ca AI sai". Số liệu lấy thẳng từ bo-test/ket_qua.json.
+
+_NHOM_MO_TA = {
+    'dễ': ('circle-check', 'green', 'Tra một trang sách là ra'),
+    'khó': ('layers', 'navy', 'Phải gộp nhiều bài, nhiều trang'),
+    'từ chối': ('shield-check', 'violet', 'Kiến thức lớp trên, phải từ chối'),
+    'ngoài sách': ('book-x', 'coral', 'Đúng lớp nhưng sách không có bài'),
+    'mơ hồ': ('circle-help', 'amber', 'Hỏi trống, hoặc nhờ làm hộ'),
+    'bẫy': ('triangle-alert', 'amber', 'Học sinh nói sai, phải sửa lại'),
+}
+
+TEST_CSS = TOOL_CSS + f'''
+.rows {{ display: flex; flex-direction: column; gap: 7px; }}
+.row {{ display: flex; align-items: center; gap: 14px; background: #FAFBFD; border: 2px solid #EEF1F6;
+        border-radius: 14px; padding: 9px 18px; }}
+.row .name {{ font-size: 18px; font-weight: 700; color: {NAVY}; width: 168px; }}
+.row .desc {{ font-size: 15px; color: #6B7280; flex: 1; }}
+.bar {{ width: 260px; height: 14px; background: #EEF1F6; border-radius: 99px; overflow: hidden; }}
+.bar i {{ display: block; height: 100%; border-radius: 99px; }}
+.score {{ font-size: 20px; font-weight: 700; width: 74px; text-align: right; }}
+.ok i {{ background: #16875F; }} .ok .score {{ color: #16875F; }}
+.bad i {{ background: {CORAL}; }} .bad .score {{ color: {CORAL}; }}
+'''
+
+
+def _hang(nhom):
+    trong = [k for k in _ket if k['nhom'] == nhom]
+    dat = sum(1 for k in trong if k['dat_may_cham'])
+    ten, mau, mo_ta = _NHOM_MO_TA.get(nhom, ('circle', 'navy', ''))
+    pct = round(dat / len(trong) * 100)
+    lop = 'ok' if dat == len(trong) else 'bad'
+    return (f'<div class="row {lop}">'
+            f'<div class="ic {mau}" style="width:34px;height:34px;border-radius:10px">{icon(ten, 19)}</div>'
+            f'<div class="name">{nhom.capitalize()}</div>'
+            f'<div class="desc">{mo_ta}</div>'
+            f'<div class="bar"><i style="width:{pct}%"></i></div>'
+            f'<div class="score">{dat}/{len(trong)}</div></div>')
+
+
+_thu_tu = list(dict.fromkeys(k['nhom'] for k in _ket))
+render('bo_kiem_thu', 1300, 68 + 61 * len(_thu_tu), f'''<div class="canvas"><div class="rows">
+  {"".join(_hang(n) for n in _thu_tu)}
+</div></div>''', TEST_CSS)
 
 # ---------------------------------------------------------------- 5. ảnh chụp trong khung trình duyệt
 FRAME_CSS = '''

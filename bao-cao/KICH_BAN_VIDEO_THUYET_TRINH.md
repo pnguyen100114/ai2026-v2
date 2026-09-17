@@ -1,7 +1,7 @@
 # Kịch bản video thuyết trình — Mimo, Gia sư AI học theo sách giáo khoa
 
-**Thời lượng đích: 4 phút 35 giây** (giới hạn 5 phút, chừa 25 giây an toàn).
-**Tổng số chữ: khoảng 690** — đọc ở tốc độ 150 chữ/phút, là tốc độ nói rõ ràng, không vội.
+**Thời lượng đích: 4 phút 44 giây** (giới hạn 5 phút, chừa 16 giây an toàn).
+**Tổng số chữ: khoảng 695** — đọc ở tốc độ 150 chữ/phút, là tốc độ nói rõ ràng, không vội.
 
 Cách dùng: đọc to cả bài, bấm giờ. Nếu ra trên 4:50 thì nói chậm quá hoặc đang thêm chữ ngoài kịch
 bản. Nếu dưới 4:10 thì đang đọc vội, ban giám khảo sẽ không kịp nghe số liệu.
@@ -10,7 +10,7 @@ Ký hiệu: **HÌNH** là thứ hiện trên màn hình, **LỜI** là câu ph�
 
 ---
 
-## Cảnh 1 — Mở đầu · 0:00 → 0:20 · 48 chữ
+## Cảnh 1 — Mở đầu · 0:00 → 0:20 · 49 chữ
 
 **HÌNH:** Mặt người nói, chính giữa khung. Góc dưới hiện tên đội và tên sản phẩm.
 
@@ -69,12 +69,12 @@ có trích dẫn.
 > Danh mục sách hiện có **29 đầu sách, 5 môn, từ lớp 6 đến lớp 9**.
 
 > ✔️ Đã đối chiếu: sổ nạp sách `backend/rag/.ingest_manifest.json` ghi **29 cuốn, 4.765 đoạn** đã vào
-> kho Pinecone — khớp đúng danh mục `books.py`. Nói con số 29 là an toàn, ban giám khảo có hỏi lại
+> kho vector — khớp đúng danh mục `books.py`. Nói con số 29 là an toàn, ban giám khảo có hỏi lại
 > cũng chứng minh được.
 
 ---
 
-## Cảnh 4 — Cách làm · 1:50 → 2:40 · 120 chữ
+## Cảnh 4 — Cách làm · 1:50 → 2:40 · 121 chữ
 
 **HÌNH:** Slide sơ đồ kiến trúc trong `bao-cao/slides/`, hiện dần theo lời nói. Năm bản dựng sẵn,
 cùng khổ 1920×1080 nên cắt qua lại không bị nhảy hình:
@@ -82,7 +82,7 @@ cùng khổ 1920×1080 nên cắt qua lại không bị nhảy hình:
 | Ảnh | Cắt vào lúc nói |
 |---|---|
 | `so_do_kien_truc_b1.png` | "phương pháp RAG — tìm kiếm rồi mới sinh câu trả lời" |
-| `so_do_kien_truc_b2.png` | "sách PDF được tách ra từng trang… lưu vào Pinecone" |
+| `so_do_kien_truc_b2.png` | "sách PDF được tách ra từng trang… lưu vào kho vector" |
 | `so_do_kien_truc_b3.png` | "nó đi tìm những trang sách liên quan nhất trước" |
 | `so_do_kien_truc_b4.png` | "rồi mới đưa đúng những trang đó cho mô hình Gemini" — lúc này mũi tên gạch chéo **KHÔNG hỏi thẳng AI** hiện ra |
 | `so_do_kien_truc_b5.png` | "React, FastAPI, toàn bộ chạy trên hạ tầng miễn phí" |
@@ -93,8 +93,8 @@ Sinh lại bằng `python bao-cao/slides.py` nếu sửa số liệu trên slide
 
 > Về kỹ thuật, nhóm em dùng phương pháp **RAG — tìm kiếm rồi mới sinh câu trả lời**.
 >
-> Trước tiên, sách giáo khoa bản PDF được tách ra từng trang, chuyển thành vector, lưu vào cơ sở dữ
-> liệu Pinecone. //
+> Trước tiên, sách giáo khoa bản PDF được tách ra từng trang, chuyển thành vector, lưu vào kho
+> vector của chính sản phẩm. //
 >
 > Khi học sinh đặt câu hỏi, hệ thống **không hỏi thẳng AI**. // Nó đi tìm những trang sách liên quan
 > nhất trước, rồi mới đưa đúng những trang đó cho mô hình Gemini, kèm yêu cầu: chỉ được giảng dựa
@@ -109,7 +109,7 @@ Sinh lại bằng `python bao-cao/slides.py` nếu sửa số liệu trên slide
 
 ---
 
-## Cảnh 5 — Kết quả thử nghiệm · 2:40 → 3:30 · 118 chữ
+## Cảnh 5 — Kết quả thử nghiệm · 2:40 → 3:22 · 104 chữ
 
 **HÌNH:** Lần lượt 3 biểu đồ trong `bao-cao/charts/`, mỗi biểu đồ hiện toàn màn hình khoảng 15 giây:
 `bieu_do1_phien_theo_mon.png` → `bieu_do2_thoi_gian_phan_hoi.png` → `bieu_do3_muc_hieu_bai.png`.
@@ -127,39 +127,61 @@ Sinh lại bằng `python bao-cao/slides.py` nếu sửa số liệu trên slide
 > Về tốc độ: một nửa số câu được trả lời **trong vòng 4,8 giây**, và 90% số câu dưới 11 giây. //
 >
 > Mimo còn tự đánh giá mức hiểu bài của học sinh sau mỗi câu trả lời — mất gốc, hiểu sơ, hay đã
-> hiểu — để lần sau giảng dễ hơn hoặc nâng dần lên. //
->
-> Ngoài gõ chữ, học sinh còn **chụp ảnh đề bài** gửi lên, và **nghe Mimo đọc** lời giải.
+> hiểu — để lần sau giảng dễ hơn hoặc nâng dần lên.
 
 > 💡 Đọc số liệu chậm hơn phần còn lại. Số nói nhanh là số không ai nhớ.
+> Phần chụp ảnh đề và nghe đọc đã cắt khỏi cảnh này để lấy chỗ cho Cảnh 6 — hai tính năng đó đã
+> nằm trong video demo rồi.
 > Ba con số này phải **khớp tuyệt đối với hồ sơ PDF**. Sửa hồ sơ thì sửa cả kịch bản.
 
 ---
 
-## Cảnh 6 — Quá trình làm · 3:30 → 4:05 · 88 chữ
+## Cảnh 6 — Quá trình làm · 3:22 → 4:11 · 122 chữ
 
-**HÌNH:** Chia đôi màn hình. Bên trái là ảnh bản đầu tiên còn lỗi (Hình 7–9 trong hồ sơ: báo "Không
-tìm thấy dữ liệu", công thức hiện ký hiệu thô). Bên phải là giao diện hiện tại.
+**HÌNH:** Hai phần.
+
+1. Nửa đầu cảnh: chia đôi màn hình. Bên trái là ảnh bản đầu tiên còn lỗi (Hình 7–9 trong hồ sơ: báo
+   "Không tìm thấy dữ liệu", công thức hiện ký hiệu thô). Bên phải là giao diện hiện tại.
+2. Từ câu "chỗ phải sửa lớn nhất là chính kho sách": cắt sang slide
+   `bao-cao/slides/doi_kho_vector.png`, để nguyên tới hết đoạn nói về kho vector.
 
 **LỜI:**
 
 > Bản đầu tiên của tụi em không chạy được như bây giờ. //
 >
 > Lúc mới làm, Mimo không đọc được kho sách, hỏi gì cũng báo "không tìm thấy dữ liệu". // Nạp được
-> sách rồi thì công thức toán hiện ra toàn ký hiệu thô, phần trích nguồn dính vào câu trả lời, đọc
-> rất khó.
+> sách rồi thì công thức toán hiện ra toàn ký hiệu thô, phần trích nguồn dính vào câu trả lời.
 >
-> Nhóm em đã sửa qua nhiều vòng: số hóa lại sách, chỉnh cách hiển thị công thức, tách riêng phần
-> nguồn, và làm thêm ảnh trang sách như thầy cô vừa thấy. //
+> **Nhưng chỗ phải sửa lớn nhất là chính kho sách.** // Ban đầu tụi em để vector trên Pinecone, mà
+> gói miễn phí của dịch vụ này **tính tiền theo lượt đọc** — hỏi nhiều là hết hạn mức, mà hết hạn
+> mức thì Mimo ngừng trả lời. //
 >
-> Toàn bộ quá trình này nhóm em có lưu lại đầy đủ trong hồ sơ.
+> Nên tụi em **chuyển toàn bộ kho vector vào chính cơ sở dữ liệu của sản phẩm**. // Không còn hạn
+> mức, không tốn đồng nào, cách tìm kiếm vẫn y như cũ. //
+>
+> Quá trình này có đủ trong hồ sơ.
 
 > 💡 Đừng giấu bản lỗi. Ban giám khảo chấm cả quá trình, và ảnh "trước – sau" là bằng chứng mạnh
 > nhất cho việc đội tự làm.
+>
+> 💡 Đoạn kho vector là đoạn "ăn điểm kỹ thuật" nhất của cả bài: nó cho thấy nhóm hiểu mình đang trả
+> giá cho cái gì và tự quyết định đổi. Nói chậm hai chữ **lượt đọc** — đó là chỗ ban giám khảo dễ
+> hỏi lại nhất. Nếu bị hỏi: gói miễn phí Pinecone cho 1 GB đọc mỗi tháng, mỗi câu hỏi kéo về vài
+> chục đoạn sách nên vài nghìn câu là hết, mà hết là cả sản phẩm ngừng trả lời.
+>
+> 💡 Ba con số để chốt nếu ban giám khảo hỏi sâu hơn (đã đo trên bản đang chạy, 17/09):
+> - Kho hiện có **4.760 đoạn sách** từ **29 cuốn, 5 môn, lớp 6–9** — nằm trong chính Postgres của
+>   sản phẩm, dùng extension `pgvector`.
+> - Chi phí lưu và đọc kho: **0 đồng**, không còn hạn mức nào để cạn.
+> - Kho nhỏ nên tìm kiếm **quét chính xác toàn bộ**, không phải tìm gần đúng — tức không có chuyện
+>   bỏ sót đoạn sách đúng. Khi kho lớn lên mới cần bật index gần đúng.
+>
+> 💡 Nếu bị hỏi "sao không dùng luôn dịch vụ trả phí cho khỏe": câu trả lời thật là sản phẩm phải
+> chạy được sau cuộc thi mà không ai phải trả tiền hàng tháng. Đó là lý do chọn, không phải né.
 
 ---
 
-## Cảnh 7 — Hạn chế và hướng phát triển · 4:05 → 4:35 · 82 chữ
+## Cảnh 7 — Hạn chế và hướng phát triển · 4:11 → 4:44 · 82 chữ
 
 **HÌNH:** Quay lại mặt người nói. Cuối cảnh cắt sang `bao-cao/slides/slide_ket.png` — tên sản phẩm,
 khẩu hiệu "Học đúng sách, hiểu đúng bài.", tên đội và tên trường. Để slide chạy hết câu cảm ơn rồi
@@ -187,14 +209,14 @@ mới tắt, đừng cắt ngay.
 
 | Cảnh | Nội dung | Từ | Đến | Dài | Số chữ |
 |---|---|---|---|---|---|
-| 1 | Mở đầu | 0:00 | 0:20 | 20 giây | 48 |
+| 1 | Mở đầu | 0:00 | 0:20 | 20 giây | 49 |
 | 2 | Vấn đề | 0:20 | 1:05 | 45 giây | 112 |
 | 3 | Giải pháp | 1:05 | 1:50 | 45 giây | 105 |
-| 4 | Cách làm | 1:50 | 2:40 | 50 giây | 120 |
-| 5 | Kết quả thử nghiệm | 2:40 | 3:30 | 50 giây | 118 |
-| 6 | Quá trình làm | 3:30 | 4:05 | 35 giây | 88 |
-| 7 | Hạn chế và kết | 4:05 | 4:35 | 30 giây | 82 |
-| | **Tổng** | | | **4:35** | **673** |
+| 4 | Cách làm | 1:50 | 2:40 | 50 giây | 121 |
+| 5 | Kết quả thử nghiệm | 2:40 | 3:22 | 42 giây | 104 |
+| 6 | Quá trình làm | 3:22 | 4:11 | 49 giây | 122 |
+| 7 | Hạn chế và kết | 4:11 | 4:44 | 33 giây | 82 |
+| | **Tổng** | | | **4:44** | **695** |
 
 ---
 
@@ -204,7 +226,11 @@ mới tắt, đừng cắt ngay.
 1. Cảnh 6 rút còn 20 giây: bỏ đoạn kể chi tiết lỗi, chỉ nói "bản đầu chưa đọc được kho sách, nhóm
    em đã sửa qua nhiều vòng".
 2. Cảnh 2 bỏ ý thứ ba (làm hộ chứ không dạy), giữ hai ý đầu.
-3. Cảnh 5 bỏ câu về chụp ảnh và nghe đọc — hai tính năng đó đã có trong video demo rồi.
+3. Cảnh 6 rút đoạn kho vector còn một câu: "kho vector cũ tính tiền theo lượt đọc, hỏi nhiều là
+   hết hạn mức, nên tụi em chuyển hẳn vào cơ sở dữ liệu của mình" — giữ được ý, tiết kiệm 20 giây.
+
+Nhát cắt "bỏ câu chụp ảnh và nghe đọc ở Cảnh 5" **đã dùng rồi** để lấy chỗ cho đoạn kho vector, đừng
+tính lại lần nữa.
 
 **Còn dư thời gian** — thêm vào cảnh 3, không thêm vào cảnh khác: cho chạy thêm một câu hỏi nữa và
 nói "đây là môn Khoa học tự nhiên lớp 6, cùng một cách trả lời, cũng có trang sách kèm theo".
@@ -234,5 +260,6 @@ không bị giật.
 - [x] Đã kiểm tra lại số đầu sách nói ở cảnh 3 — 29 cuốn, khớp sổ nạp sách
 - [ ] Đã điền **tên thành viên** vào cảnh 1 (tên đội và tên trường đã điền sẵn)
 - [x] Slide sơ đồ kiến trúc (cảnh 4) — đã có 5 bản dựng trong `bao-cao/slides/`
+- [x] Slide đổi kho vector (cảnh 6) — `bao-cao/slides/doi_kho_vector.png`
 - [x] Slide kết (cảnh 7) — `bao-cao/slides/slide_ket.png`
 - [ ] Ba biểu đồ trong `bao-cao/charts/` đã xuất ở kích thước đủ lớn để đọc trên màn hình

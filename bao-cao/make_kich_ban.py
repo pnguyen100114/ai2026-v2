@@ -26,6 +26,8 @@ CORAL, NAVY, GREY = 'F2704F', '1B2A4A', '6B7280'
 SLIDES = {
     'Cảnh 4': [(OUT / 'slides' / 'so_do_kien_truc.png',
                 'Slide sơ đồ kiến trúc, bản đầy đủ. Năm bản dựng dần b1–b5 nằm trong bao-cao/slides/')],
+    'Cảnh 6': [(OUT / 'slides' / 'doi_kho_vector.png',
+                'Slide đổi kho vector, cắt vào từ câu "chỗ phải sửa lớn nhất là chính kho sách"')],
     'Cảnh 7': [(OUT / 'slides' / 'slide_ket.png', 'Slide kết')],
 }
 

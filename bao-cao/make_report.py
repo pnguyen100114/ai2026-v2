@@ -55,6 +55,54 @@ N_VECTORS = sum(book['chunks'] for book in _manifest.values())
 INGEST_DATE = max(book['ingested_at'] for book in _manifest.values())[:10]
 INGEST_DATE = f'{INGEST_DATE[8:10]}/{INGEST_DATE[5:7]}/{INGEST_DATE[:4]}'
 
+# Bản quét thiếu: đếm thẳng số trang PDF thay vì gõ tay vào hồ sơ. Bản trước khai "ba cuốn",
+# đếm thật thì nhiều hơn thế, và con số gõ tay thì không ai phát hiện khi nó sai.
+import pymupdf as _fitz
+
+SACH_NGAN = []
+for _f in sorted((ROOT / 'backend' / 'data').glob('*.pdf')):
+    with _fitz.open(_f) as _d:
+        if _d.page_count < 80:
+            SACH_NGAN.append((_f.stem, _d.page_count))
+SACH_NGAN.sort(key=lambda x: x[1])
+
+# Số môn-lớp đã có mục lục gõ tay (books.py), so với tổng số cuốn.
+try:
+    from backend.rag.books import COURSES as _COURSES
+except ImportError:
+    import sys as _sys
+    _sys.path.insert(0, str(ROOT / 'backend'))
+    from rag.books import COURSES as _COURSES
+N_COURSE = len(_COURSES)
+
+# Kết quả bộ kiểm thử chạy trên bản đã triển khai (bao-cao/bo-test/chay_test.py).
+# Thay cho số liệu cũ lấy từ local.db: database đó ghi trong lúc sản phẩm còn hỏng (13/09 có
+# 0/18 câu trả lời kèm trích dẫn, 17/09 có 0/4 vì key Gemini hỏng), nên đưa vào hồ sơ là tự
+# khai sản phẩm chỉ trích được nguồn cho 23% câu hỏi.
+_test = json.loads((ROOT / 'bao-cao' / 'bo-test' / 'ket_qua.json').read_text(encoding='utf-8'))
+_ket = _test['ket_qua']
+T_TONG = len(_ket)
+T_DAT = sum(1 for k in _ket if k['dat_may_cham'])
+T_MON = len({k['mon'] for k in _ket})
+T_GIAY = sorted(k['giay'] for k in _ket)
+T_LAT_MED = T_GIAY[len(T_GIAY) // 2]
+_can_nguon = [k for k in _ket if k['mong_doi'] == 'trich_dan']
+T_NGUON_DAT = sum(1 for k in _can_nguon if k['dat_may_cham'])
+T_NGUON_CAN = len(_can_nguon)
+T_NHOM = {}
+for _k in _ket:
+    _t = T_NHOM.setdefault(_k['nhom'], [0, 0])
+    _t[1] += 1
+    _t[0] += 1 if _k['dat_may_cham'] else 0
+T_NGAY = _test['chay_luc'][:10]
+T_NGAY = f'{T_NGAY[8:10]}/{T_NGAY[5:7]}/{T_NGAY[:4]}'
+
+# Mọi chỗ nói về thời gian trả lời đều dùng số đo trên BẢN ĐÃ TRIỂN KHAI, không dùng số cũ
+# trong local.db. Số cũ đo lúc chạy ở máy nên không có chặng mạng tới Render và Supabase -
+# trộn hai bộ vào một hồ sơ thì cùng một thứ lại ra hai con số (4,4 giây và 5,2 giây).
+latency = T_GIAY
+lat_med = T_LAT_MED
+
 # Số câu lệnh lấy từ prompt-log/PROMPT_HISTORY.md (chạy scripts/prompt-log/export-history.cjs để cập nhật).
 _history = (ROOT / 'prompt-log' / 'PROMPT_HISTORY.md').read_text(encoding='utf-8')
 _count = lambda label: int(re.search(rf'\|\s*{label}\s*\|\s*\**(\d+)', _history).group(1))
@@ -331,22 +379,39 @@ para('Khi trình diễn, nhóm đi theo đúng một buổi học của học si
      f'(trong lúc thử nghiệm, khi kho còn ít sách, Mimo đã tự soạn {n_ai_roadmaps} lộ trình kiểu này).')
 screenshot('sp_8_luyentap_crop', 'Hình 9. Luyện tập: Mimo soạn câu riêng cho bài đang học, có mức độ khó và phần trăm nắm bài.', width=Cm(14.5))
 illustration('con_so', 'Hình 10. Một vài con số sau khi thử nghiệm')
-para('Kết quả nhóm thấy rõ nhất:')
-bullet(f'Câu hỏi kiến thức Toán 6, Toán 8, KHTN 6 đều có trích dẫn trang sách. Có {cited} trên {n_questions} lượt trả lời gắn nguồn; '
-       'những lượt còn lại là chào hỏi, tâm sự hoặc môn chưa có sách, và Mimo không bịa ra nguồn cho các lượt đó.')
+
+para(f'Để đo chứ không chỉ kể, nhóm dựng bộ kiểm thử {T_TONG} ca chạy ngày {T_NGAY} qua đúng địa chỉ web đã triển khai, '
+     f'trải {T_MON} môn từ lớp 6 đến lớp 9, gồm cả ca dễ, ca khó và ca Mimo phải từ chối. Máy chỉ chấm phần khách quan '
+     '(có trích dẫn không, đúng môn đúng lớp không, có bịa nguồn không, mất bao lâu); kiến thức đúng sai thì người đọc '
+     'tự xác nhận, nhóm không để máy tự cho điểm phần đó.')
+illustration('bo_kiem_thu', f'Hình 11. Kết quả {T_TONG} ca kiểm thử theo từng nhóm')
+para('Kết quả:')
+bullet(f'{T_NGUON_DAT} trên {T_NGUON_CAN} câu thuộc chương trình có trích dẫn đúng môn, đúng lớp và có số trang; '
+       'bấm vào số [1] là mở đúng trang sách đó. Câu hỏi kiến thức của lớp trên (tích phân, đạo hàm, thuyết tương đối) '
+       f'bị từ chối {T_NHOM.get("từ chối", [0, 0])[0]}/{T_NHOM.get("từ chối", [0, 0])[1]}, không bịa ra trang sách nào.')
+bullet(f'Nhóm khó nhất là {T_NHOM.get("ngoài sách", [0, 0])[1]} câu ĐÚNG lớp nhưng kho không có bài đó. Lần đo đầu Mimo '
+       'giảng luôn bằng kiến thức của mô hình mà không báo gì; nhóm sửa câu lệnh để Mimo nói rõ sách không có bài này '
+       f'rồi mới dạy tiếp, đo lại được {T_NHOM.get("ngoài sách", [0, 0])[0]}/{T_NHOM.get("ngoài sách", [0, 0])[1]}.')
 bullet('Khi bạn gửi bài tập, Mimo gợi ý bước đầu rồi hỏi lại, chỉ đưa lời giải đầy đủ khi bạn xin. Các nút gợi ý trả lời nhanh cũng được lọc để không lộ đáp án.')
 bullet('Nhóm thử nhắn “em không muốn sống nữa”. Mimo trả lời nhẹ nhàng, khuyên bạn nói ngay với người lớn và đưa số Tổng đài 111, 115, 113. '
        'Phần nhắc số điện thoại vẫn hiện ra kể cả khi Gemini bị lỗi hoặc hết lượt.')
-bullet(f'Một nửa số câu Mimo trả lời xong trong khoảng {vn(lat_med)} giây. Luyện tập chạy đúng: {quiz_total} lượt trả lời thử, '
+bullet(f'Một nửa số câu Mimo trả lời xong trong khoảng {vn(T_LAT_MED)} giây. Luyện tập chạy đúng: {quiz_total} lượt trả lời thử, '
        f'mức nắm bài và độ khó thay đổi theo đúng hay sai. {N_TESTS} ca kiểm thử tự động của phần máy chủ đều đạt.')
 
 # ---- 7
 doc.add_heading('7. Hạn chế và hướng cải tiến', level=1)
 para('Mimo vẫn còn nhiều chỗ nhóm muốn làm tốt hơn:')
 table(['Còn hạn chế', 'Nhóm dự định'], [
-    ['Ba cuốn nạp sớm nhất mới quét được một phần (Toán 6 tập một đến trang 62, Toán 8 tập một đến trang 37, '
-     'KHTN 6 đến trang 192) nên phần sau của ba cuốn này chưa có trích dẫn trang.', 'Quét nốt số trang còn thiếu và nạp lại ba cuốn đó.'],
+    [f'{len(SACH_NGAN)} trên {N_BOOKS} cuốn trong kho là bản quét thiếu, dưới 80 trang so với sách in '
+     f'(ít nhất là {SACH_NGAN[0][0]} chỉ có {SACH_NGAN[0][1]} trang). Hỏi đúng phần thiếu thì Mimo báo là '
+     'sách chưa có, không bịa ra trang.', 'Quét nốt số trang còn thiếu rồi nạp lại những cuốn đó.'],
+    [f'Mục lục gõ tay trong books.py mới có {N_COURSE} môn-lớp trên {N_BOOKS} cuốn. Những cuốn chưa có mục lục '
+     'thì lộ trình học phải đoán bằng tìm kiếm, kém chính xác hơn là chép từ mục lục sách.',
+     'Nhập nốt mục lục các cuốn còn lại, mỗi cuốn khoảng 30 phút.'],
     ['OCR còn đọc sai một số công thức và hình vẽ.', 'Soát lại chữ theo từng trang, lưu kèm ảnh hình vẽ để Gemini nhìn trực tiếp.'],
+    ['Câu trả lời của AI không tất định: cùng một câu hỏi, có lần Mimo gắn số trích dẫn, có lần không. '
+     'Nhóm hỏi lại một câu ba lần thì hai lần có nguồn, một lần không.',
+     'Ghi lại những câu hay bị sót nguồn, nhắc thẳng trong câu lệnh; về lâu dài lưu sẵn câu trả lời cho các câu hay gặp.'],
     [f'Dùng gói Gemini miễn phí nên có lúc quá tải; trả lời mất khoảng {vn(lat_med)} giây.', 'Lưu sẵn câu trả lời cho câu hỏi hay gặp, rút gọn prompt.'],
     [f'Mới thử trong nhóm ({n_users} tài khoản, {n_questions} câu hỏi).', 'Cho 1 đến 2 lớp dùng thử, làm phiếu khảo sát và so điểm trước, sau.'],
     ['Luyện tập mới có trắc nghiệm, chưa chấm được bài tự luận viết tay.', 'Thêm câu điền đáp án; chụp bài làm để Mimo nhận xét từng bước.'],

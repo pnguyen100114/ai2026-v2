@@ -11,7 +11,7 @@ $root = Split-Path -Parent $PSScriptRoot
 if ($Docx) {
     $docx = [System.IO.Path]::GetFullPath((Join-Path $root $Docx))
 } else {
-    $docx = Join-Path $root 'bao-cao\Ho_so_du_an_Gia_Su_AI_Mimo_v2.docx'
+    $docx = Join-Path $root 'bao-cao\Ho_so_du_an_Gia_Su_AI_Mimo_v3.docx'
 }
 $pdf = [System.IO.Path]::ChangeExtension($docx, '.pdf')
 
