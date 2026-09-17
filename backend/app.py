@@ -285,6 +285,10 @@ def health() -> dict[str, Any]:
     rag_status['embedding_model'] = os.getenv('EMBEDDING_MODEL') or 'gemini-embedding-001'
     rag_status['embedding_dimension'] = int(os.getenv('EMBEDDING_DIMENSION', '1536'))
     rag_status['gemini_key'] = bool(GEMINI_API_KEY)
+    # Hai ngưỡng này quyết định câu trả lời có trích dẫn hay không, mà từ ngoài thì không có
+    # cách nào biết bản đang chạy dùng số nào - đã mất một lần dò mò vì đúng chuyện đó.
+    rag_status['score_threshold'] = RAG_SCORE_THRESHOLD
+    rag_status['source_min_score'] = CHAT_SOURCE_MIN_SCORE
 
     return {'status': 'ok', 'service': 'Gia Su AI v2 backend', 'rag': rag_status}
 
