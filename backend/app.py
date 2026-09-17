@@ -252,6 +252,33 @@ def health() -> dict[str, Any]:
     return {'status': 'ok', 'service': 'Gia Su AI v2 backend', 'rag': rag_status}
 
 
+@app.get('/api/health/probe')
+def health_probe(user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
+    """Chạy thật một lần tìm kiếm SGK rồi trả về đúng câu lỗi nếu hỏng.
+
+    /api/health chỉ nói kho có mở được không. Nó không nói được vì sao mọi câu hỏi trả về
+    "Mimo chưa mở được sách giáo khoa": lỗi thật bị nuốt trong chat/stream và chỉ hiện ở
+    log của Render. Endpoint này gọi đúng hàm mà câu hỏi dùng và đưa lỗi ra ngoài.
+
+    Bắt buộc đăng nhập vì mỗi lần gọi là một lượt embedding tính vào quota Gemini.
+    """
+    try:
+        matches = search_knowledge('hằng đẳng thức đáng nhớ', subject='Toán', grade=8, top_k=3)
+    except Exception as exc:
+        logger.exception('health probe: tìm kiếm SGK thất bại')
+        return {
+            'ok': False,
+            'error_type': type(exc).__name__,
+            'error': str(exc)[:900],
+        }
+    return {
+        'ok': True,
+        'matches': len(matches),
+        'top_score': round(matches[0]['score'], 3) if matches else None,
+        'top_source': matches[0]['source'] if matches else None,
+    }
+
+
 def _gemini_contents(prompt: str, request: ChatRequest) -> Any:
     if not request.image_data:
         return prompt
