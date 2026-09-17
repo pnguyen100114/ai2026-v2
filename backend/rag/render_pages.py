@@ -43,9 +43,17 @@ load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / '.env')
 
 DATA_DIR = Path(__file__).resolve().parent.parent / 'data'
 
-# 1.0x ≈ 96 DPI: chữ SGK vẫn đọc rõ khi phóng to, mà cả bộ đo được 633 MB nên vừa gói Supabase
-# miễn phí (1 GB). Đổi hai số này thì phải chạy lại với --force.
-RENDER_SCALE = float(os.getenv('PAGE_RENDER_SCALE', '1.0'))
+# Nhắm CHIỀU RỘNG ĐÍCH, không nhân theo khổ trang.
+#
+# Bản trước dùng hệ số nhân (PAGE_RENDER_SCALE=1.0), nhưng khổ trang của 29 bản scan chênh
+# nhau 5 lần: TOAN8-Tap1 chỉ 340pt còn TA6-TAP2 tới 1727pt. Nhân 1.0 nên quyển Toán 8 ra ảnh
+# 341x454 pixel - mở lên chữ mờ không đọc được - trong khi quyển Tiếng Anh ra 1727px thừa thãi.
+# Đường thumbnail bên dưới vốn đã tính đúng kiểu này; chỉ đường ảnh đầy đủ là thiếu.
+#
+# Đo thật trên cả 3.609 trang: 900px = 471 MB, 1100px = 621 MB, 1300px = 776 MB. Chọn 1100px
+# vì chữ SGK đọc rõ mà vẫn vừa gói Supabase miễn phí 1 GB (kể cả phần thumbnail ~75 MB).
+# Đổi số này thì phải chạy lại với --force.
+RENDER_WIDTH = int(os.getenv('PAGE_RENDER_WIDTH', '1100'))
 RENDER_QUALITY = int(os.getenv('PAGE_RENDER_QUALITY', '72'))
 # Must match SOURCE_THUMB_WIDTH in app.py: the same thumbnail used to sit under every answer.
 THUMB_WIDTH = 320
@@ -59,13 +67,25 @@ MAX_PENDING = UPLOAD_WORKERS * 4
 
 def render_page(page: pymupdf.Page, thumb: bool) -> bytes:
     if thumb:
-        scale = THUMB_WIDTH / page.rect.width
-        quality = THUMB_QUALITY
+        width, quality = THUMB_WIDTH, THUMB_QUALITY
     else:
-        scale = RENDER_SCALE
-        quality = RENDER_QUALITY
+        # Chặn trên bằng chính độ phân giải của bản scan nhúng trong trang. Render rộng hơn
+        # số đó chỉ là nội suy: file to lên mà chữ không nét thêm một chút nào.
+        width, quality = min(RENDER_WIDTH, _native_width(page) or RENDER_WIDTH), RENDER_QUALITY
+
+    scale = width / page.rect.width
     pixmap = page.get_pixmap(matrix=pymupdf.Matrix(scale, scale), alpha=False)
     return pixmap.tobytes('jpg', jpg_quality=quality)
+
+
+def _native_width(page: pymupdf.Page) -> int:
+    """Chiều rộng (pixel) của ảnh scan lớn nhất nhúng trong trang; 0 nếu trang toàn chữ vector.
+
+    get_images trả (xref, smask, width, height, ...) nên đọc được kích thước mà không phải
+    giải nén ảnh ra.
+    """
+    widths = [image[2] for image in page.get_images(full=True) if image[2]]
+    return max(widths) if widths else 0
 
 
 def _drain(pending: set, limit: int, failures: list[str]) -> set:
@@ -151,7 +171,7 @@ def main() -> None:
         print('Không có file PDF nào trong backend/data.')
         return
 
-    print(f'{len(pdf_files)} cuốn sách · render {RENDER_SCALE}x chất lượng {RENDER_QUALITY}'
+    print(f'{len(pdf_files)} cuốn sách · render rộng tối đa {RENDER_WIDTH}px chất lượng {RENDER_QUALITY}'
           + (' · CHẠY THỬ, không upload' if dry_run else f' · bucket "{page_store.PAGE_BUCKET}"'))
 
     totals = [0, 0, 0]
