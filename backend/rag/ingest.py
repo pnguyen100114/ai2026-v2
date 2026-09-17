@@ -116,14 +116,52 @@ WATERMARK_PATTERNS = [
     r"\bday-va-hoc\b",
 ]
 
+# TOAN8-Tap1.pdf mang một watermark bị xoay, nên pypdf đọc ra thành rác thay vì thành chữ:
+# mỗi trang mở đầu bằng "-va-hoc/", vài dòng trống, rồi một khối như "2S 9S 8 < L4) I" và
+# "IIE159Iq NI)! 20U-EA-Ätp/u103". Rác này đổi theo từng trang ("2S 9S 0", "IIE1291q"...)
+# nên không thể bắt bằng danh sách chuỗi cố định ở trên - phải cắt theo hình dạng.
+#
+# Chỉ cắt khi trang mở đầu ĐÚNG bằng chữ ký dưới đây. Bản đầu tiên không khoá điều kiện này
+# và nó ăn mất "CHƯƠNG I - MỞ ĐẦU" ở 1.399 chunk của 28 quyển khác.
+WATERMARK_HEADER = re.compile(r"^\s*\S*-va-hoc/")
+
+# Dòng có từ 3 "từ thật" trở lên thì là nội dung sách, dừng cắt ở đó.
+_REAL_WORD = re.compile(r"[A-Za-zÀ-ỹ]{3,}")
+
+# Trần số dòng được cắt, để một trang lạ không bị xoá sạch.
+WATERMARK_HEADER_MAX_LINES = 25
+
 # A page holding less than this many real characters is a cover, a photo or watermark-only.
 MIN_PAGE_CHARS = int(os.getenv("MIN_PAGE_CHARS", "120"))
+
+
+def strip_watermark_header(text):
+    """Bỏ khối rác ở đầu trang của những bản scan có watermark bị xoay (xem WATERMARK_HEADER)."""
+    if not WATERMARK_HEADER.match(text):
+        return text
+
+    lines = text.split("\n")
+    index = 0
+    while (
+        index < min(len(lines), WATERMARK_HEADER_MAX_LINES)
+        and len(_REAL_WORD.findall(lines[index])) < 3
+    ):
+        index += 1
+
+    # Cắt hết cả trang thì thà giữ nguyên còn hơn trả về rỗng.
+    return "\n".join(lines[index:]) if index < len(lines) else text
 
 
 def strip_watermarks(text):
     """Remove re-sharing watermarks so they never reach an embedding."""
     for pattern in WATERMARK_PATTERNS:
         text = re.sub(pattern, " ", text, flags=re.IGNORECASE)
+
+    # PHẢI chạy sau vòng lặp trên, không phải trước. Trang của TOAN8-Tap1 mở đầu bằng
+    # "https://blogtailieu.com/day -va-hoc/" - có dấu cách giữa "day" và "-va-hoc". Mẫu
+    # URL ở trên dừng ở dấu cách nên để sót đúng mẩu "-va-hoc/", và chính mẩu đó mới là
+    # chữ ký mà WATERMARK_HEADER tìm.
+    text = strip_watermark_header(text)
 
     return re.sub(r"[ \t]+", " ", text)
 
