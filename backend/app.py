@@ -4,6 +4,7 @@ import os
 import base64
 import json
 import logging
+import re
 import sys
 import time
 from pathlib import Path
@@ -97,15 +98,42 @@ MAX_JSON_OUTPUT_TOKENS = int(os.getenv('MAX_JSON_OUTPUT_TOKENS', '4096'))
 QUOTA_COOLDOWN_SECONDS = 300
 # Ngưỡng để một đoạn sách được HIỆN RA làm nguồn trích dẫn, khắt khe hơn ngưỡng đưa vào prompt.
 #
-# Số đo thật trên kho hiện tại (16 mẫu, xem bao-cao/bo-test/nguong.md):
-#   - lời chào / lạc đề: cao nhất 0.693 ("Em cảm ơn nhiều ạ")
-#   - câu hỏi thật có trong sách: thấp nhất 0.702 ("Từ ngữ địa phương là gì?")
-# Nên 0.70 là chỗ duy nhất tách sạch hai nhóm. Mức cũ 0.68 nằm DƯỚI đỉnh nhiễu, tức lời cảm
-# ơn cũng được gắn một trang SGK - đúng kiểu bịa nguồn mà sản phẩm này hứa không làm.
+# Đo thật trên kho hiện tại (bao-cao/bo-test/do_nguong.py) thì điểm của lời chào và điểm của
+# câu hỏi thật CHỒNG LÊN NHAU, không ngưỡng nào tách được:
 #
-# Khoảng tách chỉ 0.009 nên đừng coi đây là con số chắc chắn: thêm sách mới thì phải đo lại
-# bằng bao-cao/bo-test/do_nguong.py chứ không đoán.
-CHAT_SOURCE_MIN_SCORE = float(os.getenv('CHAT_SOURCE_MIN_SCORE', str(max(RAG_SCORE_THRESHOLD, 0.70))))
+#     0.686  "Hai tam giác bằng nhau theo trường hợp cạnh - góc - cạnh khi nào?"  ← câu thật
+#     0.691  "Ok em hiểu rồi"                                                     ← lời chào
+#     0.693  "Em cảm ơn nhiều ạ"                                                  ← lời chào
+#     0.698  "Phân tích x² - 6x + 9 thành nhân tử"                                ← câu thật
+#
+# Đặt 0.68 thì lời cảm ơn cũng được gắn một trang SGK; đặt 0.70 thì hai câu hỏi thật mất
+# trích dẫn. Nên ngưỡng không phải là chỗ để giải bài toán này - phải xem tin nhắn có phải
+# CÂU HỎI HỌC TẬP hay không trước đã (xem _la_cau_hoi_hoc_tap). Có cổng đó rồi thì ngưỡng
+# hạ về 0.65 được, vừa giữ trích dẫn cho câu thật vừa không bịa nguồn cho lời chào.
+CHAT_SOURCE_MIN_SCORE = float(os.getenv('CHAT_SOURCE_MIN_SCORE', str(max(RAG_SCORE_THRESHOLD, 0.65))))
+
+# Dấu hiệu một tin nhắn là câu hỏi học tập chứ không phải chào hỏi, cảm ơn hay tán gẫu.
+# Gồm từ để hỏi và động từ ra đề - "Phân tích x² - 6x + 9" không có dấu hỏi nào nhưng vẫn là
+# một câu hỏi bài.
+_TU_HOI_BAI = re.compile(
+    r'\?|\b('
+    r'gì|nào|sao|mấy|bao nhiêu|đâu|ai|'
+    r'phân tích|so sánh|tính|giải|chứng minh|nêu|trình bày|phát biểu|định nghĩa|'
+    r'khai triển|rút gọn|tìm|vẽ|kể|viết|đặt câu|cho ví dụ|ví dụ|khác nhau|nghĩa là'
+    r')\b',
+    re.IGNORECASE)
+
+
+def _la_cau_hoi_hoc_tap(message: str) -> bool:
+    """Tin nhắn này có đáng gắn trích dẫn SGK không.
+
+    "Em cảm ơn nhiều ạ" vẫn khớp kha khá với một trang sách bất kì (0.69), nên nếu chỉ xét
+    điểm thì Mimo sẽ gắn cho nó một trang SGK - tức bịa nguồn. Chặn ở đây rẻ và chắc hơn
+    nhiều so với việc chỉnh ngưỡng.
+    """
+    return bool(_TU_HOI_BAI.search(message or ''))
+
+
 if GEMINI_API_KEY:
     try:
         gemini_client = genai.Client(api_key=GEMINI_API_KEY)
@@ -621,9 +649,11 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     lesson_pages = [item for item in _lesson_pages(subject, int(grade), topic) if _page_key(item) not in seen_pages][:LESSON_CONTEXT_PAGES] if topic and not retrieval_error else []
     context_matches = sorted(matches[:3] + lesson_pages, key=lambda item: float(item.get('score', 0.0)), reverse=True)
     unique_matches: dict[tuple[Any, Any], dict[str, Any]] = {}
-    for item in context_matches:
-        if float(item.get('score', 0.0)) >= CHAT_SOURCE_MIN_SCORE:
-            unique_matches.setdefault(_page_key(item), item)
+    # Lời chào và lời cảm ơn không được gắn trang sách, dù điểm tương đồng có cao tới đâu.
+    if _la_cau_hoi_hoc_tap(message):
+        for item in context_matches:
+            if float(item.get('score', 0.0)) >= CHAT_SOURCE_MIN_SCORE:
+                unique_matches.setdefault(_page_key(item), item)
     # Every citable passage gets a number, in the same order as the `sources` sent to the client,
     # so "[n]" in the answer points at sources[n-1] and at the passage labelled [n] in the prompt.
     cited_matches = list(unique_matches.values())
