@@ -667,6 +667,28 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         ' | '.join(filter(None, [f"[{number}] {item.get('book_title') or item.get('source') or 'SGK'}", item.get('lesson_title'), f"trang {item.get('page') or 'chưa rõ'}"]))
         for number, item in enumerate(cited_matches, start=1)
     )
+
+    # Học sinh hỏi một BÀI HỌC mà kho không có đoạn nào đủ gần: phải nói thẳng là sách của em
+    # không có bài đó. Nếu không, mô hình lấy trí nhớ của chính nó ra giảng, và cả lời hứa "chỉ
+    # dạy theo sách giáo khoa" sụp ngay tại đó - học sinh không có cách nào biết câu trả lời
+    # này không kiểm chứng được.
+    #
+    # Không áp cho BÀI TẬP: một bài luyện tập hiếm khi có nguyên văn trong sách, nhưng vẫn giải
+    # được bằng khái niệm trong sách, nên vẫn giúp bình thường (xem luật "Không từ chối bài
+    # nâng cao" bên dưới).
+    thieu_sach = ''
+    if _la_cau_hoi_hoc_tap(message) and not cited_matches and not risk:
+        thieu_sach = (
+            '\n\nKHO SÁCH KHÔNG CÓ BÀI NÀY - VẪN GIÚP EM, NHƯNG PHẢI NÓI RÕ\n'
+            f'Không tìm được đoạn nào trong sách {subject} lớp {grade} khớp với câu hỏi này.\n'
+            '- Nếu em hỏi một KHÁI NIỆM hoặc BÀI HỌC: vẫn giải thích đầy đủ, nhưng MỞ ĐẦU bằng đúng '
+            f'một câu ngắn cho em biết phần này không có trong sách {subject} lớp {grade} mà Mimo đang '
+            'có, và nếu đoán được thì nói bài đó thuộc lớp nào. Sau câu đó thì dạy bình thường.\n'
+            '- Nếu em nhờ giải một BÀI TẬP: hướng dẫn bình thường bằng khái niệm nền tảng của lớp em, '
+            'không cần câu mở đầu đó - bài tập vốn không có nguyên văn trong sách.\n'
+            '- Không gắn [n] cho bất cứ câu nào trong câu trả lời này, vì không có nguồn nào để trích.'
+        )
+
     history = [item for item in (request.messages or []) if (item.get('content') or '').strip()]
     # The photo itself is only sent in the turn it was attached; later turns see the problem Gemini copied out of it.
     previous = [
@@ -724,7 +746,7 @@ SAU KHI TRẢ LỜI XONG, xuống dòng và viết đúng một dòng dạng:
 Context SGK:
 {context_text or f'Chưa có SGK phù hợp trong hệ thống: vẫn dạy bình thường theo kiến thức chuẩn của chương trình GDPT 2018 môn {subject} lớp {grade}, không trích dẫn tên sách hay số trang; câu nào không chắc thì nói thật.'}
 Nguồn được phép trích dẫn:
-{source_text or 'Không có nguồn đạt ngưỡng; không tự tạo tên sách hoặc số trang.'}
+{source_text or 'Không có nguồn đạt ngưỡng; không tự tạo tên sách hoặc số trang.'}{thieu_sach}
 Những lần trước em học bài này (ở các cuộc trò chuyện khác):
 {chr(10).join(earlier_lesson_turns) if earlier_lesson_turns else 'Chưa có.'}
 Lịch sử hội thoại gần đây:

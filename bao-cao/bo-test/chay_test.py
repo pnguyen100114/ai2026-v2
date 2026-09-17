@@ -113,15 +113,20 @@ def cham(mong_doi: str, mon: str, lop: int, ket: dict) -> tuple[bool, str]:
     if mong_doi == 'khong_co_trong_sach':
         if nguon:
             return False, f'bịa {len(nguon)} trích dẫn cho bài không có trong sách'
-        # Không bịa nguồn mới là một nửa. Nửa còn lại: có NÓI RA là sách không có bài này
-        # không, hay lặng lẽ trả lời bằng trí nhớ của model. Đây chỉ là dò từ khoá, không
-        # chắc chắn — nên ca nào cũng cần người đọc xác nhận lại.
+        # Không bịa nguồn mới là một nửa. Nửa còn lại: Mimo VẪN dạy (không từ chối, vì kiến
+        # thức vừa sức lớp em) nhưng phải BÁO cho em biết phần này không có trong sách -
+        # giao diện không hiện gì khi thiếu nguồn, nên câu báo đó là tín hiệu duy nhất em có.
+        #
+        # Dò từ khoá thì không chắc chắn: một câu báo diễn đạt kiểu khác sẽ bị chấm nhầm là
+        # trượt. Nên ca nào cũng phải người đọc xác nhận lại, xem cột nguoi_cham_kien_thuc.
         loi = (ket.get('noi_dung') or '').lower()
         dau_hieu = ('không có trong', 'chưa có', 'không nằm trong', 'không thuộc',
-                    'không tìm thấy', 'sách của em', 'chương trình lớp', 'thuộc chương trình')
+                    'không tìm thấy', 'sách của em', 'chương trình lớp', 'thuộc chương trình',
+                    'mimo có', 'mimo đang có', 'tài liệu', 'sách mimo', 'lớp 9', 'lớp 10',
+                    'lớp 11', 'lớp 12', 'chương trình cũ')
         if any(d in loi for d in dau_hieu):
-            return True, 'nói rõ sách không có bài này'
-        return False, 'trả lời bằng kiến thức ngoài sách, không báo là sách không có'
+            return True, 'có báo sách không có bài này'
+        return False, 'dạy như thể sách có bài này, không báo gì'
 
     if mong_doi == 'hoi_lai':
         if nguon:
