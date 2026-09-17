@@ -152,9 +152,16 @@ Sau khi đổi biến môi trường, cần khởi động lại `npm run dev`.
 9. Mở Tư thế học tập để bật camera nhận diện tự động.
 10. Mở Tiến độ để xem XP, chuỗi học, phiên Pomodoro và lịch sử.
 
-### Nạp dữ liệu curriculum vào Pinecone
+### Nạp dữ liệu curriculum vào kho vector
 
-Roadmap và AI Tutor cần vector dữ liệu trong Pinecone. Đặt các PDF SGK vào thư mục `backend/data`.
+Roadmap và AI Tutor cần vector SGK. Kho vector nằm trong chính database của dự án — bảng
+`sgk_chunks` trong `DATABASE_URL`, dùng `pgvector` khi là Postgres, dùng file SQLite
+`backend/local.db` khi chạy local. Không có dịch vụ ngoài và không có key nào phải đăng ký.
+Đặt các PDF SGK vào thư mục `backend/data`.
+
+> Nạp vào database nào là do `DATABASE_URL` lúc chạy lệnh quyết định. Để trống → nạp vào
+> SQLite ở máy. Muốn nạp lên production thì đặt `DATABASE_URL` trỏ vào Postgres đó rồi chạy
+> đúng lệnh dưới đây; vector đã có trong cache nên lần nạp thứ hai gần như không tốn gì.
 
 **Bước 1 — kiểm tra PDF trước khi nạp.** Nhiều bản SGK tải trên mạng là scan ảnh: người đọc được nhưng máy không trích được chữ nào. Nạp loại này chỉ tốn quota và làm bẩn kết quả tìm kiếm.
 
@@ -172,7 +179,7 @@ Quyển nào báo `SCAN ẢNH` thì phải tìm bản PDF khác. Cách tự ki�
 .venv\Scripts\python.exe -m backend.rag.ingest --force          # nạp lại cả quyển đã có
 ```
 
-Nạp theo từng quyển và ghi nhận vào `backend/rag/.ingest_manifest.json`, nên dừng giữa chừng (hết quota, mất mạng, Ctrl+C) vẫn giữ nguyên các quyển đã xong. Mọi vector tạo ra đều được lưu vào `backend/rag/.embed_cache.sqlite3`, vì vậy chạy lại gần như không tốn quota.
+Nạp theo từng quyển và ghi nhận vào `backend/rag/.ingest_manifest.json`, nên dừng giữa chừng (hết quota, mất mạng, Ctrl+C) vẫn giữ nguyên các quyển đã xong. Lệnh còn hỏi thẳng kho xem quyển đó đã có chưa, nên nạp sang một database mới sẽ nạp lại đầy đủ chứ không bị manifest cũ làm bỏ qua. Mọi vector tạo ra đều được lưu vào `backend/rag/.embed_cache.sqlite3`, vì vậy chạy lại gần như không tốn quota.
 
 Gói miễn phí Gemini giới hạn **100 text/phút** (mỗi chunk tính là 1 request), nên khoảng 100 chunk mỗi phút. Bật billing thì tăng `EMBED_RPM` trong `.env`.
 
@@ -182,7 +189,7 @@ Tên file PDF cần chứa môn và lớp, ví dụ `TOAN8-Tap1.pdf`, `KHTN 7.pd
 Invoke-WebRequest http://127.0.0.1:8000/api/health | Select-Object -ExpandProperty Content
 ```
 
-Trường `rag.vectors` phải lớn hơn `0`. Sau khi nạp xong, khởi động lại backend rồi tải lại trang roadmap.
+Trường `rag.vectors` phải lớn hơn `0`, và `rag.backend` cho biết đang tìm kiếm bằng `pgvector` hay `memory`. Sau khi nạp xong, khởi động lại backend rồi tải lại trang roadmap.
 
 Dữ liệu demo được lưu trong `localStorage` của trình duyệt, chưa dùng cơ sở dữ liệu thật.
 

@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@pinecone-database/pinecone": "^9.0.0",
     "katex": "^0.18.7",
     "lucide-react": "^1.43.0",
     "react": "^19.2.8",

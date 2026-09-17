@@ -221,12 +221,8 @@ def source_page(source: str = Query(..., min_length=1), page: int = Query(..., g
 def health() -> dict[str, Any]:
     rag_status: dict[str, Any] = {'configured': True}
     try:
-        from backend.rag.retriever import index, PINECONE_NAMESPACE
-        stats = index.describe_index_stats() if index is not None else {}
-        rag_status.update({
-            'namespace': PINECONE_NAMESPACE or 'default',
-            'vectors': int(stats.get('total_vector_count', 0)),
-        })
+        from backend.rag import vector_store
+        rag_status.update(vector_store.stats())
     except Exception as exc:
         rag_status = {'configured': False, 'error': str(exc)}
     return {'status': 'ok', 'service': 'Gia Su AI v2 backend', 'rag': rag_status}
@@ -738,7 +734,7 @@ def _ai_roadmap(user: dict[str, Any], subject: str, grade: int) -> dict[str, Any
     if cached:
         return cached
     if gemini_client is None:
-        raise HTTPException(status_code=404, detail='Không tìm thấy dữ liệu curriculum phù hợp trong RAG/Pinecone.')
+        raise HTTPException(status_code=404, detail='Không tìm thấy dữ liệu curriculum phù hợp trong kho RAG.')
     check_chat_rate(user)
     try:
         response = _generate_content(

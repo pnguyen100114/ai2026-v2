@@ -262,7 +262,13 @@ def test_roadmap_by_id_parses_subject_and_grade(client, app_mod, monkeypatch, ro
 def test_health(client):
     body = client.get('/api/health').json()
     assert body['status'] == 'ok'
-    assert body['rag'] == {'configured': True, 'namespace': 'default', 'vectors': 0}
+    rag = body['rag']
+    assert rag['configured'] is True
+    # Không so cả dict: 'vectors' là số thật của database đang chạy, và stats() còn được
+    # thêm trường theo thời gian. Chỉ khoá lại những thứ mà frontend/monitor thực sự đọc.
+    assert rag['backend'] in {'pgvector', 'memory'}
+    assert rag['vector_index'] in {'exact', 'hnsw'}
+    assert isinstance(rag['vectors'], int)
 
 
 @pytest.fixture

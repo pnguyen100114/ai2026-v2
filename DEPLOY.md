@@ -27,9 +27,11 @@ Xem dữ liệu local: mở `backend/local.db` bằng [DB Browser for SQLite](ht
 
 ```
 GitHub repo ──► Vercel   (frontend React)   VITE_API_BASE_URL
-            └─► Render   (backend FastAPI)  GEMINI_*, PINECONE_*, DATABASE_URL, AUTH_SECRET, ALLOWED_ORIGINS
+            └─► Render   (backend FastAPI)  GEMINI_API_KEY, DATABASE_URL, AUTH_SECRET, ALLOWED_ORIGINS
                               │
                               ├── Postgres miễn phí (Supabase hoặc Neon)
+                              │     ├── tài khoản, chat, quiz
+                              │     └── kho vector SGK (bảng sgk_chunks, pgvector)
                               └── Supabase Storage (ảnh trang SGK render sẵn)
 ```
 
@@ -57,11 +59,10 @@ Repo đã có sẵn [render.yaml](render.yaml) nên **không phải gõ tay tên
    | `DATABASE_URL` | chuỗi Session pooler ở bước 1 |
    | `SUPABASE_URL` · `SUPABASE_SERVICE_KEY` | `backend/.env` (xem bước 3 bên dưới) |
    | `GEMINI_API_KEY` | `backend/.env` |
-   | `PINECONE_API_KEY` · `PINECONE_INDEX` | `backend/.env` |
 
 4. Mở `https://<ten-backend>.onrender.com/api/health`, phải thấy `"status": "ok"` và `"vectors"` lớn hơn 0.
 
-`render.yaml` cố ý **không** khai `PINECONE_NAMESPACE`, `EMBEDDING_MODEL`, `EMBEDDING_DIMENSION`: mặc định trong code đã khớp với lúc nạp sách, khai thêm rồi điền số khác là hỏng toàn bộ tìm kiếm SGK. `BOOK_PAGE_OFFSETS` thì đã bị xoá hẳn khỏi code: độ lệch trang của từng quyển nằm trong [backend/rag/books.py](backend/rag/books.py), muốn chỉnh thì sửa ở đó. Nếu service của bạn được tạo từ bản `render.yaml` cũ và còn biến này trên dashboard, **vào Environment xoá nó đi** — một giá trị không phải JSON hợp lệ ở đây từng làm backend chết ngay lúc khởi động.
+Không còn biến `PINECONE_*` nào: kho vector SGK nằm trong chính `DATABASE_URL` (bảng `sgk_chunks`). Service tạo từ bản `render.yaml` cũ mà còn các biến đó trên dashboard thì xoá đi cho gọn — code không đọc nữa. `render.yaml` cũng cố ý **không** khai `EMBEDDING_MODEL`, `EMBEDDING_DIMENSION`: mặc định trong code đã khớp với lúc nạp sách, khai thêm rồi điền số khác là hỏng toàn bộ tìm kiếm SGK. `BOOK_PAGE_OFFSETS` thì đã bị xoá hẳn khỏi code: độ lệch trang của từng quyển nằm trong [backend/rag/books.py](backend/rag/books.py), muốn chỉnh thì sửa ở đó. Nếu service của bạn được tạo từ bản `render.yaml` cũ và còn biến này trên dashboard, **vào Environment xoá nó đi** — một giá trị không phải JSON hợp lệ ở đây từng làm backend chết ngay lúc khởi động.
 
 Gói free của Render "ngủ" sau 15 phút không có truy cập, nên lần mở đầu tiên mất khoảng 30–50 giây. Build lỗi vì Python thì sửa `PYTHON_VERSION` trong `render.yaml` thành một phiên bản Render liệt kê rồi push lại.
 

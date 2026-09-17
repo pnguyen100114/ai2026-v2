@@ -6,45 +6,38 @@ from typing import Any, Dict, List, Optional
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from pinecone import Pinecone
 
 try:
+    from backend.rag import vector_store
     from backend.rag.books import COURSES, canonical_subject, course_book, enrich_match, find_book, find_course, subject_variants
 except ImportError:  # pragma: no cover
+    from rag import vector_store
     from rag.books import COURSES, canonical_subject, course_book, enrich_match, find_book, find_course, subject_variants
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
-PINECONE_INDEX = os.getenv('PINECONE_INDEX')
-PINECONE_NAMESPACE = os.getenv('PINECONE_NAMESPACE') or ''
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'gemini-embedding-001')
 EMBEDDING_DIMENSION = int(os.getenv('EMBEDDING_DIMENSION', '1536'))
 RAG_SCORE_THRESHOLD = float(os.getenv('RAG_SCORE_THRESHOLD', '0.60'))
 
-# Pinecone's free tier meters READS (1 GB/month), and every match carries its full chunk text
-# (~2 KB). A single uncapped top_k=100 curriculum query costs ~150 KB, so a few thousand of
-# them exhaust the month. Cap every query and cache the expensive one.
+# Kho vector này nằm trong DATABASE_URL của chính dự án (xem rag/vector_store.py), không
+# còn Pinecone nên đọc bao nhiêu cũng 0 đồng. Trần top_k giữ lại vì một lý do khác: mỗi
+# match kéo theo ~2 KB text đi vào prompt gửi Gemini, và token đầu vào thì vẫn mất tiền.
 RAG_MAX_TOP_K = int(os.getenv('RAG_MAX_TOP_K', '24'))
 CURRICULUM_CACHE_TTL = float(os.getenv('CURRICULUM_CACHE_TTL', '3600'))
 
 _curriculum_cache: Dict[Any, Any] = {}
 
-if not PINECONE_API_KEY or not PINECONE_INDEX:
-    raise RuntimeError('Pinecone chưa được cấu hình trong backend/.env')
-
 if not GEMINI_API_KEY:
     raise RuntimeError('GEMINI_API_KEY chưa được cấu hình trong backend/.env')
 
 try:
-    pc = Pinecone(api_key=PINECONE_API_KEY)
-    index = pc.Index(PINECONE_INDEX)
+    STORE_BACKEND = vector_store.init_store()
+    _store_error = None
 except Exception as exc:  # pragma: no cover
-    index = None
-    _pinecone_error = exc
-else:
-    _pinecone_error = None
+    STORE_BACKEND = None
+    _store_error = exc
 
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
@@ -127,24 +120,17 @@ def _record_to_output(match: Dict[str, Any]) -> Dict[str, Any]:
 def search_knowledge(query: str, subject: Optional[str] = None, grade: Optional[int] = None, top_k: int = 5, volume: Optional[int] = None, extra_filter: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     if not query or not str(query).strip():
         return []
-    if index is None:
-        raise RuntimeError(f'Không thể kết nối Pinecone: {_pinecone_error}')
+    if STORE_BACKEND is None:
+        raise RuntimeError(f'Không mở được kho vector SGK trong database: {_store_error}')
 
     query_vector = create_embedding(str(query))
     if not query_vector:
         raise RuntimeError('Embedding query thất bại. Vui lòng kiểm tra GEMINI_API_KEY hoặc mô hình embedding.')
 
     query_filter = _make_filter(subject=subject, grade=grade, volume=volume, extra=extra_filter)
-    # Hard cap: every extra match is ~2 KB off the metered read budget.
+    # Trần top_k: mỗi match thêm ~2 KB vào prompt gửi Gemini, và token đầu vào vẫn mất tiền.
     effective_top_k = max(1, min(int(top_k), RAG_MAX_TOP_K))
-    result = index.query(
-        vector=query_vector,
-        top_k=effective_top_k,
-        include_metadata=True,
-        filter=query_filter,
-        namespace=PINECONE_NAMESPACE,
-    )
-    matches = result.get('matches', []) if hasattr(result, 'get') else getattr(result, 'matches', [])
+    matches = vector_store.search(query_vector, top_k=effective_top_k, query_filter=query_filter)
 
     filtered = []
     for match in matches:
@@ -174,10 +160,10 @@ def search_topic(topic: str, subject: Optional[str] = None, grade: Optional[int]
 
 
 def _curriculum_from_catalog(subject: Any, grade: Any) -> List[Dict[str, Any]]:
-    """The table of contents as curriculum rows, with no Pinecone read at all.
+    """The table of contents as curriculum rows, with no vector search at all.
 
     books.py already holds every chapter, lesson and printed page copied from each book's
-    MỤC LỤC, which is both more accurate than what a similarity search recovers and free.
+    MỤC LỤC, which is both more accurate than what a similarity search recovers and cheaper.
     """
     course = find_course(subject, grade)
     if course is None:
@@ -213,7 +199,7 @@ def get_curriculum(subject: Optional[str] = None, grade: Optional[int] = None, t
     subject_filter = str(subject).strip() if subject else None
     grade_filter = int(grade) if grade is not None else None
 
-    # Books we have a catalog for never touch Pinecone.
+    # Sách đã có mục lục trong books.py thì không cần đụng tới kho vector.
     catalog = _curriculum_from_catalog(subject_filter, grade_filter)
     if catalog:
         return catalog
@@ -308,6 +294,7 @@ def get_curriculum_from_rag(subject: str, grade: int) -> List[Dict[str, Any]]:
 
 __all__ = [
     'RAG_SCORE_THRESHOLD',
+    'STORE_BACKEND',
     'search_knowledge',
     'search_lesson',
     'search_topic',

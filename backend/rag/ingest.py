@@ -9,12 +9,13 @@ import uuid
 from pathlib import Path
 from dotenv import load_dotenv
 from pypdf import PdfReader
-from pinecone import Pinecone
 
 try:
+    from backend.rag import vector_store
     from backend.rag.books import find_book, find_course, lesson_at
     from backend.rag.embeddings import DailyQuotaExhausted, cache_size, create_embeddings
 except ImportError:  # pragma: no cover
+    import vector_store
     from books import find_book, find_course, lesson_at
     from embeddings import DailyQuotaExhausted, cache_size, create_embeddings
 
@@ -25,13 +26,6 @@ except ImportError:  # pragma: no cover
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / '.env')
 
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-PINECONE_INDEX = os.getenv("PINECONE_INDEX")
-
-PINECONE_NAMESPACE = os.getenv(
-    "PINECONE_NAMESPACE"
-) or ""
-
 EMBEDDING_DIMENSION = int(
     os.getenv("EMBEDDING_DIMENSION", "1536")
 )
@@ -41,8 +35,9 @@ EMBEDDING_DIMENSION = int(
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1800"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
 
-# Which books are already on Pinecone. Kept on disk on purpose: the old check ran a Pinecone
-# query per file, and reads are what exhaust the free tier's 1 GB/month egress.
+# Dấu vết những quyển đã nạp: vân tay file, model, dimension, chunk size. Giữ trên đĩa để
+# biết một quyển có cần DỰNG LẠI vector hay không; còn chuyện nó đã nằm trong kho hay chưa
+# thì hỏi thẳng kho (rag/vector_store.py), vì đọc kho của chính mình không mất đồng nào.
 MANIFEST_PATH = Path(
     os.getenv("INGEST_MANIFEST_PATH", "")
     or Path(__file__).resolve().parent / ".ingest_manifest.json"
@@ -50,31 +45,10 @@ MANIFEST_PATH = Path(
 
 
 # ==========================================
-# CHECK ENV
+# KHO VECTOR (trong DATABASE_URL của dự án)
 # ==========================================
 
-if not PINECONE_API_KEY:
-    raise ValueError(
-        "Chưa có PINECONE_API_KEY trong .env"
-    )
-
-if not PINECONE_INDEX:
-    raise ValueError(
-        "Chưa có PINECONE_INDEX trong .env"
-    )
-
-
-# ==========================================
-# PINECONE
-# ==========================================
-
-pc = Pinecone(
-    api_key=PINECONE_API_KEY
-)
-
-index = pc.Index(
-    PINECONE_INDEX
-)
+STORE_BACKEND = vector_store.init_store()
 
 
 # ==========================================
@@ -92,12 +66,12 @@ DATA_DIR = BASE_DIR / "data"
 
 
 # ==========================================
-# SAFE PINECONE ID
+# SAFE ID
 # ==========================================
 
 def make_safe_id(text):
     """
-    Pinecone chỉ cho phép ID chứa ASCII.
+    ID chỉ dùng ASCII cho dễ đọc log và dễ tra tay trong database.
 
     Ví dụ:
     LSĐL_8_1_2_0_abc123
@@ -736,12 +710,16 @@ def create_records(pdf_path):
 
 
 # ==========================================
-# UPLOAD TO PINECONE
+# GHI VÀO KHO VECTOR
 # ==========================================
 
 def upload_records(records):
+    """Tạo embedding rồi ghi thẳng vào bảng sgk_chunks của database dự án.
 
-    # 100 vectors ~ 800 KB, well inside Pinecone's 2 MB request limit.
+    Đa số vector đã nằm sẵn trong .embed_cache.sqlite3 từ lần nạp trước, nên lần chạy này
+    gần như không gọi Gemini và không tốn quota - chỉ là chép 4.765 vector sang chỗ ở mới.
+    """
+
     batch_size = int(os.getenv("UPSERT_BATCH_SIZE", "100"))
 
     total = len(records)
@@ -753,27 +731,11 @@ def upload_records(records):
         total
     )
 
-    for start in range(
+    for start in range(0, total, batch_size):
 
-        0,
+        batch = records[start:start + batch_size]
 
-        total,
-
-        batch_size
-
-    ):
-
-        batch = records[
-            start:start + batch_size
-        ]
-
-        texts = [
-
-            record["text"]
-
-            for record in batch
-
-        ]
+        texts = [record["text"] for record in batch]
 
         print()
 
@@ -781,97 +743,52 @@ def upload_records(records):
             "Gemini đang tạo embedding:",
             start + 1,
             "->",
-            min(
-                start + batch_size,
-                total
-            )
+            min(start + batch_size, total)
         )
 
         # ------------------------------
         # CREATE EMBEDDINGS
         # ------------------------------
 
-        vectors = create_embeddings(
-            texts
-        )
+        vectors = create_embeddings(texts)
 
         if len(vectors) != len(batch):
 
             raise RuntimeError(
-
-                "Số embedding không khớp "
-                "số chunks."
-
+                "Số embedding không khớp số chunks."
             )
 
-        pinecone_vectors = []
+        rows = []
 
-        # ------------------------------
-        # BUILD PINECONE VECTORS
-        # ------------------------------
+        for position, record in enumerate(batch):
 
-        for i, record in enumerate(
-            batch
-        ):
-
-            vector = vectors[i]
+            vector = vectors[position]
 
             if len(vector) != EMBEDDING_DIMENSION:
 
                 raise RuntimeError(
-
-                    f"Embedding dimension sai: "
-
-                    f"{len(vector)}. "
-
-                    f"Expected: "
-
-                    f"{EMBEDDING_DIMENSION}"
-
+                    f"Embedding dimension sai: {len(vector)}. "
+                    f"Expected: {EMBEDDING_DIMENSION}"
                 )
 
-            # Kiểm tra ID
-            safe_id = make_safe_id(
-                record["id"]
-            )
-
-            pinecone_vectors.append({
-
-                "id":
-                    safe_id,
-
-                "values":
-                    vector,
-
-                "metadata":
-                    record["metadata"]
-
+            rows.append({
+                "id": make_safe_id(record["id"]),
+                "values": vector,
+                "metadata": record["metadata"],
             })
 
         # ------------------------------
-        # UPLOAD
+        # UPSERT
         # ------------------------------
 
-        print(
-            "Đang upload vào Pinecone..."
-        )
+        print("Đang ghi vào kho vector...")
 
-        index.upsert(
+        vector_store.upsert(rows)
 
-            vectors=pinecone_vectors,
-
-            namespace=PINECONE_NAMESPACE
-
-        )
+        print("✓ Đã ghi batch")
 
         print(
-            "✓ Đã upload batch"
-        )
-
-        print(
-            f"  Progress: "
-            f"{min(start + batch_size, total)}"
-            f"/{total}"
+            f"  Progress: {min(start + batch_size, total)}/{total}"
         )
 
 
@@ -921,13 +838,19 @@ def file_fingerprint(pdf_path):
 
 
 def already_ingested(pdf_path):
-    """True when the local manifest says this exact PDF is on Pinecone with the current settings.
+    """True khi quyển này đã nằm trong kho vector ĐANG dùng, đúng với cấu hình hiện tại.
 
-    Deliberately reads no data from Pinecone: the previous version ran a query per file, and
-    on the free tier reads are metered (1 GB/month) while writes are not. When that budget ran
-    out every ingest died with 429 before uploading anything.
+    Hỏi thẳng kho chứ không chỉ tin manifest: manifest nằm trên đĩa máy dev, còn kho thì
+    tuỳ DATABASE_URL. Nếu chỉ tin manifest thì lần nạp đầu lên database production sẽ bỏ
+    qua sạch 29 quyển và để kho rỗng. Đọc kho của chính mình không mất phí, khác Pinecone.
     """
-    entry = load_manifest().get(manifest_key(Path(pdf_path).name))
+    name = Path(pdf_path).name
+
+    # Kho rỗng (database mới) thì manifest nói gì cũng không quan trọng: phải nạp lại.
+    if vector_store.count_source(name) == 0:
+        return False
+
+    entry = load_manifest().get(manifest_key(name))
 
     if not entry:
         return False
@@ -958,26 +881,18 @@ def record_ingested(pdf_path, chunk_count):
     save_manifest(manifest)
 
 
-def delete_book_vectors(filename, page_count):
-    """Remove a book's old vectors before re-uploading it.
+def delete_book_vectors(filename, page_count=None):
+    """Xoá vector cũ của một quyển trước khi nạp lại.
 
-    IDs are deterministic (`<book id>-p<page>-c<chunk>`), so they can be deleted without
-    listing anything - deletes are writes, which the free tier does not meter.
+    Xoá theo cột `source` nên quét đúng mọi chunk của quyển đó, kể cả khi lần nạp trước
+    chia chunk kiểu khác và sinh ra id không đoán được.
     """
-    book = find_book(filename)
 
-    if book is None:
-        return
+    removed = vector_store.delete_source(Path(filename).name)
 
-    # Generous upper bound on chunks per page; a smaller chunk_size than today never exceeded this.
-    ids = [
-        make_safe_id(f"{book.id}-p{page}-c{chunk}")
-        for page in range(1, page_count + 1)
-        for chunk in range(0, 24)
-    ]
+    print(f"  Đã xoá {removed} vector cũ của {Path(filename).name}")
 
-    for start in range(0, len(ids), 1000):
-        index.delete(ids=ids[start:start + 1000], namespace=PINECONE_NAMESPACE)
+    return removed
 
 
 # ==========================================
@@ -993,7 +908,7 @@ def main():
     )
 
     print(
-        "       GEMINI + PINECONE RAG"
+        "     NAP SGK VAO KHO VECTOR (RAG)"
     )
 
     print(
@@ -1003,13 +918,9 @@ def main():
     print()
 
     print(
-        "Pinecone Index:",
-        PINECONE_INDEX
-    )
-
-    print(
-        "Namespace:",
-        PINECONE_NAMESPACE
+        "Kho vector:",
+        STORE_BACKEND,
+        f"({vector_store.count()} vector dang co)"
     )
 
     print(
@@ -1044,7 +955,7 @@ def main():
     # ======================================
 
     # python -m backend.rag.ingest "TOAN -TAP 1.pdf"  -> chỉ nạp file đó
-    # python -m backend.rag.ingest --force            -> nạp cả sách đã có trên Pinecone
+    # python -m backend.rag.ingest --force            -> nạp lại cả quyển đã có trong kho
     args = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
     force = "--force" in sys.argv[1:]
 
@@ -1066,7 +977,7 @@ def main():
 
         for path in skipped:
 
-            print("↷ Bỏ qua (đã có trên Pinecone, thêm --force để nạp lại):", path.name)
+            print("↷ Bỏ qua (đã có trong kho, thêm --force để nạp lại):", path.name)
 
         pdf_files = [path for path in pdf_files if path not in skipped]
 
@@ -1131,11 +1042,9 @@ def main():
 
             if force:
 
-                pages = max(record["metadata"]["page"] for record in records)
-
                 print("Xoá vector cũ của quyển này trước khi nạp lại...")
 
-                delete_book_vectors(pdf_file.name, pages)
+                delete_book_vectors(pdf_file.name)
 
             upload_records(records)
 
@@ -1143,13 +1052,13 @@ def main():
 
             total_uploaded += len(records)
 
-            print(f"✓ Xong {pdf_file.name}: {len(records)} chunks đã lên Pinecone.")
+            print(f"✓ Xong {pdf_file.name}: {len(records)} chunks đã vào kho vector.")
 
         except KeyboardInterrupt:
 
             print()
 
-            print("⏹ Dừng theo yêu cầu. Các quyển đã xong vẫn giữ nguyên trên Pinecone.")
+            print("⏹ Dừng theo yêu cầu. Các quyển đã xong vẫn nằm nguyên trong kho.")
 
             break
 
@@ -1212,10 +1121,15 @@ def main():
     print()
 
     print(
-        "Đã upload",
+        "Đã ghi",
         total_uploaded,
-        "chunks vào Pinecone."
+        f"chunks vào kho vector ({vector_store.count()} vector tất cả)."
     )
+
+    # Kho vừa đổi kích thước: bật/tắt lại index vector cho đúng ngưỡng, khỏi đợi restart.
+    if STORE_BACKEND == 'pgvector':
+        mode = 'HNSW (gần đúng)' if vector_store.sync_vector_index() else 'quét chính xác'
+        print("Cách tìm kiếm:", mode)
 
     print(
         "Cache embedding:",

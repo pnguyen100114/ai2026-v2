@@ -3,6 +3,10 @@
 #
 # Biến có "sync: false" = Render hỏi bạn lúc tạo, không lưu trong Git.
 # Lấy giá trị từ backend/.env ở máy (trừ DATABASE_URL, lấy ở Supabase → Connect → Session pooler).
+#
+# Không còn biến PINECONE_* nào: kho vector SGK nay nằm trong chính DATABASE_URL (bảng
+# sgk_chunks). Nếu service của bạn được tạo từ bản render.yaml cũ và còn PINECONE_API_KEY /
+# PINECONE_INDEX / PINECONE_NAMESPACE trên dashboard thì vào Environment xoá đi cho gọn.
 
 services:
   - type: web
@@ -47,13 +51,9 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
-      - key: PINECONE_API_KEY
-        sync: false
-      - key: PINECONE_INDEX
-        sync: false
 
-      # Cố ý KHÔNG khai báo ở đây: PINECONE_NAMESPACE (bạn để trống), EMBEDDING_MODEL,
-      # EMBEDDING_DIMENSION — code đã có sẵn giá trị mặc định đúng với lúc nạp sách.
+      # Cố ý KHÔNG khai báo ở đây: EMBEDDING_MODEL, EMBEDDING_DIMENSION — code đã có sẵn
+      # giá trị mặc định đúng với lúc nạp sách.
       # BOOK_PAGE_OFFSETS đã bị xoá hẳn khỏi code: độ lệch trang nay nằm trong
       # backend/rag/books.py. Nếu service của bạn còn biến đó trên dashboard thì xoá đi.
       # Khai thừa ra chỉ tổ phải điền, điền sai còn hỏng tìm kiếm.

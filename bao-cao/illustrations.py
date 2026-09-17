@@ -102,17 +102,17 @@ def tiles(items):
 render('cong_cu', 1300, 560, f'''<div class="canvas">
   <div class="label">Dữ liệu và AI bên trong Mimo</div>
   <div class="grid3">{tiles([
-    ('library', 'amber', 'Sách giáo khoa', 'Toán 6, Toán 8 tập một và KHTN 6, bộ Kết nối tri thức'),
+    ('library', 'amber', 'Sách giáo khoa', '29 cuốn, 5 môn, lớp 6 đến 9, bộ Kết nối tri thức'),
     ('scan-line', 'navy', 'OCR', 'Đọc chữ từ các trang sách scan'),
     ('layers', 'violet', 'Gemini Embedding', 'Biến đoạn sách và câu hỏi thành vector để so nghĩa'),
-    ('database', 'green', 'Pinecone', 'Kho 719 đoạn sách, tìm đúng trang trong tích tắc'),
+    ('database', 'green', 'Kho vector', '4765 đoạn sách, tìm đúng trang trong tích tắc'),
     ('sparkles', 'solid', 'Gemini 3.5 Flash', 'Giảng bài, đọc ảnh đề, nghe giọng nói, soạn câu luyện tập'),
     ('volume-2', 'coral', 'Edge TTS', 'Đọc bài giảng bằng giọng tiếng Việt'),
   ])}</div>
   <div class="label" style="margin-top:30px">Công cụ giúp nhóm làm sản phẩm</div>
   <div class="grid3">{tiles([
-    ('terminal', 'navy', 'Claude Code', '49 câu lệnh: đọc mã, sửa lỗi, viết kiểm thử'),
-    ('code-xml', 'navy', 'GitHub Copilot', '29 câu lệnh: dựng backend, sửa lỗi giao diện'),
+    ('terminal', 'navy', 'Claude Code', '162 câu lệnh: đọc mã, sửa lỗi, viết kiểm thử'),
+    ('code-xml', 'navy', 'GitHub Copilot', '30 câu lệnh: dựng backend, sửa lỗi giao diện'),
     ('user-round', 'amber', 'Hồ sơ & lịch sử học', 'Lớp, bài đang học, kết quả luyện tập để dạy nối tiếp'),
   ])}</div>
 </div>''', TOOL_CSS)
@@ -127,11 +127,11 @@ PIPE_CSS = '''
 .arrow { color: #C3CAD5; }
 '''
 steps = [
-    ('file-text', 'amber', 'Sách PDF', 'Toán 6, Toán 8, KHTN 6'),
+    ('file-text', 'amber', 'Sách PDF', '29 cuốn, lớp 6 đến 9'),
     ('scan-line', 'navy', 'OCR', 'đọc chữ từ trang scan'),
     ('scissors', 'violet', 'Cắt đoạn', 'mỗi đoạn khoảng 1.000 ký tự'),
     ('layers', 'coral', 'Vector hóa', 'Gemini Embedding'),
-    ('database', 'green', 'Pinecone', '719 đoạn kèm môn, lớp, bài, trang'),
+    ('database', 'green', 'Kho vector', '4765 đoạn kèm môn, lớp, bài, trang'),
 ]
 nodes = f'<span class="arrow">{icon("arrow-right", 40, 2.5)}</span>'.join(
     f'<div class="node"><div class="ic {t}" style="width:96px;height:96px;border-radius:28px">{icon(i, 48)}</div><h4>{h}</h4><p>{d}</p></div>'
@@ -177,7 +177,7 @@ render('dau_vao_xu_ly_dau_ra', 1300, 620, f'''<div class="canvas"><div class="fl
     ('camera', 'navy', 'Ảnh chụp đề bài', 'chụp từ điện thoại, máy tính'),
     ('mic', 'navy', 'Giọng nói', 'bấm micro và nói'),
     ('user-round', 'amber', 'Hồ sơ của em', 'lớp, bài đang học, lỗi hay sai'),
-    ('database', 'green', 'Kho sách Pinecone', '719 đoạn sách giáo khoa'),
+    ('database', 'green', 'Kho vector SGK', '4765 đoạn sách giáo khoa'),
   ])}</div>
   {arrow_mid}
   <div><div class="col-title" style="color:{CORAL}">MIMO XỬ LÝ</div><div class="brain">
@@ -247,7 +247,7 @@ def kpi(i, t, v, text):
 
 
 render('con_so', 1300, 260, f'''<div class="canvas"><div class="kpis">
-  {kpi('database', 'green', '719', 'đoạn sách giáo khoa trong kho để Mimo tra cứu')}
+  {kpi('database', 'green', '4765', 'đoạn sách của 29 cuốn SGK trong kho để Mimo tra cứu')}
   {kpi('message-circle', 'coral', str(N_QUESTIONS), 'câu hỏi thử ở 3 môn Toán, KHTN, Ngữ văn')}
   {kpi('timer', 'amber', f"{LAT_MED:.1f} giây".replace('.', ','), 'một nửa số câu Mimo trả lời xong trong khoảng này')}
   {kpi('circle-check', 'navy', '194/194', 'ca kiểm thử tự động đều chạy đúng')}

@@ -1,6 +1,6 @@
 """Test harness: runs the FastAPI app fully offline.
 
-Pinecone, Gemini and the database are replaced with in-memory fakes so every test
+The vector store, Gemini and the database are replaced with in-memory fakes so every test
 checks one input -> output pair deterministically, without network or quota.
 """
 from __future__ import annotations
@@ -24,13 +24,12 @@ os.environ['AUTH_SECRET'] = 'test-secret'
 os.environ['CHAT_RATE_PER_MINUTE'] = '1000'
 os.environ['CHAT_RATE_PER_DAY'] = '1000'
 
-# The real retriever connects to Pinecone at import time; swap in a stub module.
+# The real retriever opens the vector store and a Gemini client at import time; stub it out.
 import backend.rag  # noqa: E402
 
 _fake_retriever = types.ModuleType('backend.rag.retriever')
 _fake_retriever.RAG_SCORE_THRESHOLD = 0.60
-_fake_retriever.PINECONE_NAMESPACE = ''
-_fake_retriever.index = None
+_fake_retriever.STORE_BACKEND = 'memory'
 _fake_retriever.search_knowledge = lambda *args, **kwargs: []
 _fake_retriever.get_curriculum_from_rag = lambda *args, **kwargs: []
 _fake_retriever.build_roadmap_from_curriculum = lambda *args, **kwargs: {}
