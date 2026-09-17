@@ -51,9 +51,9 @@ services:
         sync: false
       - key: PINECONE_INDEX
         sync: false
-      - key: BOOK_PAGE_OFFSETS
-        sync: false
 
       # Cố ý KHÔNG khai báo ở đây: PINECONE_NAMESPACE (bạn để trống), EMBEDDING_MODEL,
-      # EMBEDDING_DIMENSION — code đã có sẵn giá trị mặc định đúng với lúc nạp sách.
+      # EMBEDDING_DIMENSION, BOOK_PAGE_OFFSETS — code đã có sẵn giá trị mặc định đúng với
+      # lúc nạp sách. Riêng độ lệch trang sách nay nằm trong backend/rag/books.py và ghi đè
+      # BOOK_PAGE_OFFSETS khi nạp, nên điền biến đó ở đây không có tác dụng gì.
       # Khai thừa ra chỉ tổ phải điền, điền sai còn hỏng tìm kiếm.

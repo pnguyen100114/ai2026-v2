@@ -50,7 +50,7 @@ Repo đã có sẵn [render.yaml](render.yaml) nên **không phải gõ tay tên
 1. https://render.com → **New → Blueprint** (không phải "Web Service") → chọn repo GitHub.
 2. Render đọc `render.yaml` và tự điền: build/start command, health check `/api/health`, vùng Singapore, gói Free,
    `TRUSTED_PROXY_HOPS=1`, `ALLOWED_ORIGINS=*`, `PAGE_BUCKET=sgk-pages`, và **tự sinh `AUTH_SECRET`**.
-3. Render hỏi 7 giá trị, sáu trong số đó copy thẳng từ `backend/.env` ở máy:
+3. Render hỏi 6 giá trị, năm trong số đó copy thẳng từ `backend/.env` ở máy:
 
    | Render hỏi | Lấy ở đâu |
    |---|---|
@@ -58,11 +58,10 @@ Repo đã có sẵn [render.yaml](render.yaml) nên **không phải gõ tay tên
    | `SUPABASE_URL` · `SUPABASE_SERVICE_KEY` | `backend/.env` (xem bước 3 bên dưới) |
    | `GEMINI_API_KEY` | `backend/.env` |
    | `PINECONE_API_KEY` · `PINECONE_INDEX` | `backend/.env` |
-   | `BOOK_PAGE_OFFSETS` | `backend/.env` |
 
 4. Mở `https://<ten-backend>.onrender.com/api/health`, phải thấy `"status": "ok"` và `"vectors"` lớn hơn 0.
 
-`render.yaml` cố ý **không** khai `PINECONE_NAMESPACE`, `EMBEDDING_MODEL`, `EMBEDDING_DIMENSION`: mặc định trong code đã khớp với lúc nạp sách, khai thêm rồi điền số khác là hỏng toàn bộ tìm kiếm SGK.
+`render.yaml` cố ý **không** khai `PINECONE_NAMESPACE`, `EMBEDDING_MODEL`, `EMBEDDING_DIMENSION`: mặc định trong code đã khớp với lúc nạp sách, khai thêm rồi điền số khác là hỏng toàn bộ tìm kiếm SGK. `BOOK_PAGE_OFFSETS` cũng không khai: độ lệch trang của từng quyển nằm trong [backend/rag/books.py](backend/rag/books.py) và ghi đè biến môi trường khi nạp sách, nên sửa trên Render không có tác dụng — muốn chỉnh thì sửa `books.py` rồi nạp lại.
 
 Gói free của Render "ngủ" sau 15 phút không có truy cập, nên lần mở đầu tiên mất khoảng 30–50 giây. Build lỗi vì Python thì sửa `PYTHON_VERSION` trong `render.yaml` thành một phiên bản Render liệt kê rồi push lại.
 
