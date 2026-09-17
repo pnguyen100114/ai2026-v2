@@ -61,7 +61,7 @@ Repo đã có sẵn [render.yaml](render.yaml) nên **không phải gõ tay tên
 
 4. Mở `https://<ten-backend>.onrender.com/api/health`, phải thấy `"status": "ok"` và `"vectors"` lớn hơn 0.
 
-`render.yaml` cố ý **không** khai `PINECONE_NAMESPACE`, `EMBEDDING_MODEL`, `EMBEDDING_DIMENSION`: mặc định trong code đã khớp với lúc nạp sách, khai thêm rồi điền số khác là hỏng toàn bộ tìm kiếm SGK. `BOOK_PAGE_OFFSETS` cũng không khai: độ lệch trang của từng quyển nằm trong [backend/rag/books.py](backend/rag/books.py) và ghi đè biến môi trường khi nạp sách, nên sửa trên Render không có tác dụng — muốn chỉnh thì sửa `books.py` rồi nạp lại.
+`render.yaml` cố ý **không** khai `PINECONE_NAMESPACE`, `EMBEDDING_MODEL`, `EMBEDDING_DIMENSION`: mặc định trong code đã khớp với lúc nạp sách, khai thêm rồi điền số khác là hỏng toàn bộ tìm kiếm SGK. `BOOK_PAGE_OFFSETS` thì đã bị xoá hẳn khỏi code: độ lệch trang của từng quyển nằm trong [backend/rag/books.py](backend/rag/books.py), muốn chỉnh thì sửa ở đó. Nếu service của bạn được tạo từ bản `render.yaml` cũ và còn biến này trên dashboard, **vào Environment xoá nó đi** — một giá trị không phải JSON hợp lệ ở đây từng làm backend chết ngay lúc khởi động.
 
 Gói free của Render "ngủ" sau 15 phút không có truy cập, nên lần mở đầu tiên mất khoảng 30–50 giây. Build lỗi vì Python thì sửa `PYTHON_VERSION` trong `render.yaml` thành một phiên bản Render liệt kê rồi push lại.
 

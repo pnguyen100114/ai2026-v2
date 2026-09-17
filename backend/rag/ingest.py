@@ -35,7 +35,6 @@ PINECONE_NAMESPACE = os.getenv(
 EMBEDDING_DIMENSION = int(
     os.getenv("EMBEDDING_DIMENSION", "1536")
 )
-BOOK_PAGE_OFFSETS = json.loads(os.getenv('BOOK_PAGE_OFFSETS', '{}') or '{}')
 
 # Bigger chunks than the original 1000/150: ~40% fewer vectors for the same book, and a
 # 1800-character window holds a whole SGK section instead of half of one.
@@ -351,7 +350,9 @@ def detect_book_type(filename):
 
 
 def get_page_offset(filename):
-    return int(BOOK_PAGE_OFFSETS.get(filename, 0))
+    """Printed page - PDF page. books.py measured this per book; 0 for files not in it."""
+    book = find_book(filename)
+    return book.page_offset if book is not None else 0
 
 
 # ==========================================

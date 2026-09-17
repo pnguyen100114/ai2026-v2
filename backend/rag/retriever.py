@@ -1,5 +1,4 @@
 import os
-import json
 import re
 import time
 from typing import Any, Dict, List, Optional
@@ -10,9 +9,9 @@ from google.genai import types
 from pinecone import Pinecone
 
 try:
-    from backend.rag.books import COURSES, canonical_subject, course_book, enrich_match, find_course, subject_variants
+    from backend.rag.books import COURSES, canonical_subject, course_book, enrich_match, find_book, find_course, subject_variants
 except ImportError:  # pragma: no cover
-    from rag.books import COURSES, canonical_subject, course_book, enrich_match, find_course, subject_variants
+    from rag.books import COURSES, canonical_subject, course_book, enrich_match, find_book, find_course, subject_variants
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
@@ -23,7 +22,6 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'gemini-embedding-001')
 EMBEDDING_DIMENSION = int(os.getenv('EMBEDDING_DIMENSION', '1536'))
 RAG_SCORE_THRESHOLD = float(os.getenv('RAG_SCORE_THRESHOLD', '0.60'))
-BOOK_PAGE_OFFSETS = json.loads(os.getenv('BOOK_PAGE_OFFSETS', '{}') or '{}')
 
 # Pinecone's free tier meters READS (1 GB/month), and every match carries its full chunk text
 # (~2 KB). A single uncapped top_k=100 curriculum query costs ~150 KB, so a few thousand of
@@ -101,7 +99,10 @@ def _record_to_output(match: Dict[str, Any]) -> Dict[str, Any]:
     pdf_page = _normalize_grade(metadata.get('page'))
     page_offset = _normalize_grade(metadata.get('page_offset'))
     if page_offset is None:
-        page_offset = int(BOOK_PAGE_OFFSETS.get(str(metadata.get('source') or ''), 0))
+        # Vectors ingested before page_offset was stored in metadata: books.py knows the
+        # offset for every book we have, measured from that scan's own folios.
+        book = find_book(metadata.get('source'))
+        page_offset = book.page_offset if book is not None else 0
     payload = {
         'id': match.get('id'),
         'score': float(match.get('score', 0.0)),
