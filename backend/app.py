@@ -225,6 +225,30 @@ def health() -> dict[str, Any]:
         rag_status.update(vector_store.stats())
     except Exception as exc:
         rag_status = {'configured': False, 'error': str(exc)}
+
+    # vector_store.stats() mở kết nối riêng, nên nó xanh kể cả khi retriever KHÔNG mở được
+    # kho lúc khởi động. Đúng tình huống đó thì mọi câu hỏi trả về "Mimo chưa mở được sách
+    # giáo khoa" trong khi /api/health vẫn báo ổn - không có cách nào nhìn ra từ bên ngoài.
+    # Ở đây soi thẳng trạng thái mà search_knowledge thật sự dùng.
+    try:
+        try:
+            from backend.rag import retriever
+        except ImportError:  # pragma: no cover
+            from rag import retriever
+        rag_status['retriever'] = retriever.STORE_BACKEND or 'failed'
+        if retriever.STORE_BACKEND is None:
+            rag_status['retriever_error'] = str(retriever._store_error)
+    except Exception as exc:
+        rag_status['retriever'] = 'import_failed'
+        rag_status['retriever_error'] = str(exc)
+
+    # Hai biến này phải khớp đúng lúc nạp sách. Nguy hiểm nhất là EMBEDDING_DIMENSION còn
+    # sót trên dashboard từ thời Pinecone: retriever cắt/đệm vector về đúng số đó, rồi
+    # pgvector từ chối vì cột là vector(1536) - MỌI câu hỏi hỏng, còn /api/health vẫn xanh.
+    rag_status['embedding_model'] = os.getenv('EMBEDDING_MODEL') or 'gemini-embedding-001'
+    rag_status['embedding_dimension'] = int(os.getenv('EMBEDDING_DIMENSION', '1536'))
+    rag_status['gemini_key'] = bool(GEMINI_API_KEY)
+
     return {'status': 'ok', 'service': 'Gia Su AI v2 backend', 'rag': rag_status}
 
 
