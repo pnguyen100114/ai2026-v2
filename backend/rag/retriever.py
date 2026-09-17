@@ -90,12 +90,16 @@ def create_embedding(text: str) -> List[float]:
 def _record_to_output(match: Dict[str, Any]) -> Dict[str, Any]:
     metadata = match.get('metadata') or {}
     pdf_page = _normalize_grade(metadata.get('page'))
-    page_offset = _normalize_grade(metadata.get('page_offset'))
-    if page_offset is None:
-        # Vectors ingested before page_offset was stored in metadata: books.py knows the
-        # offset for every book we have, measured from that scan's own folios.
-        book = find_book(metadata.get('source'))
-        page_offset = book.page_offset if book is not None else 0
+    # books.py là nguồn chân lý, KHÔNG phải số đã nướng vào metadata lúc nạp. Sửa một độ lệch
+    # sai trong books.py mà kho vẫn giữ số cũ thì trích dẫn tiếp tục lệch cho tới khi nạp lại
+    # cả quyển - đúng chuyện đã xảy ra với TOAN8-Tap1 (nạp với -1, thực tế phải là 0, nên mọi
+    # trích dẫn lệch một trang). Ưu tiên catalog thì sửa một dòng là cả kho đúng theo.
+    book = find_book(metadata.get('source'))
+    if book is not None:
+        page_offset = book.page_offset
+    else:
+        # Sách chưa có trong danh mục: đành tin số lưu lúc nạp.
+        page_offset = _normalize_grade(metadata.get('page_offset')) or 0
     payload = {
         'id': match.get('id'),
         'score': float(match.get('score', 0.0)),
