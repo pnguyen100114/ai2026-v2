@@ -1,0 +1,622 @@
+{
+  "chay_luc": "2026-09-17T17:59:18",
+  "api": "https://gia-su-ai-api.onrender.com",
+  "kho_vector": {
+    "configured": true,
+    "backend": "pgvector",
+    "dialect": "postgresql",
+    "vectors": 4760,
+    "vector_index": "exact",
+    "hnsw_min_rows": 50000,
+    "retriever": "pgvector",
+    "embedding_model": "gemini-embedding-001",
+    "embedding_dimension": 1536,
+    "gemini_key": true
+  },
+  "ket_qua": [
+    {
+      "stt": 1,
+      "nhom": "dễ",
+      "mon": "Toán",
+      "lop": 8,
+      "cau_hoi": "Hằng đẳng thức bình phương của một tổng là gì?",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Phải ra (A+B)² = A² + 2AB + B², trích Toán 8 tập một chương II.",
+      "dat_may_cham": true,
+      "ly_do": "3 nguồn, trang 32, 34, 29",
+      "giay": 3.9,
+      "so_nguon": 3,
+      "nguon": [
+        {
+          "sach": "TOAN8-Tap1.pdf",
+          "trang": 32,
+          "bai": "Bài 6. Hiệu hai bình phương. Bình phương của một tổng hay một hiệu"
+        },
+        {
+          "sach": "TOAN8-Tap1.pdf",
+          "trang": 34,
+          "bai": "Bài 7. Lập phương của một tổng. Lập phương của một hiệu"
+        },
+        {
+          "sach": "TOAN8-Tap1.pdf",
+          "trang": 29,
+          "bai": "Bài 6. Hiệu hai bình phương. Bình phương của một tổng hay một hiệu"
+        }
+      ],
+      "tra_loi": "Để Mimo giúp em nắm vững hằng đẳng thức này nhé.\n\nBình phương của một tổng của hai biểu thức $A$ và $B$ được tính bằng công thức: $(A + B)^2 = A^2 + 2AB + B^2$ [1].\n\nEm cứ hiểu đơn giản là: Bình phương số thứ nhất, cộng với 2 lần tích của số thứ nhất và số thứ hai, rồi cộng thêm bình phương số thứ hai. Ví dụ, với $(x + 2)^2$, ta coi $A = x$ và $B = 2$, thì kết quả sẽ là $x^2 + 2 \\cdot x \\cdot 2 + 2^2 = x^2 + 4x + 4$.\n\nEm thử áp dụng công thức này để khai triển $(2b + 1)^2$ xem sao nhé?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 2,
+      "nhom": "dễ",
+      "mon": "Toán",
+      "lop": 6,
+      "cau_hoi": "Thế nào là số nguyên tố?",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Số tự nhiên lớn hơn 1, chỉ có hai ước là 1 và chính nó.",
+      "dat_may_cham": true,
+      "ly_do": "3 nguồn, trang 38, 39, 42",
+      "giay": 4.13,
+      "so_nguon": 3,
+      "nguon": [
+        {
+          "sach": "TOAN6 -TAP 1.pdf",
+          "trang": 38,
+          "bai": "Bài 10. Số nguyên tố"
+        },
+        {
+          "sach": "TOAN6 -TAP 1.pdf",
+          "trang": 39,
+          "bai": "Bài 10. Số nguyên tố"
+        },
+        {
+          "sach": "TOAN6 -TAP 1.pdf",
+          "trang": 42,
+          "bai": "Bài 10. Số nguyên tố"
+        }
+      ],
+      "tra_loi": "Mimo rất vui được đồng hành cùng em trong bài học hôm nay!\n\nĐể hiểu về số nguyên tố, em hãy nhớ quy tắc đơn giản này: **Số nguyên tố là số tự nhiên lớn hơn 1 và chỉ có đúng hai ước là 1 và chính nó** [1].\n\nVí dụ, số 5 chỉ có các ước là 1 và 5, nên 5 là số nguyên tố. Còn số 6 có các ước là 1, 2, 3 và 6 (nhiều hơn hai ước), nên 6 không phải là số nguyên tố mà được gọi là hợp số [1].\n\nEm thử suy nghĩ xem, số 7 có phải là số nguyên tố không nhỉ?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 3,
+      "nhom": "dễ",
+      "mon": "KHTN",
+      "lop": 7,
+      "cau_hoi": "Quang hợp ở thực vật là gì?",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Phải nêu nguyên liệu, sản phẩm, vai trò của diệp lục.",
+      "dat_may_cham": true,
+      "ly_do": "3 nguồn, trang 101, 102, 103",
+      "giay": 5.56,
+      "so_nguon": 3,
+      "nguon": [
+        {
+          "sach": "KHTN 7.pdf",
+          "trang": 101,
+          "bai": null
+        },
+        {
+          "sach": "KHTN 7.pdf",
+          "trang": 102,
+          "bai": null
+        },
+        {
+          "sach": "KHTN 7.pdf",
+          "trang": 103,
+          "bai": null
+        }
+      ],
+      "tra_loi": "Câu hỏi rất hay, đây là kiến thức nền tảng của môn KHTN 7 đấy.\n\nQuang hợp là quá trình thực vật tự tổng hợp chất hữu cơ để cung cấp cho cơ thể mình và các sinh vật khác trên Trái Đất [1]. Quá trình này diễn ra chủ yếu ở lá cây, cụ thể là bên trong các lục lạp có chứa diệp lục [1].\n\nEm thử nhìn vào phương trình này nhé:\n$$ \\text{Nước} + \\text{Carbon dioxide} \\xrightarrow[\\text{Diệp lục}]{\\text{Ánh sáng}} \\text{Glucose} + \\text{Oxygen} $$ [3]\n\nDựa vào phương trình trên, em có thể cho Mimo biết những nguyên liệu nào cây cần lấy từ môi trường để thực hiện quá trình này không?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 4,
+      "nhom": "dễ",
+      "mon": "KHTN",
+      "lop": 9,
+      "cau_hoi": "Định luật Ôm phát biểu như thế nào?",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "I = U/R, nêu rõ ý nghĩa từng đại lượng.",
+      "dat_may_cham": true,
+      "ly_do": "3 nguồn, trang 56, 58, 55",
+      "giay": 4.58,
+      "so_nguon": 3,
+      "nguon": [
+        {
+          "sach": "KHTN 9.pdf",
+          "trang": 56,
+          "bai": null
+        },
+        {
+          "sach": "KHTN 9.pdf",
+          "trang": 58,
+          "bai": null
+        },
+        {
+          "sach": "KHTN 9.pdf",
+          "trang": 55,
+          "bai": null
+        }
+      ],
+      "tra_loi": "Mimo rất vui được đồng hành cùng em trong môn Khoa học tự nhiên.\n\nĐịnh luật Ohm phát biểu rằng: Cường độ dòng điện chạy qua đoạn dây dẫn tỉ lệ thuận với hiệu điện thế giữa hai đầu đoạn dây và tỉ lệ nghịch với điện trở của nó [1].\n\nBiểu thức của định luật là:\n$$I = \\frac{U}{R}$$\n\nTrong đó:\n- $I$ là cường độ dòng điện (đơn vị là ampe, A).\n- $U$ là hiệu điện thế (đơn vị là vôn, V).\n- $R$ là điện trở (đơn vị là ôm, $\\Omega$) [2].\n\nEm thử suy nghĩ xem, nếu ta giữ nguyên hiệu điện thế mà tăng điện trở của đoạn dây dẫn lên gấp đôi, thì cường độ dòng điện chạy qua nó sẽ thay đổi như thế nào nhỉ?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 5,
+      "nhom": "dễ",
+      "mon": "Ngữ văn",
+      "lop": 8,
+      "cau_hoi": "Thế nào là câu ghép? Cho một ví dụ.",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Câu có từ hai cụm chủ - vị trở lên không bao chứa nhau.",
+      "dat_may_cham": false,
+      "ly_do": "không trích dẫn nguồn nào",
+      "giay": 4.18,
+      "so_nguon": 0,
+      "nguon": [],
+      "tra_loi": "Mimo rất vui khi được đồng hành cùng em trong môn Ngữ văn.\n\nCâu ghép là câu có từ hai cụm chủ ngữ - vị ngữ (C-V) trở lên, trong đó các cụm C-V này không bao hàm nhau. Mỗi cụm C-V trong câu ghép được gọi là một vế câu. Các vế câu thường được nối với nhau bằng các từ nối hoặc dấu câu.\n\nVí dụ: \"Trời mưa, đường trơn.\"\nTrong câu này:\n- Cụm C-V thứ nhất: \"Trời\" (chủ ngữ) - \"mưa\" (vị ngữ).\n- Cụm C-V thứ hai: \"đường\" (chủ ngữ) - \"trơn\" (vị ngữ).\n\nBây giờ, em thử đặt một câu ghép đơn giản xem sao?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 6,
+      "nhom": "dễ",
+      "mon": "LSDL",
+      "lop": 8,
+      "cau_hoi": "Cách mạng tư sản Anh nổ ra vào thời gian nào?",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Thế kỉ XVII, mốc 1642 - 1688.",
+      "dat_may_cham": true,
+      "ly_do": "2 nguồn, trang 9, 8",
+      "giay": 4.39,
+      "so_nguon": 2,
+      "nguon": [
+        {
+          "sach": "lsdl 8.pdf",
+          "trang": 9,
+          "bai": null
+        },
+        {
+          "sach": "lsdl 8.pdf",
+          "trang": 8,
+          "bai": null
+        }
+      ],
+      "tra_loi": "Cách mạng tư sản Anh bùng nổ vào tháng 8 năm 1642, khi vua Sác-lơ I tuyên chiến với Quốc hội [1].\n\nTrước đó, vào năm 1640, nhà vua đã phải triệu tập Quốc hội để tăng thuế nhằm có tiền đàn áp cuộc khởi nghĩa của người Xcốt-len, từ đó đẩy mâu thuẫn giữa tư sản, quý tộc mới với thế lực phong kiến lên cao trào [1].\n\nTheo em, vì sao mâu thuẫn giữa nhà vua và Quốc hội lại trở nên gay gắt như vậy nhỉ?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 7,
+      "nhom": "dễ",
+      "mon": "Tiếng Anh",
+      "lop": 6,
+      "cau_hoi": "Unit 1 Hobbies học những từ vựng nào?",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Từ vựng về sở thích, trích Tiếng Anh 6 tập một.",
+      "dat_may_cham": false,
+      "ly_do": "không trích dẫn nguồn nào",
+      "giay": 4.44,
+      "so_nguon": 0,
+      "nguon": [],
+      "tra_loi": "Mimo rất vui khi được đồng hành cùng em học Tiếng Anh.\n\nĐể Mimo kiểm tra lại giúp em nhé. Trong tài liệu học tập của em mà Mimo có ở đây, nội dung bắt đầu từ Unit 7 đến Unit 12. Hiện tại, Mimo chưa có thông tin về Unit 1 trong giáo trình này để hỗ trợ em ngay được.\n\nNếu em đang có sách giáo khoa hoặc vở ghi chép Unit 1, em có thể chụp ảnh hoặc chép lại một vài từ em đang học, Mimo sẽ cùng em ôn tập nhé!",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 8,
+      "nhom": "dễ",
+      "mon": "Toán",
+      "lop": 9,
+      "cau_hoi": "Hệ hai phương trình bậc nhất hai ẩn là gì?",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Dạng tổng quát ax + by = c.",
+      "dat_may_cham": true,
+      "ly_do": "3 nguồn, trang 8, 17, 5",
+      "giay": 7.78,
+      "so_nguon": 3,
+      "nguon": [
+        {
+          "sach": "TOAN9-Tap1.pdf",
+          "trang": 8,
+          "bai": null
+        },
+        {
+          "sach": "TOAN9-Tap1.pdf",
+          "trang": 17,
+          "bai": null
+        },
+        {
+          "sach": "TOAN9-Tap1.pdf",
+          "trang": 5,
+          "bai": null
+        }
+      ],
+      "tra_loi": "Mimo rất vui khi được đồng hành cùng em trong môn Toán lớp 9.\n\nĐể Mimo giải thích đơn giản thế này nhé: Hệ hai phương trình bậc nhất hai ẩn là một cặp gồm hai phương trình bậc nhất hai ẩn đi kèm với nhau, ví dụ như:\n$$\\begin{cases} ax + by = c \\\\ a'x + b'y = c' \\end{cases}$$ [1]\n\nKhi em có hai phương trình mà cùng chứa hai ẩn số (thường là $x$ và $y$), và em cần tìm một cặp số $(x_0; y_0)$ sao cho khi thay vào, nó thỏa mãn đồng thời cả hai phương trình đó, thì cặp số đó được gọi là nghiệm của hệ phương trình [1].\n\nGiống như bài toán cổ về cam và quýt, em có số quả và số người cần chia, em phải tìm ra hai con số sao cho khớp cả hai điều kiện cùng lúc vậy [3].\n\nEm đã hình dung được ý nghĩa của \"hệ\" là phải thỏa mãn cả hai điều kiện chưa, hay em muốn Mimo lấy ví dụ cụ thể hơn?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 9,
+      "nhom": "khó",
+      "mon": "Toán",
+      "lop": 8,
+      "cau_hoi": "Hình thoi và hình vuông khác nhau ở điểm nào?",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Phải gộp kiến thức của hai bài khác nhau trong chương III.",
+      "dat_may_cham": true,
+      "ly_do": "3 nguồn, trang 67, 70, 71",
+      "giay": 4.36,
+      "so_nguon": 3,
+      "nguon": [
+        {
+          "sach": "TOAN8-Tap1.pdf",
+          "trang": 67,
+          "bai": "Bài 14. Hình thoi và hình vuông"
+        },
+        {
+          "sach": "TOAN8-Tap1.pdf",
+          "trang": 70,
+          "bai": "Bài 14. Hình thoi và hình vuông"
+        },
+        {
+          "sach": "TOAN8-Tap1.pdf",
+          "trang": 71,
+          "bai": "Bài 14. Hình thoi và hình vuông"
+        }
+      ],
+      "tra_loi": "Đây là câu hỏi rất hay, vì hai hình này có mối quan hệ khá gần gũi nên nhiều bạn dễ nhầm lẫn lắm.\n\nĐể phân biệt đơn giản nhất, em hãy nhìn vào định nghĩa nhé:\n- Hình thoi là tứ giác có bốn cạnh bằng nhau [1].\n- Còn hình vuông là tứ giác có bốn góc vuông và bốn cạnh bằng nhau [2].\n\nNhư vậy, một hình vuông chắc chắn là hình thoi, nhưng một hình thoi thì chưa chắc đã là hình vuông trừ khi nó có thêm góc vuông hoặc các đường chéo bằng nhau [2]. Em có thể tưởng tượng hình vuông giống như một hình thoi \"đặc biệt\" hơn vậy.\n\nEm có muốn thử nhận biết xem khi nào một hình thoi trở thành hình vuông không?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 10,
+      "nhom": "khó",
+      "mon": "Toán",
+      "lop": 8,
+      "cau_hoi": "Phân tích x² - 6x + 9 thành nhân tử và giải thích từng bước.",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Nhận ra hằng đẳng thức (x-3)². Kiểm tra xem có giảng từng bước không hay đưa luôn đáp án.",
+      "dat_may_cham": true,
+      "ly_do": "3 nguồn, trang 43, 42, 45",
+      "giay": 4.27,
+      "so_nguon": 3,
+      "nguon": [
+        {
+          "sach": "TOAN8-Tap1.pdf",
+          "trang": 43,
+          "bai": "Bài 9. Phân tích đa thức thành nhân tử"
+        },
+        {
+          "sach": "TOAN8-Tap1.pdf",
+          "trang": 42,
+          "bai": "Bài 9. Phân tích đa thức thành nhân tử"
+        },
+        {
+          "sach": "TOAN8-Tap1.pdf",
+          "trang": 45,
+          "bai": "Bài 9. Phân tích đa thức thành nhân tử"
+        }
+      ],
+      "tra_loi": "Với đa thức này, chúng mình có thể dùng hằng đẳng thức để giải quyết rất nhanh đấy [1].\n\nEm hãy nhìn vào biểu thức $x^2 - 6x + 9$:\n1. Đầu tiên, em thử viết lại các số hạng dưới dạng bình phương xem sao nhé: $x^2$ giữ nguyên, $9$ thì bằng $3^2$.\n2. Tiếp theo, em kiểm tra xem số hạng ở giữa ($-6x$) có phải là $-2 \\cdot x \\cdot 3$ không?\n\nNếu đúng, em sẽ áp dụng hằng đẳng thức bình phương của một hiệu: $A^2 - 2AB + B^2 = (A - B)^2$ [1].\n\nEm thử áp dụng vào bài này xem kết quả cuối cùng là gì nào?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 11,
+      "nhom": "khó",
+      "mon": "KHTN",
+      "lop": 8,
+      "cau_hoi": "So sánh phản ứng toả nhiệt và phản ứng thu nhiệt, mỗi loại cho một ví dụ.",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Cần đối chiếu hai khái niệm và tự lấy ví dụ.",
+      "dat_may_cham": true,
+      "ly_do": "2 nguồn, trang 14, 11",
+      "giay": 4.61,
+      "so_nguon": 2,
+      "nguon": [
+        {
+          "sach": "KHTN 8.pdf",
+          "trang": 14,
+          "bai": null
+        },
+        {
+          "sach": "KHTN 8.pdf",
+          "trang": 11,
+          "bai": null
+        }
+      ],
+      "tra_loi": "Câu hỏi này rất hay vì đây là trọng tâm giúp mình hiểu rõ bản chất các phản ứng xung quanh ta đấy!\n\nMimo giúp em tóm tắt sự khác biệt nhé:\n- **Phản ứng toả nhiệt:** Là phản ứng giải phóng năng lượng (dưới dạng nhiệt) ra môi trường xung quanh [1]. Ví dụ: Phản ứng đốt cháy ethanol (cồn) trong đèn cồn, khi cháy sẽ giải phóng nhiệt làm nóng môi trường xung quanh [1].\n- **Phản ứng thu nhiệt:** Là phản ứng nhận năng lượng (dưới dạng nhiệt) trong suốt quá trình phản ứng xảy ra [1]. Ví dụ: Phản ứng phân huỷ copper(II) hydroxide thành copper(II) oxide và hơi nước, phản ứng này cần đun nóng liên tục, nếu ngừng cung cấp nhiệt thì phản ứng cũng dừng lại [1].\n\nEm thử suy nghĩ xem, việc mình dùng gas để đun nấu hằng ngày là ví dụ cho loại phản ứng nào nhỉ?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 12,
+      "nhom": "khó",
+      "mon": "KHTN",
+      "lop": 9,
+      "cau_hoi": "Vì sao xuất hiện dòng điện cảm ứng? Điều đó liên quan gì tới máy phát điện?",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Nối kiến thức hai bài: cảm ứng điện từ và ứng dụng.",
+      "dat_may_cham": true,
+      "ly_do": "3 nguồn, trang 70, 69, 67",
+      "giay": 4.75,
+      "so_nguon": 3,
+      "nguon": [
+        {
+          "sach": "KHTN 9.pdf",
+          "trang": 70,
+          "bai": null
+        },
+        {
+          "sach": "KHTN 9.pdf",
+          "trang": 69,
+          "bai": null
+        },
+        {
+          "sach": "KHTN 9.pdf",
+          "trang": 67,
+          "bai": null
+        }
+      ],
+      "tra_loi": "Rất vui được đồng hành cùng em trong môn KHTN.\n\nDòng điện cảm ứng xuất hiện khi số đường sức từ xuyên qua tiết diện của cuộn dây dẫn kín biến thiên [1][3]. Hiểu đơn giản, chính sự \"thay đổi\" này đã tạo nên dòng điện, và hiện tượng đó được gọi là cảm ứng điện từ [1].\n\nCòn về máy phát điện, nguyên tắc tạo ra dòng điện xoay chiều chính là dựa trên hiện tượng này đấy [3]. Người ta làm cho số đường sức từ xuyên qua tiết diện cuộn dây thay đổi liên tục bằng cách cho cuộn dây hoặc nam châm quay trong từ trường [1][3]. Sự luân phiên thay đổi đó tạo ra dòng điện xoay chiều mà chúng ta sử dụng hàng ngày [1].\n\nEm thử suy nghĩ xem, nếu mình giữ nguyên nam châm và cuộn dây mà không cho chúng chuyển động đối với nhau, thì liệu có dòng điện cảm ứng xuất hiện không nhỉ?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 13,
+      "nhom": "khó",
+      "mon": "Ngữ văn",
+      "lop": 9,
+      "cau_hoi": "Phân biệt nghĩa tường minh và hàm ý, cho ví dụ.",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Khái niệm trừu tượng, dễ trả lời chung chung mà không bám sách.",
+      "dat_may_cham": false,
+      "ly_do": "không trích dẫn nguồn nào",
+      "giay": 5.11,
+      "so_nguon": 0,
+      "nguon": [],
+      "tra_loi": "Chủ đề về nghĩa của từ ngữ và cách diễn đạt rất thú vị, đây cũng là phần quan trọng trong chương trình Ngữ văn lớp 9 đấy.\n\nĐể phân biệt hai khái niệm này, em có thể hiểu đơn giản như sau:\n\n*   **Nghĩa tường minh:** Là phần thông báo được diễn đạt trực tiếp bằng từ ngữ trong câu. Ai đọc hay nghe cũng hiểu ngay ý người nói muốn gì.\n    *   *Ví dụ:* \"Trời đang mưa đấy.\" (Câu này khẳng định rõ ràng thời tiết đang có mưa).\n*   **Hàm ý:** Là phần thông báo không được nói ra trực tiếp bằng từ ngữ, mà người nghe phải suy luận từ ngữ cảnh hoặc cách nói để hiểu ý ngụ ý của người nói.\n    *   *Ví dụ:* Khi thấy em định đi ra ngoài mà trời đang đổ mưa, mẹ bảo: \"Con mang theo ô đi.\" -> Hàm ý của mẹ là \"Trời đang mưa, nếu không mang ô con sẽ bị ướt đấy\".\n\nEm thử tự đặt một câu có chứa hàm ý mà em từng nghe hoặc từng dùng trong đời sống xem sao, Mimo sẽ xem giúp em nhé!",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 14,
+      "nhom": "khó",
+      "mon": "LSDL",
+      "lop": 9,
+      "cau_hoi": "Vì sao Chiến tranh thế giới thứ hai bùng nổ?",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Câu hỏi nguyên nhân, cần nhiều ý từ nhiều trang.",
+      "dat_may_cham": true,
+      "ly_do": "2 nguồn, trang 18, 19",
+      "giay": 5.16,
+      "so_nguon": 2,
+      "nguon": [
+        {
+          "sach": "LSDL 9.pdf",
+          "trang": 18,
+          "bai": null
+        },
+        {
+          "sach": "LSDL 9.pdf",
+          "trang": 19,
+          "bai": null
+        }
+      ],
+      "tra_loi": "Đây là một câu hỏi rất hay, nó giúp mình hiểu được nguồn cơn của những biến động lớn trong lịch sử thế giới đấy.\n\nĐể Mimo giải thích ngắn gọn nhé: Sau Chiến tranh thế giới thứ nhất, mâu thuẫn giữa các nước đế quốc về thị trường và thuộc địa vẫn rất gay gắt. Đặc biệt, cuộc đại suy thoái kinh tế 1929 - 1933 đã làm những mâu thuẫn đó trở nên trầm trọng hơn, dẫn đến việc hình thành chủ nghĩa phát xít ở Đức, Nhật Bản và I-ta-li-a [1].\n\nCác nước này muốn phát động chiến tranh để phân chia lại thế giới, trong khi Anh, Pháp, Mỹ lại có thái độ nhượng bộ vì muốn đẩy Đức chống Liên Xô [1]. Sự bành trướng của khối phát xít cuối cùng đã dẫn đến việc Đức tấn công Ba Lan vào ngày 1-9-1939, chính thức làm bùng nổ cuộc chiến tranh này [2].\n\nEm có thấy sự kiện nào trong những nguyên nhân kể trên là quan trọng nhất không?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 15,
+      "nhom": "khó",
+      "mon": "Toán",
+      "lop": 7,
+      "cau_hoi": "Hai tam giác bằng nhau theo trường hợp cạnh - góc - cạnh khi nào?",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "Phát biểu đúng trường hợp c.g.c.",
+      "dat_may_cham": true,
+      "ly_do": "2 nguồn, trang 60, 59",
+      "giay": 4.8,
+      "so_nguon": 2,
+      "nguon": [
+        {
+          "sach": "TOAN7 - TAP 1.pdf",
+          "trang": 60,
+          "bai": null
+        },
+        {
+          "sach": "TOAN7- TAP 2.pdf",
+          "trang": 59,
+          "bai": null
+        }
+      ],
+      "tra_loi": "Để hai tam giác bằng nhau theo trường hợp cạnh - góc - cạnh (c.g.c), chúng mình cần xét hai tam giác có hai cạnh và góc xen giữa của tam giác này bằng hai cạnh và góc xen giữa của tam giác kia [2].\n\nNói cách khác, nếu hai cạnh và góc xen giữa của tam giác này bằng hai cạnh và góc xen giữa của tam giác kia thì hai tam giác đó bằng nhau.\n\nEm thử tưởng tượng, nếu mình có tam giác $ABC$ và tam giác $MNP$ có:\n- $AB = MN$\n- $\\widehat{A} = \\widehat{M}$\n- $AC = MP$\n\nThì tam giác $ABC$ bằng tam giác $MNP$ theo trường hợp này đó. Em có muốn thử vận dụng vào một bài tập nhỏ không?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 16,
+      "nhom": "khó",
+      "mon": "Toán",
+      "lop": 6,
+      "cau_hoi": "Tìm ước chung lớn nhất của 24 và 36, giải thích cách làm.",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "ƯCLN = 12. Kiểm tra có giảng cách phân tích thừa số nguyên tố không.",
+      "dat_may_cham": true,
+      "ly_do": "3 nguồn, trang 45, 46, 44",
+      "giay": 4.5,
+      "so_nguon": 3,
+      "nguon": [
+        {
+          "sach": "TOAN6 -TAP 1.pdf",
+          "trang": 45,
+          "bai": "Bài 11. Ước chung. Ước chung lớn nhất"
+        },
+        {
+          "sach": "TOAN6 -TAP 1.pdf",
+          "trang": 46,
+          "bai": "Bài 11. Ước chung. Ước chung lớn nhất"
+        },
+        {
+          "sach": "TOAN6 -TAP 1.pdf",
+          "trang": 44,
+          "bai": "Bài 11. Ước chung. Ước chung lớn nhất"
+        }
+      ],
+      "tra_loi": "Để tìm ước chung lớn nhất (ƯCLN) của 24 và 36, Mimo gợi ý mình thực hiện theo các bước sau nhé [2]:\n\n**Bước 1:** Phân tích mỗi số ra thừa số nguyên tố.\n- $24 = 2^3 \\cdot 3$\n- $36 = 2^2 \\cdot 3^2$\n\n**Bước 2:** Chọn ra các thừa số nguyên tố chung.\nTrong hai kết quả trên, em thấy có những số nguyên tố nào xuất hiện ở cả hai phép phân tích không?\n\n**Bước 3:** Lập tích các thừa số đã chọn, mỗi thừa số lấy với số mũ nhỏ nhất [2].\n\nEm thử chọn các thừa số chung và số mũ nhỏ nhất rồi tính xem kết quả bằng bao nhiêu nhé?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 17,
+      "nhom": "từ chối",
+      "mon": "Toán",
+      "lop": 8,
+      "cau_hoi": "Tính tích phân của hàm số y = x² · ln(x) từ 1 đến e.",
+      "mong_doi": "tu_choi",
+      "ghi_chu_cham": "Tích phân là lớp 12. Phải từ chối và nói rõ lí do, không được bịa trang SGK lớp 8.",
+      "dat_may_cham": true,
+      "ly_do": "không bịa trích dẫn",
+      "giay": 4.44,
+      "so_nguon": 0,
+      "nguon": [],
+      "tra_loi": "Mimo rất sẵn lòng đồng hành cùng em học Toán.\n\nTuy nhiên, bài tập tính tích phân của hàm số $y = x^2 \\cdot \\ln(x)$ nằm trong chương trình Toán THPT, vượt quá kiến thức lớp 8 mà chúng mình đang cùng nhau ôn luyện. Ở lớp 8, chúng ta đang tập trung vào các phép tính với đa thức, hằng đẳng thức đáng nhớ và phân tích đa thức thành nhân tử thôi.\n\nCó bài tập nào về đa thức hay rút gọn biểu thức trong chương trình lớp 8 mà em đang thấy vướng không, kể cho Mimo nghe nhé!",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 18,
+      "nhom": "từ chối",
+      "mon": "Toán",
+      "lop": 6,
+      "cau_hoi": "Đạo hàm của hàm số y = sin(x) bằng bao nhiêu?",
+      "mong_doi": "tu_choi",
+      "ghi_chu_cham": "Đạo hàm là lớp 11.",
+      "dat_may_cham": true,
+      "ly_do": "không bịa trích dẫn",
+      "giay": 4.2,
+      "so_nguon": 0,
+      "nguon": [],
+      "tra_loi": "Câu hỏi của em rất thú vị, nhưng đạo hàm là kiến thức nằm trong chương trình THPT, còn ở lớp 6 chúng mình hiện đang tập trung làm quen với các phép tính số thập phân và phân số thôi. \n\nĐể giải được những bài toán về đạo hàm, em sẽ cần nắm thật vững kiến thức về hàm số và giới hạn của lớp 11 và 12 đấy. Hiện tại, mình hãy cứ giữ sự tò mò này cho đến khi lên cấp ba nhé! \n\nHôm nay em có bài tập nào về số thập phân hay các phép tính trong sách lớp 6 cần Mimo hỗ trợ không?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 19,
+      "nhom": "từ chối",
+      "mon": "KHTN",
+      "lop": 7,
+      "cau_hoi": "Giải thích thuyết tương đối hẹp của Einstein.",
+      "mong_doi": "tu_choi",
+      "ghi_chu_cham": "Không có trong SGK THCS.",
+      "dat_may_cham": true,
+      "ly_do": "không bịa trích dẫn",
+      "giay": 4.39,
+      "so_nguon": 0,
+      "nguon": [],
+      "tra_loi": "Mimo rất vui khi thấy em có niềm đam mê tìm tòi những kiến thức khoa học ngoài chương trình học lớp 7 như thuyết tương đối hẹp.\n\nTuy nhiên, thuyết tương đối của Einstein là một chủ đề vật lý nâng cao, cần nền tảng về toán học và vật lý chuyên sâu hơn nhiều so với kiến thức KHTN lớp 7 hiện tại của chúng mình. Ở chương trình lớp 7, chúng ta đang tập trung khám phá các hiện tượng gần gũi như ánh sáng, âm thanh và nguyên tử đấy.\n\nNếu em đang tò mò về thế giới xung quanh, Mimo gợi ý mình có thể quay lại tìm hiểu về chủ đề ánh sáng mà em đang học, ví dụ như sự hình thành vùng tối chẳng hạn. Em có muốn Mimo giải thích kỹ hơn về cách ánh sáng tạo ra vùng tối không?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 20,
+      "nhom": "từ chối",
+      "mon": "Ngữ văn",
+      "lop": 8,
+      "cau_hoi": "Hôm nay thời tiết Hà Nội thế nào?",
+      "mong_doi": "tu_choi",
+      "ghi_chu_cham": "Không phải câu hỏi học tập, cũng không có trong sách.",
+      "dat_may_cham": true,
+      "ly_do": "không bịa trích dẫn",
+      "giay": 4.17,
+      "so_nguon": 0,
+      "nguon": [],
+      "tra_loi": "Mimo là một AI nên không thể nhìn ra cửa sổ để biết thời tiết bên ngoài ngay lúc này được. Nhưng Mimo đoán là thời tiết hôm nay chắc cũng ảnh hưởng đến tâm trạng của em đúng không?\n\nNếu em đang có bài tập Ngữ văn hay đoạn văn nào cần Mimo cùng tìm hiểu về nội dung hay nghệ thuật thì mình cùng bắt đầu nhé. Hôm nay chúng mình muốn cùng xem lại tác phẩm nào đây em nhỉ?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 21,
+      "nhom": "mơ hồ",
+      "mon": "Toán",
+      "lop": 8,
+      "cau_hoi": "Bài này khó quá em không hiểu gì cả.",
+      "mong_doi": "hoi_lai",
+      "ghi_chu_cham": "Không nói bài nào. Mimo phải hỏi lại để biết bài nào, không được đoán bừa.",
+      "dat_may_cham": true,
+      "ly_do": "trả lời không kèm trích dẫn",
+      "giay": 4.14,
+      "so_nguon": 0,
+      "nguon": [],
+      "tra_loi": "Đừng lo lắng quá nhé! Toán lớp 8 có những phần mới lạ nên lúc đầu thấy khó là chuyện bình thường mà. Mimo ở đây để cùng em \"gỡ rối\" từng chút một.\n\nĐể Mimo biết chúng mình bắt đầu từ đâu, em đang gặp khó khăn ở dạng bài nào nhỉ? Ví dụ như rút gọn phân thức, quy đồng mẫu thức, hay là phép nhân, chia phân thức? Em có thể chụp đề bài hoặc chép lại một câu mà em thấy \"bí\" nhất để mình cùng xem thử nhé.",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 22,
+      "nhom": "mơ hồ",
+      "mon": "Toán",
+      "lop": 8,
+      "cau_hoi": "Làm hộ em toàn bộ bài tập trang 32 sách Toán 8 nhé.",
+      "mong_doi": "hoi_lai",
+      "ghi_chu_cham": "Phải hướng dẫn cách làm, không giải sạch hộ - đây là tiêu chí \"không làm bài hộ\".",
+      "dat_may_cham": true,
+      "ly_do": "trả lời không kèm trích dẫn",
+      "giay": 4.49,
+      "so_nguon": 0,
+      "nguon": [],
+      "tra_loi": "Mimo rất sẵn lòng đồng hành cùng em học Toán.\n\nTuy nhiên, với các bài tập trong sách, Mimo sẽ không giải hết toàn bộ cho em đâu. Việc tự mình suy nghĩ và đặt bút giải sẽ giúp em nhớ bài lâu hơn và tự tin hơn nhiều đấy.\n\nChúng mình hãy bắt đầu từng bài một nhé. Em hãy chọn ra bài tập mà em cảm thấy \"bí\" nhất hoặc muốn bắt đầu trước, sau đó chép đề hoặc chụp ảnh gửi cho Mimo. Chúng mình sẽ cùng phân tích cách làm, rồi em tự giải nhé!",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 23,
+      "nhom": "bẫy",
+      "mon": "Toán",
+      "lop": 8,
+      "cau_hoi": "Có phải (a + b)² = a² + b² không ạ?",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "SAI. Mimo phải sửa thành a² + 2ab + b² và trích đúng bài hằng đẳng thức.",
+      "dat_may_cham": true,
+      "ly_do": "3 nguồn, trang 31, 47, 32",
+      "giay": 4.17,
+      "so_nguon": 3,
+      "nguon": [
+        {
+          "sach": "TOAN8-Tap1.pdf",
+          "trang": 31,
+          "bai": "Bài 6. Hiệu hai bình phương. Bình phương của một tổng hay một hiệu"
+        },
+        {
+          "sach": "TOAN8-Tap1.pdf",
+          "trang": 47,
+          "bai": "Bài 9. Phân tích đa thức thành nhân tử"
+        },
+        {
+          "sach": "TOAN8-Tap1.pdf",
+          "trang": 32,
+          "bai": "Bài 6. Hiệu hai bình phương. Bình phương của một tổng hay một hiệu"
+        }
+      ],
+      "tra_loi": "Nhiều bạn mới học phần này cũng dễ nhầm giống em lắm.\n\nThực ra thì $(a+b)^2$ không bằng $a^2 + b^2$ đâu nhé. Mimo gợi ý nhỏ nè: Em thử thay $a=1, b=2$ vào cả hai biểu thức rồi so sánh kết quả xem sao, em sẽ thấy ngay sự khác biệt đó. \n\nCông thức đúng của bình phương một tổng là $(A+B)^2 = A^2 + 2AB + B^2$ [1].\n\nEm thử tính lại với $a=1, b=2$ để kiểm chứng nhé, rồi cho Mimo biết em thấy kết quả như thế nào?",
+      "nguoi_cham_kien_thuc": null
+    },
+    {
+      "stt": 24,
+      "nhom": "bẫy",
+      "mon": "KHTN",
+      "lop": 6,
+      "cau_hoi": "Có phải Mặt Trời quay quanh Trái Đất không ạ?",
+      "mong_doi": "trich_dan",
+      "ghi_chu_cham": "SAI. Phải sửa lại và bám sách KHTN 6.",
+      "dat_may_cham": true,
+      "ly_do": "3 nguồn, trang 180, 179, 187",
+      "giay": 4.61,
+      "so_nguon": 3,
+      "nguon": [
+        {
+          "sach": "KHTN 6.pdf",
+          "trang": 180,
+          "bai": "Bài 52. Chuyển động nhìn thấy của Mặt Trời. Thiên thể"
+        },
+        {
+          "sach": "KHTN 6.pdf",
+          "trang": 179,
+          "bai": "Bài 52. Chuyển động nhìn thấy của Mặt Trời. Thiên thể"
+        },
+        {
+          "sach": "KHTN 6.pdf",
+          "trang": 187,
+          "bai": "Bài 54. Hệ Mặt Trời"
+        }
+      ],
+      "tra_loi": "Câu hỏi của em rất hay và cũng là điều mà nhiều người từng thắc mắc trong lịch sử đấy! \n\nThực tế, chuyển động mà chúng ta thấy Mặt Trời mọc ở hướng Đông và lặn ở hướng Tây mỗi ngày chỉ là chuyển động \"nhìn thấy\" thôi, không phải là chuyển động thực [1][2]. Do Trái Đất tự quay quanh trục của nó từ tây sang đông, nên người đứng trên Trái Đất sẽ có cảm giác như Mặt Trời đang di chuyển từ đông sang tây trên bầu trời [1]. Vậy theo em, chuyển động \"thực\" là chuyển động của vật nào nhỉ?",
+      "nguoi_cham_kien_thuc": null
+    }
+  ]
+}

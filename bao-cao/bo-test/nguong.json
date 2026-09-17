@@ -1,0 +1,97 @@
+{
+  "dinh_nhieu": 0.692789743191354,
+  "day_cau_that": 0.70219149481558,
+  "de_xuat": 0.7,
+  "nhieu": [
+    {
+      "diem": 0.692789743191354,
+      "cau": "Em cảm ơn nhiều ạ"
+    },
+    {
+      "diem": 0.690964357005733,
+      "cau": "Ok em hiểu rồi"
+    },
+    {
+      "diem": 0.650073328753171,
+      "cau": "Haha vui quá"
+    },
+    {
+      "diem": 0.645357926620594,
+      "cau": "Mai em đi chơi"
+    },
+    {
+      "diem": 0.644857074462604,
+      "cau": "Mimo ơi"
+    },
+    {
+      "diem": 0.640052518687656,
+      "cau": "Bạn tên gì?"
+    },
+    {
+      "diem": 0.632124188343667,
+      "cau": "Chào cô Mimo ạ"
+    },
+    {
+      "diem": 0.6243086611837,
+      "cau": "Chào Mimo!"
+    },
+    {
+      "diem": 0.620367012829613,
+      "cau": "Hôm nay thời tiết Hà Nội thế nào?"
+    },
+    {
+      "diem": 0.605987933280121,
+      "cau": "Hôm nay em mệt quá"
+    }
+  ],
+  "cau_that": [
+    {
+      "diem": 0.775767709636672,
+      "cau": "Quang hợp ở thực vật là gì?"
+    },
+    {
+      "diem": 0.766137221971779,
+      "cau": "Biện pháp tu từ chơi chữ là gì?"
+    },
+    {
+      "diem": 0.758513901320459,
+      "cau": "Có mấy kiểu câu ghép? Cho ví dụ."
+    },
+    {
+      "diem": 0.755093191449767,
+      "cau": "Biệt ngữ xã hội là gì?"
+    },
+    {
+      "diem": 0.75034667635903,
+      "cau": "Định luật Ôm phát biểu thế nào?"
+    },
+    {
+      "diem": 0.74983934447812,
+      "cau": "Từ tượng hình và từ tượng thanh khác nhau thế nào?"
+    },
+    {
+      "diem": 0.749210781743328,
+      "cau": "Cách mạng tư sản Anh nổ ra khi nào?"
+    },
+    {
+      "diem": 0.741138253544732,
+      "cau": "Hằng đẳng thức bình phương của một tổng là gì?"
+    },
+    {
+      "diem": 0.72460633691285,
+      "cau": "Hình thoi khác hình vuông ở đâu?"
+    },
+    {
+      "diem": 0.723210346019974,
+      "cau": "Thế nào là số nguyên tố?"
+    },
+    {
+      "diem": 0.717907694516666,
+      "cau": "Chữ Nôm ra đời thế nào?"
+    },
+    {
+      "diem": 0.70219149481558,
+      "cau": "Từ ngữ địa phương là gì?"
+    }
+  ]
+}

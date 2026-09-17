@@ -95,8 +95,17 @@ GEMINI_FALLBACK_MODELS = [model.strip() for model in os.getenv('GEMINI_FALLBACK_
 MAX_OUTPUT_TOKENS = int(os.getenv('MAX_OUTPUT_TOKENS', '800'))
 MAX_JSON_OUTPUT_TOKENS = int(os.getenv('MAX_JSON_OUTPUT_TOKENS', '4096'))
 QUOTA_COOLDOWN_SECONDS = 300
-# Stricter than retrieval: greetings and off-topic chat still score ~0.60-0.66 against cover/intro pages.
-CHAT_SOURCE_MIN_SCORE = float(os.getenv('CHAT_SOURCE_MIN_SCORE', str(max(RAG_SCORE_THRESHOLD, 0.68))))
+# Ngưỡng để một đoạn sách được HIỆN RA làm nguồn trích dẫn, khắt khe hơn ngưỡng đưa vào prompt.
+#
+# Số đo thật trên kho hiện tại (16 mẫu, xem bao-cao/bo-test/nguong.md):
+#   - lời chào / lạc đề: cao nhất 0.693 ("Em cảm ơn nhiều ạ")
+#   - câu hỏi thật có trong sách: thấp nhất 0.702 ("Từ ngữ địa phương là gì?")
+# Nên 0.70 là chỗ duy nhất tách sạch hai nhóm. Mức cũ 0.68 nằm DƯỚI đỉnh nhiễu, tức lời cảm
+# ơn cũng được gắn một trang SGK - đúng kiểu bịa nguồn mà sản phẩm này hứa không làm.
+#
+# Khoảng tách chỉ 0.009 nên đừng coi đây là con số chắc chắn: thêm sách mới thì phải đo lại
+# bằng bao-cao/bo-test/do_nguong.py chứ không đoán.
+CHAT_SOURCE_MIN_SCORE = float(os.getenv('CHAT_SOURCE_MIN_SCORE', str(max(RAG_SCORE_THRESHOLD, 0.70))))
 if GEMINI_API_KEY:
     try:
         gemini_client = genai.Client(api_key=GEMINI_API_KEY)
