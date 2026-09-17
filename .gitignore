@@ -27,6 +27,8 @@ Anh_cac_giai_doan
 
 # Local datasets and generated training outputs
 data/
+# Sách PDF để dự phòng, không phải bản đang dùng. Vẫn hàng chục MB mỗi file.
+backend/data-du-phong/
 runs/
 sitting posture.v4-sitting_posture_4keypoint.yolov8/train/
 sitting posture.v4-sitting_posture_4keypoint.yolov8/valid/
