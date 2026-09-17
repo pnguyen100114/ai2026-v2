@@ -24,7 +24,9 @@ import array
 import math
 import operator
 import os
+import sys
 import threading
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from sqlalchemy import bindparam, text
@@ -36,8 +38,11 @@ except ImportError:  # pragma: no cover - vẫn chạy được, chỉ chậm h�
 
 try:
     from backend.db import engine
-except ImportError:  # pragma: no cover - khi chạy trực tiếp trong thư mục backend/
-    from db import engine
+except ImportError:  # pragma: no cover
+    # Chạy thẳng `python backend/rag/ingest.py`: Python chỉ đặt backend/rag vào sys.path,
+    # không có gốc repo, nên cả `backend.db` lẫn `db` đều không thấy. Thêm gốc repo vào.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from backend.db import engine
 
 EMBEDDING_DIMENSION = int(os.getenv('EMBEDDING_DIMENSION', '1536'))
 

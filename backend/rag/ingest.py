@@ -847,12 +847,18 @@ def already_ingested(pdf_path):
     name = Path(pdf_path).name
 
     # Kho rỗng (database mới) thì manifest nói gì cũng không quan trọng: phải nạp lại.
-    if vector_store.count_source(name) == 0:
+    stored = vector_store.count_source(name)
+    if stored == 0:
         return False
 
     entry = load_manifest().get(manifest_key(name))
 
     if not entry:
+        return False
+
+    # Nạp dở giữa chừng (mạng đứt, Ctrl+C) thì kho có ít vector hơn manifest ghi. Phải nạp
+    # lại, nếu không quyển này thiếu vĩnh viễn mà không có dòng cảnh báo nào.
+    if stored < int(entry.get("chunks", 0)):
         return False
 
     # Anything that changes the vectors - a different scan, model, dimension or chunk size -
@@ -1040,7 +1046,10 @@ def main():
 
                 continue
 
-            if force:
+            # Đến được đây nghĩa là quyển này chưa đủ trong kho. Nếu vẫn còn sót vector cũ
+            # (nạp dở, hoặc lần trước chia chunk kiểu khác) thì BẮT BUỘC xoá trước: id có
+            # phần uuid ngẫu nhiên nên ghi tiếp sẽ thành nhân đôi chứ không phải thay thế.
+            if force or vector_store.count_source(pdf_file.name) > 0:
 
                 print("Xoá vector cũ của quyển này trước khi nạp lại...")
 
