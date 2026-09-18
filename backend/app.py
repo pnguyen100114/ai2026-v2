@@ -7,6 +7,7 @@ import logging
 import re
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -383,6 +384,13 @@ LESSON_CONTEXT_PAGES = 2
 LESSON_PAGES_CACHE_SIZE = 256
 _lesson_pages_cache: dict[tuple[str, int, str], list[dict[str, Any]]] = {}
 
+# Trước chữ đầu tiên của câu trả lời, mỗi tin nhắn phải chờ xong ba việc chờ mạng: tìm SGK
+# (embedding + truy vấn vector), lấy trang của bài đang học, và đọc lịch sử bài này ở các
+# cuộc trò chuyện khác. Cả ba không cần kết quả của nhau, nhưng chạy nối đuôi thì học sinh
+# phải chờ tổng của cả ba. Đo trên máy dev (database ở Sydney): 2,2s + 2,2s + 1,3s. Chạy
+# song song thì chỉ còn đúng việc lâu nhất.
+_io_pool = ThreadPoolExecutor(max_workers=12, thread_name_prefix='chat-io')
+
 
 def _page_key(item: dict[str, Any]) -> tuple[Any, Any]:
     return item.get('source'), item.get('pdf_page') or item.get('page')
@@ -639,8 +647,17 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     topic = str(context.get('currentTopic') or '').strip()
     risk = detect_risk(message)
 
+    # Ba việc chờ mạng dưới đây không cần kết quả của nhau, nên cùng khởi hành một lúc
+    # (xem _io_pool). Kết quả được lấy ra đúng chỗ cần dùng ở bên dưới.
+    matches_task = _io_pool.submit(search_knowledge, message, subject=subject, grade=grade, top_k=5)
+    # _lesson_pages và lesson_history tự nuốt lỗi của mình và trả về danh sách rỗng.
+    lesson_pages_task = _io_pool.submit(_lesson_pages, subject, int(grade), topic) if topic else None
+    earlier_turns_task = _io_pool.submit(
+        lesson_history, user['id'], subject, lesson, exclude_session_id=(request.session or {}).get('id'),
+    ) if lesson else None
+
     try:
-        matches = search_knowledge(message, subject=subject, grade=grade, top_k=5)
+        matches = matches_task.result()
     except Exception as exc:
         logger.exception('RAG retrieval failed for chat message')
         matches = []
@@ -650,7 +667,7 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
 
     # Pages of the lesson being studied keep short follow-ups ("cho em ví dụ khác") anchored to the right part of the book.
     seen_pages = {_page_key(item) for item in matches[:3]}
-    lesson_pages = [item for item in _lesson_pages(subject, int(grade), topic) if _page_key(item) not in seen_pages][:LESSON_CONTEXT_PAGES] if topic and not retrieval_error else []
+    lesson_pages = [item for item in lesson_pages_task.result() if _page_key(item) not in seen_pages][:LESSON_CONTEXT_PAGES] if lesson_pages_task is not None and not retrieval_error else []
     context_matches = sorted(matches[:3] + lesson_pages, key=lambda item: float(item.get('score', 0.0)), reverse=True)
     unique_matches: dict[tuple[Any, Any], dict[str, Any]] = {}
     # Lời chào và lời cảm ơn không được gắn trang sách, dù điểm tương đồng có cao tới đâu.
@@ -707,8 +724,8 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     marker_example = '{"quick_replies":["...","..."],"understanding":"...","image_text":"..."}' if request.image_data else '{"quick_replies":["...","..."],"understanding":"..."}'
     earlier_lesson_turns = [
         f"{'Học sinh' if item['role'] == 'user' else 'Mimo'}: {item['content'][:300]}"
-        for item in lesson_history(user['id'], subject, lesson, exclude_session_id=(request.session or {}).get('id'))
-    ] if lesson else []
+        for item in earlier_turns_task.result()
+    ] if earlier_turns_task is not None else []
     progress_text = _lesson_progress(user, subject, int(grade), topic)
     student_name = student.name if student.name and student.name != 'Học sinh' else 'em'
     prompt = f'''Bạn là Mimo – trợ lý học tập AI thân thiện, như một người anh/chị lớn giỏi giang, kiên nhẫn, luôn đồng hành cùng học sinh THCS.

@@ -1,0 +1,34 @@
+# Render gói free cho service ngủ sau 15 phút không ai gọi, và lần gọi đánh thức mất rất lâu:
+# đo ngày 18/09/2026 là 53,5 giây, trong khi các lần sau chỉ 0,33s. Nghĩa là em học sinh đầu
+# tiên mở Mimo sau giờ nghỉ phải ngồi chờ gần một phút trước màn hình trắng.
+#
+# Lịch này gọi /api/health 10 phút một lần để service không kịp ngủ. Đây là cách chữa rẻ nhất,
+# không phải cách chắc nhất: lịch cron của GitHub Actions là "cố gắng hết sức", giờ cao điểm
+# có thể trễ 5-15 phút, và lần nào trễ quá 15 phút thì service vẫn ngủ. Muốn chắc chắn thì
+# dùng dịch vụ ping chuyên dụng (UptimeRobot, cron-job.org) hoặc lên gói trả phí của Render.
+name: Giữ backend luôn thức
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+# Lịch trước chưa xong thì bỏ, không xếp hàng chồng lên nhau.
+concurrency:
+  group: giu-backend-thuc
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Gọi /api/health
+        run: |
+          # --max-time 120: nếu service đã ngủ thì chính lần gọi này phải chịu trận đánh thức.
+          ma=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 120 \
+                    --retry 2 --retry-delay 10 --retry-all-errors \
+                    https://gia-su-ai-api.onrender.com/api/health)
+          echo "HTTP $ma"
+          # Backend hỏng thì để job đỏ, để còn biết mà sửa.
+          test "$ma" = "200"

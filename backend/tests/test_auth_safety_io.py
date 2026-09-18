@@ -131,6 +131,9 @@ def test_progress_reports_real_streak_today_and_lessons(auth_client):
             'toan8.don-thuc': {'concept': 'Đơn thức', 'mastery': 0.8, 'attempts': 3},
             'khtn8.te-bao': {'concept': 'Tế bào', 'mastery': 0.2, 'attempts': 1},
         }}))
+    # Test này ghi thẳng vào bảng users bằng SQL, không qua db.py, nên phải tự bỏ bản nhớ hồ
+    # sơ học sinh (xem get_user). Code thật không cần dòng này: mọi đường ghi đều tự gọi.
+    db.forget_user(user_id)
 
     progress = auth_client.get('/api/progress', params={'subject': 'Toán', 'grade': 8}, headers=headers).json()
 

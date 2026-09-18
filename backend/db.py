@@ -7,6 +7,7 @@ Tables are created on startup; nothing has to be run by hand.
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import hmac
 import logging
@@ -175,7 +176,10 @@ def _create_engine() -> Engine:
     url = _database_url()
     if url.startswith('sqlite'):
         return create_engine(url, connect_args={'check_same_thread': False})
-    return create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=5)
+    # Một tin nhắn giờ dùng tới hai kết nối cùng lúc (xem _io_pool trong app.py), nên pool
+    # cũ 5+5 sẽ thành chỗ nghẽn ngay khi có vài em hỏi cùng lúc: kết nối không phải tài
+    # nguyên đắt, còn chờ pool thì cộng thẳng vào thời gian em ngồi nhìn màn hình trống.
+    return create_engine(url, pool_pre_ping=True, pool_size=10, max_overflow=20)
 
 
 engine = _create_engine()
@@ -199,6 +203,7 @@ def init_db() -> None:
             users.c.current_topic == LEGACY_DEFAULT_TOPIC,
             or_(users.c.grade != 8, users.c.subject != 'Toán'),
         ).values(current_lesson='', current_topic=''))
+    _user_cache.clear()
     if engine.dialect.name == 'postgresql':
         # On Supabase, tables in "public" are reachable through its REST API with the anon key.
         # RLS without policies blocks that path; the backend connects as the table owner and is unaffected.
@@ -245,6 +250,7 @@ def get_password_hash(user_id: str) -> str | None:
 def set_password(user_id: str, password: str) -> None:
     with engine.begin() as conn:
         conn.execute(update(users).where(users.c.id == user_id).values(password_hash=hash_password(password)))
+    forget_user(user_id)
 
 
 SOURCE_URL_TTL = timedelta(days=7)
@@ -339,10 +345,49 @@ def public_user(row: Any) -> dict[str, Any]:
     }
 
 
+# Mỗi request đều đi qua current_user -> get_user, tức là một vòng đi-về tới database trước
+# khi bất cứ việc gì bắt đầu. Đo trên bản đã triển khai: ~0,58s, nằm thẳng trên đường học sinh
+# chờ chữ đầu tiên. Hàng users gần như không đổi giữa hai tin nhắn, nên giữ lại trong bộ nhớ.
+#
+# An toàn vì mọi chỗ ghi vào bảng users trong file này đều gọi forget_user() ngay sau đó, nên
+# hồ sơ mới có hiệu lực lập tức. TTL chỉ là lưới đỡ cho những đường ghi không đi qua đây (lệnh
+# reset_password chạy ở tiến trình khác, hoặc sau này chạy nhiều instance).
+#
+# 10 phút chứ không phải vài chục giây: học sinh ngồi nghĩ giữa hai câu hỏi thường lâu hơn thế,
+# TTL ngắn thì gần như tin nhắn nào cũng trượt và cache thành vô nghĩa. Dài cũng không rủi ro
+# vì bản nhớ chỉ chứa hồ sơ công khai (xem public_user - không có mật khẩu), còn đăng nhập đi
+# qua find_user_by_email vốn không dùng cache nên đổi mật khẩu vẫn có hiệu lực ngay.
+USER_CACHE_TTL = float(os.getenv('USER_CACHE_TTL', '600'))
+USER_CACHE_SIZE = 2000
+_user_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+_user_cache_lock = threading.Lock()
+
+
+def forget_user(user_id: str | None) -> None:
+    """Bỏ bản nhớ của một học sinh. Gọi sau MỌI lệnh ghi vào bảng users."""
+    if user_id:
+        with _user_cache_lock:
+            _user_cache.pop(user_id, None)
+
+
 def get_user(user_id: str) -> dict[str, Any] | None:
+    now = time.monotonic()
+    with _user_cache_lock:
+        cached = _user_cache.get(user_id)
+    if cached is not None and (now - cached[0]) < USER_CACHE_TTL:
+        # Trả bản sao: người gọi sửa dict trả về thì không được làm hỏng bản nhớ.
+        return copy.deepcopy(cached[1])
     with engine.connect() as conn:
         row = conn.execute(select(users).where(users.c.id == user_id)).first()
-    return public_user(row) if row else None
+    if row is None:
+        forget_user(user_id)
+        return None
+    user = public_user(row)
+    with _user_cache_lock:
+        if len(_user_cache) >= USER_CACHE_SIZE:
+            _user_cache.pop(next(iter(_user_cache)))
+        _user_cache[user_id] = (now, copy.deepcopy(user))
+    return user
 
 
 def find_user_by_email(email: str) -> dict[str, Any] | None:
@@ -361,6 +406,7 @@ def create_user(email: str, name: str, grade: int, password: str) -> dict[str, A
 def touch_login(user_id: str) -> None:
     with engine.begin() as conn:
         conn.execute(update(users).where(users.c.id == user_id).values(last_login_at=_now()))
+    forget_user(user_id)
 
 
 PROFILE_FIELDS = {'name': 'name', 'grade': 'grade', 'subject': 'subject', 'currentLesson': 'current_lesson', 'currentTopic': 'current_topic', 'onboarding': 'onboarding', 'onboarded': 'onboarded'}
@@ -376,6 +422,7 @@ def update_user(user_id: str, patch: dict[str, Any]) -> dict[str, Any]:
     if values:
         with engine.begin() as conn:
             conn.execute(update(users).where(users.c.id == user_id).values(**values))
+        forget_user(user_id)
     return get_user(user_id)  # type: ignore[return-value]
 
 
@@ -608,5 +655,7 @@ def save_quiz_attempt(user: dict[str, Any], attempt: dict[str, Any], learning_pr
             conn.execute(insert(quiz_attempts).values(**attempt, user_id=user['id']))
             if learning_profile is not None:
                 conn.execute(update(users).where(users.c.id == user['id']).values(learning_profile=learning_profile))
+        # Mức nắm bài vừa đổi: tin nhắn tiếp theo phải dạy theo số mới, không theo số cũ.
+        forget_user(user['id'])
     except Exception:
         logger.exception('Failed to persist quiz attempt')
