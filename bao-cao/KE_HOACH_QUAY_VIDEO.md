@@ -100,6 +100,42 @@ vào phần trích nguồn, để chuột dừng đủ lâu cho người xem đ�
 Quay **rời từng cảnh** rồi mới ghép: hỏng một cảnh chỉ quay lại cảnh đó. Việc này quan trọng vì mỗi
 lần quay lại là tốn thêm một lượt Gemini và một lượt đọc Pinecone.
 
+### Bản mẫu quay bằng máy, để canh nhịp trước khi tự quay
+
+`bao-cao/quay_video.py` lái trình duyệt đi đúng chín cảnh trên và ghi lại thành video. Đây **không
+phải bản nộp** — nó là bản mẫu để xem trước một cảnh dài bao nhiêu, dừng ở đâu, cuộn tới đâu, rồi
+mới ngồi quay lại bằng OBS cho đúng nhịp đó.
+
+    .venv\Scripts\python.exe bao-cao\quay_video.py          # in ra danh sách chín cảnh
+    .venv\Scripts\python.exe bao-cao\quay_video.py 4        # quay riêng cảnh 4
+    .venv\Scripts\python.exe bao-cao\quay_video.py 3 4 7    # quay vài cảnh
+    .venv\Scripts\python.exe bao-cao\quay_video.py tat-ca   # quay cả chín cảnh
+
+Gọi trống thì nó không quay gì cả, chỉ in danh sách. Mỗi cảnh ra một tệp `.webm` riêng trong
+`bao-cao/video-tho/`, kèm dòng báo cảnh đó **dài bao nhiêu giây so với kịch bản** — đó chính là số
+cần biết trước khi tự quay.
+
+Vài điều phải nhớ khi dùng:
+
+- [ ] **Trỏ `VITE_API_BASE_URL` sang bản deploy trên Render** (`https://gia-su-ai-api.onrender.com`),
+      để quay đúng bản mà ban giám khảo sẽ mở. Số liệu đợt thử nghiệm trong hồ sơ đã khóa cứng theo
+      ngày 13–14/9 nên tài khoản demo sinh ra hôm nay không làm lệch con số nộp — cứ quay thoải mái.
+      Script tự kiểm tra và dừng lại nếu backend không trả lời.
+- [ ] **Mỗi lần chạy vẫn tốn quota thật** — đúng như cảnh báo ở mục 3.2. Chạy `tat-ca` là một loạt
+      lượt Gemini và lượt đọc Pinecone. Quay thử từng cảnh một, đừng chạy cả bộ cho vui.
+- [ ] Thêm `--nhanh` khi chỉ muốn kiểm tra script còn bám đúng giao diện hay không: nó rút hết các
+      quãng dừng, ra đoạn quay vô dụng nhưng chạy nhanh.
+- [ ] **Cảnh 6 không dùng được bản mẫu**: video Playwright không có tiếng, mà cảnh 6 chính là cảnh
+      nghe Mimo đọc. Cảnh đó bắt buộc tự quay có thu tiếng.
+- [ ] Chuột trong bản mẫu là chấm tròn vẽ thêm, không phải con trỏ thật. Lúc tự quay nhớ bật hiệu
+      ứng làm nổi con trỏ như mục 3.3.
+- [ ] Cảnh 5 cần ảnh đề bài đặt sẵn ở `bao-cao/anh-de-bai.png`.
+
+Phiên demo (tài khoản, lộ trình, câu hỏi đầu tiên) được dựng một lần rồi lưu vào
+`video-tho/phien.json` để quay lại cảnh khác khỏi chờ từ đầu. Backend dựng lại DB thì thêm
+`--phien-moi`. Thư mục này không lên kho — cả `bao-cao/` vốn đã nằm trong `.gitignore` — và cũng
+đừng gỡ ra: tệp video hàng chục MB, mà `phien.json` còn giữ phiên đăng nhập của tài khoản demo.
+
 ---
 
 ## 3. Chuẩn bị trước khi bấm ghi
