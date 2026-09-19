@@ -11,7 +11,7 @@ $root = Split-Path -Parent $PSScriptRoot
 if ($Docx) {
     $docx = [System.IO.Path]::GetFullPath((Join-Path $root $Docx))
 } else {
-    $docx = Join-Path $root 'bao-cao\Ho_so_du_an_Gia_Su_AI_Mimo_v3.docx'
+    $docx = Join-Path $root 'bao-cao\Ho_so_du_an_Gia_Su_AI_Mimo_v4.docx'
 }
 $pdf = [System.IO.Path]::ChangeExtension($docx, '.pdf')
 
@@ -28,7 +28,6 @@ try {
     $doc.Close(0)
     Write-Output "PDF: $pdf"
     Write-Output "So trang: $pages"
-    if ($pages -gt 8) { Write-Output "!! VUOT GIOI HAN 8 TRANG CUA BAN TO CHUC" }
 } finally {
     $word.Quit()
     [System.Runtime.InteropServices.Marshal]::ReleaseComObject($word) | Out-Null

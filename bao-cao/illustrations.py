@@ -29,6 +29,12 @@ _giay = sorted(k['giay'] for k in _ket)
 LAT_MED = _giay[len(_giay) // 2]
 N_QUESTIONS = _db.execute("select count(*) from messages where role='user'").fetchone()[0]
 
+# Số câu lệnh lấy từ prompt-log/PROMPT_HISTORY.md, cùng một nguồn với make_report.py. Gõ cứng
+# ở đây thì mỗi lần chạy lại export-history.cjs là hình và chữ trong hồ sơ nói hai con số khác nhau.
+_history = (ROOT / 'prompt-log' / 'PROMPT_HISTORY.md').read_text(encoding='utf-8')
+_dem = lambda nhan: int(re.search(rf'\|\s*{nhan}\s*\|\s*\**(\d+)', _history).group(1))
+N_PROMPTS_CLAUDE, N_PROMPTS_COPILOT = _dem('Claude Code'), _dem('GitHub Copilot')
+
 OUT = ROOT / 'bao-cao' / 'hinh-minh-hoa'
 TMP = OUT / '_html'
 OUT.mkdir(parents=True, exist_ok=True)
@@ -129,13 +135,13 @@ render('cong_cu', 1300, 560, f'''<div class="canvas">
     ('scan-line', 'navy', 'OCR', 'Đọc chữ từ các trang sách scan'),
     ('layers', 'violet', 'Gemini Embedding', 'Biến đoạn sách và câu hỏi thành vector để so nghĩa'),
     ('database', 'green', 'Kho vector', f'{N_VECTORS} đoạn sách, tìm đúng trang trong tích tắc'),
-    ('sparkles', 'solid', 'Gemini 3.5 Flash', 'Giảng bài, đọc ảnh đề, nghe giọng nói, soạn câu luyện tập'),
+    ('sparkles', 'solid', 'Gemini 3.1 Flash Lite', 'Giảng bài, đọc ảnh đề, nghe giọng nói, soạn câu luyện tập'),
     ('volume-2', 'coral', 'Edge TTS', 'Đọc bài giảng bằng giọng tiếng Việt'),
   ])}</div>
   <div class="label" style="margin-top:30px">Công cụ giúp nhóm làm sản phẩm</div>
   <div class="grid3">{tiles([
-    ('terminal', 'navy', 'Claude Code', '162 câu lệnh: đọc mã, sửa lỗi, viết kiểm thử'),
-    ('code-xml', 'navy', 'GitHub Copilot', '30 câu lệnh: dựng backend, sửa lỗi giao diện'),
+    ('terminal', 'navy', 'Claude Code', f'{N_PROMPTS_CLAUDE} câu lệnh: đọc mã, sửa lỗi, viết kiểm thử'),
+    ('code-xml', 'navy', 'GitHub Copilot', f'{N_PROMPTS_COPILOT} câu lệnh: dựng backend, sửa lỗi giao diện'),
     ('user-round', 'amber', 'Hồ sơ & lịch sử học', 'Lớp, bài đang học, kết quả luyện tập để dạy nối tiếp'),
   ])}</div>
 </div>''', TOOL_CSS)

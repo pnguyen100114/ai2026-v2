@@ -48,3 +48,8 @@ sitting posture.v4-sitting_posture_4keypoint.yolov8/**/*.cache
 
 # Word/Office lock files
 ~$*
+test/
+
+# Bản quay nháp từng cảnh: video hàng chục MB, quay lại lúc nào cũng được. phien.json trong
+# đó còn giữ phiên đăng nhập của tài khoản demo, không đưa lên kho.
+bao-cao/video-tho/
