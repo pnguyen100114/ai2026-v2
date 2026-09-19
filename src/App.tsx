@@ -39,7 +39,7 @@ import {
 import PomodoroState from './components/PomodoroState'
 import ProfilePage from './components/ProfilePage'
 import { usePomodoro } from './contexts/PomodoroContext'
-import ChatMessageContent, { citedSourceNumbers } from './components/ChatMessageContent'
+import ChatMessageContent, { MathText, citedSourceNumbers } from './components/ChatMessageContent'
 import { useAuth } from './contexts/AuthContext'
 import { apiFetch, apiJson, apiUrl } from './lib/api'
 import { RecordingTooShortError, startRecording, vietnameseBrowserVoice, voiceInputSupported, type Recorder } from './lib/audio'
@@ -1356,13 +1356,13 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
         {quizError && <div className="alert-box quiz-error" role="alert">{quizError}</div>}
         {quiz && <div className="quiz-card">
           <div className="quiz-meta"><span>{quiz.concept}</span><strong>Mức {quiz.difficulty}: {quiz.difficulty_label}</strong><small>Năng lực hiện tại {Math.round(quiz.mastery * 100)}%</small></div>
-          <h3>{quiz.question}</h3>
-          <div className="quiz-options">{quiz.options.map((option) => <button key={option} type="button" className={quizAnswer === option ? 'selected' : ''} onClick={() => onQuizAnswer(option)} disabled={Boolean(quizResult)}>{option}</button>)}</div>
+          <h3><MathText content={quiz.question} /></h3>
+          <div className="quiz-options">{quiz.options.map((option) => <button key={option} type="button" className={quizAnswer === option ? 'selected' : ''} onClick={() => onQuizAnswer(option)} disabled={Boolean(quizResult)}><MathText content={option} /></button>)}</div>
           {!quizResult && quiz.hint && (hintShown
-            ? <p className="quiz-hint"><Lightbulb size={14} /> {quiz.hint}</p>
+            ? <p className="quiz-hint"><Lightbulb size={14} /> <MathText content={quiz.hint} /></p>
             : <button type="button" className="text-btn quiz-hint-btn" onClick={onShowHint}><Lightbulb size={14} /> Xem gợi ý (được ít điểm hơn một chút)</button>)}
           {!quizResult && <button className="quiz-submit" type="button" onClick={onSubmitQuiz} disabled={quizLoading || !quizAnswer}>{quizLoading ? 'Đang chấm...' : 'Kiểm tra câu trả lời'}</button>}
-          {quizResult && <div className={`quiz-feedback ${quizResult.is_correct ? 'correct' : 'incorrect'}`}><strong>{quizResult.is_correct ? 'Tốt lắm!' : 'Mình cùng sửa lại nhé'}</strong><p>{quizResult.feedback}</p><small>{quizResult.explanation}</small><div className="recommendation"><b>{quizResult.recommendation.title}</b><span>{quizResult.recommendation.reason}</span></div><button className="text-btn" type="button" onClick={onLoadQuiz}>Làm câu tiếp theo <ChevronRight size={14} /></button></div>}
+          {quizResult && <div className={`quiz-feedback ${quizResult.is_correct ? 'correct' : 'incorrect'}`}><strong>{quizResult.is_correct ? 'Tốt lắm!' : 'Mình cùng sửa lại nhé'}</strong><p><MathText content={quizResult.feedback} /></p><small><MathText content={quizResult.explanation} /></small><div className="recommendation"><b>{quizResult.recommendation.title}</b><span>{quizResult.recommendation.reason}</span></div><button className="text-btn" type="button" onClick={onLoadQuiz}>Làm câu tiếp theo <ChevronRight size={14} /></button></div>}
         </div>}
       </section>
       {previewSource?.preview_url && <div className="source-modal-backdrop" role="presentation" onClick={() => setPreviewSource(null)}><div className="source-modal" role="dialog" aria-modal="true" aria-label="Xem trang sách" onClick={(event) => event.stopPropagation()}><div className="source-modal-head"><div><strong>{previewSource.title || previewSource.source || 'Trang SGK'}</strong><span>{[previewSource.lesson_title, `Trang ${previewSource.page || '-'}`].filter(Boolean).join(' · ')}</span></div><button type="button" onClick={() => setPreviewSource(null)} aria-label="Đóng xem trang"><X size={18} /></button></div><img src={apiUrl(previewSource.preview_url)} alt={`Trang ${previewSource.page || ''} trong ${previewSource.source || 'sách giáo khoa'}`} /></div></div>}

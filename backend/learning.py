@@ -82,7 +82,8 @@ YÊU CẦU
 - Nếu học sinh có lỗi hay mắc, ưu tiên câu hỏi giúp em sửa đúng lỗi đó.
 - Không trùng ý với các câu đã hỏi gần đây.
 - 3 hoặc 4 phương án, chỉ một phương án đúng; phương án sai phản ánh lỗi sai thường gặp.
-- Công thức viết dạng văn bản đơn giản (ví dụ x^2, 3/4), không dùng LaTeX.
+- Công thức toán viết bằng LaTeX đặt giữa hai dấu $, ví dụ $3x^2y$, $\\frac{{3}}{{4}}$ — giao diện
+  render bằng KaTeX như phần giảng bài. Chữ thường không bọc trong $.
 - Gợi ý (hint) chỉ mở hướng làm, không lộ đáp án.
 
 Câu đã hỏi gần đây:
@@ -162,6 +163,9 @@ def public_question(question_id: str, question: dict[str, Any], state: dict[str,
 
 def _normalize_answer(value: str) -> str:
     normalized = value.strip().lower().replace('²', '^2').replace('³', '^3')
+    # Câu hỏi nay sinh ra kèm LaTeX, nên "$x^2$", "$x^{2}$" và "x^2" phải được coi là một:
+    # đáp án đúng được so bằng chuỗi, lệch một dấu ngoặc là chấm sai một câu em làm đúng.
+    normalized = normalized.replace('$', '').replace('{', '').replace('}', '').replace('\\', '')
     normalized = re.sub(r'\s+', ' ', normalized)
     return normalized
 

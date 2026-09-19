@@ -40,6 +40,33 @@ export function citedSourceNumbers(content: string, sourceCount: number): number
   return [...new Set(numbers)]
 }
 
+const SUPERSCRIPT = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' } as const
+// "x^2" / "x^{10}" → "x²" / "x¹⁰". Chỉ dùng cho chuỗi KHÔNG có "$": prompt đã dặn Gemini viết
+// công thức bằng LaTeX, nhưng mô hình không phải lúc nào cũng nghe, và một câu luyện tập hiện
+// ra "2x^2 + 1 = 0" thì học sinh đọc là mũ hay là dấu nháy cũng không biết.
+const PLAIN_POWER = /\^\{?(\d+)\}?/g
+
+function readablePowers(text: string): string {
+  if (text.includes('$')) return text
+  return text.replace(PLAIN_POWER, (match, digits: string) =>
+    [...digits].map((digit) => SUPERSCRIPT[digit as keyof typeof SUPERSCRIPT] ?? match).join(''))
+}
+
+// Công thức trong một dòng chữ ngắn: câu luyện tập, phương án, gợi ý, lời chấm.
+// Khác ChatMessageContent ở chỗ không có trích dẫn và không sinh thẻ khối: <p> bị đổi thành
+// <span> để dùng được cả bên trong <button> (phương án trả lời), nơi HTML không cho đặt <p>.
+export function MathText({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkMath]}
+      rehypePlugins={[rehypeKatex]}
+      components={{ p: ({ children }) => <span>{children}</span> }}
+    >
+      {readablePowers((content || '').replace(MATH_IN_CODE, '$1'))}
+    </ReactMarkdown>
+  )
+}
+
 export default function ChatMessageContent({ content, sources = [], onCite }: ChatMessageContentProps) {
   return (
     <div className="markdown-content">
