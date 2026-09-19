@@ -2,20 +2,22 @@
 
 ## Cách hoạt động
 
-- Học sinh **chỉ cần nhập email** (lần đầu thêm tên và lớp), không có mật khẩu. Sau khi tạo tài khoản sẽ làm khảo sát 3 bước (môn học, mục tiêu, lộ trình).
+- Học sinh đăng nhập bằng **email + mật khẩu** (lần đầu thêm tên và lớp). Mật khẩu tối thiểu 6 ký tự, được băm trước khi lưu — database không bao giờ giữ mật khẩu dạng chữ thường. Sau khi tạo tài khoản sẽ làm khảo sát 3 bước (môn học, mục tiêu, lộ trình).
 - Backend FastAPI tự quản lý tài khoản và cấp token đăng nhập, lưu trong trình duyệt 180 ngày.
 - Mọi dữ liệu nằm trong database của backend:
 
 | Bảng | Nội dung |
 |---|---|
-| `users` | Email, tên, lớp, môn, kết quả khảo sát (`onboarding`), tiến độ luyện tập |
+| `users` | Email, mật khẩu đã băm, tên, lớp, môn, kết quả khảo sát (`onboarding`), tiến độ luyện tập |
 | `chat_sessions` / `messages` | Toàn bộ câu hỏi (`prompt`), câu trả lời, nguồn SGK, model, thời gian phản hồi |
 | `feedback` | 👍/👎 và góp ý cho từng câu trả lời |
-| `quiz_attempts` | Lịch sử làm bài luyện tập |
+| `quiz_attempts` / `quiz_questions` | Câu luyện tập đã soạn và lịch sử trả lời |
+| `ai_roadmaps` | Lộ trình do AI tự soạn cho môn/lớp chưa có mục lục trong `books.py` |
+| `sgk_chunks` | Kho vector SGK (pgvector khi là Postgres) |
 
 Bảng được **tạo tự động** khi backend khởi động, không cần chạy SQL bằng tay.
 
-> ⚠️ Không có mật khẩu nên ai biết email của một học sinh cũng có thể đăng nhập bằng email đó. Cách này phù hợp cho dự án học tập hoặc demo; không nên lưu thông tin nhạy cảm.
+> ⚠️ Tài khoản tạo từ trước khi có mật khẩu sẽ được "nhận" trong lần đăng nhập đầu tiên: mật khẩu nhập lúc đó trở thành mật khẩu của tài khoản. Nếu database còn tài khoản cũ, hãy đăng nhập đặt mật khẩu cho chúng trước khi mở cho người ngoài dùng.
 
 ## Chạy local
 
@@ -130,6 +132,6 @@ order by f.created_at desc limit 50;
 
 - Không commit `.env`, `backend/.env`, `backend/local.db`, `backend/.auth_secret` (đã có trong `.gitignore`). Nếu lỡ đẩy API key lên GitHub, **tạo key mới ngay**.
 - `SUPABASE_SERVICE_KEY` mạnh hơn mọi key khác trong dự án (đọc/ghi được toàn bộ database lẫn storage, bỏ qua mọi giới hạn). Chỉ đặt trong `backend/.env` và Environment của Render; đừng nhầm sang biến `VITE_*` — mọi biến `VITE_*` đều bị nhúng thẳng vào file JavaScript mà học sinh tải về.
-- Mỗi học sinh bị giới hạn `CHAT_RATE_PER_MINUTE` / `CHAT_RATE_PER_DAY` câu hỏi; mỗi địa chỉ IP tối đa 10 lần đăng nhập mỗi phút.
+- Mỗi học sinh bị giới hạn `CHAT_RATE_PER_MINUTE` / `CHAT_RATE_PER_DAY` câu hỏi (mặc định 10/phút, 200/ngày); mỗi địa chỉ IP tối đa 30 lần gọi đăng nhập mỗi phút. Riêng việc nhập sai mật khẩu bị chặn theo **từng email** (5 lần/phút, 30 lần/ngày), nên đoán mật khẩu của một học sinh từ nhiều địa chỉ IP vẫn chậm.
 - Học sinh chỉ xem, sửa, xóa được lịch sử và feedback của chính mình.
 - Người dùng là học sinh THCS: nên ghi rõ việc lưu nội dung hội thoại để cải thiện chất lượng.

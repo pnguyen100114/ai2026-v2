@@ -1,177 +1,120 @@
-# SETUP ĐẦY ĐỦ - AI GIA SƯ THCS     
+# Hướng dẫn cài đặt đầy đủ — Mimo, Gia sư AI THCS
 
+Tài liệu này dành cho người mới dùng Windows. Làm theo đúng thứ tự để chạy được website và backend AI.
 
-Tài liệu này dành cho người mới sử dụng Windows. Làm theo đúng thứ tự để chạy website, API nhận diện tư thế và camera AI.
+Muốn đưa sản phẩm lên mạng cho người khác dùng, xem [DEPLOY.md](DEPLOY.md).
 
 ## 1. Thành phần của dự án
 
-Website gồm:
+| Thành phần | Nội dung |
+|---|---|
+| Frontend React + Vite | Đăng nhập, khảo sát đầu vào, trang chủ, lộ trình học, hỏi bài, luyện tập, Pomodoro, hồ sơ tiến độ |
+| Backend FastAPI | Gọi Gemini, tìm kiếm SGK, quản lý tài khoản, luyện tập thích ứng, lọc tin nhắn nguy hiểm |
+| Kho vector SGK | Bảng `sgk_chunks` nằm trong chính database của dự án — không dùng dịch vụ vector ngoài |
+| Database | Postgres khi deploy; để trống `DATABASE_URL` khi chạy local thì tự dùng SQLite `backend/local.db` |
 
-- Frontend React/Vite: trang chủ, đăng nhập, khảo sát, roadmap, Pomodoro, trợ lý AI và tiến độ.
-- Dashboard **Tư thế học tập**: mở camera để tự động nhận diện `good/bad` mỗi vài giây hoặc tải ảnh lên.
-- Backend FastAPI: nhận ảnh và chạy model YOLO.
-- Model YOLO đã huấn luyện: `sitting posture.v4-sitting_posture_4keypoint.yolov8\best.pt`.
-
-Model chỉ nhận diện **tư thế ngồi**, không nhận diện bạo lực và không nhận diện khuôn mặt.
+Dự án **cần khóa API Gemini** để chạy. Không có khóa thì giao diện vẫn mở được nhưng Mimo không trả lời.
 
 ## 2. Cấu hình máy tối thiểu
 
 - Windows 10 hoặc Windows 11.
 - Node.js LTS 20 trở lên.
-- Python 3.10 - 3.12, khuyến nghị Python 3.12.
+- Python 3.12 hoặc 3.13 (PyMuPDF có sẵn bản cài cho hai phiên bản này).
 - RAM tối thiểu 8GB.
-- Trình duyệt Chrome hoặc Edge phiên bản mới.
-- Camera nếu muốn dùng nhận diện trực tiếp.
-- Khoảng 5GB dung lượng trống để cài thư viện AI.
+- Trình duyệt Chrome hoặc Edge bản mới.
+- Micro nếu muốn dùng nút hỏi bài bằng giọng nói.
+- Khoảng 2GB dung lượng trống cho thư viện.
 
-## 3. Cách nhanh nhất cho người mới - chỉ cần nhấp đúp
+## 3. Cách nhanh nhất — chỉ cần nhấp đúp
 
 1. Cài [Node.js LTS](https://nodejs.org/).
-2. Cài [Python 3.12](https://www.python.org/downloads/). Khi cài nhớ chọn **Add Python to PATH**.
-3. Giải nén toàn bộ file ZIP vào một thư mục, không mở ứng dụng trực tiếp bên trong file ZIP.
-4. Mở thư mục project và nhấp đúp file **`Cai dat AI Gia Su.bat`**.
-5. File sẽ tự động cài frontend, tạo môi trường Python, cài backend, build project, khởi động API, khởi động website và mở trình duyệt.
-6. Lần đầu có thể mất vài phút vì phải tải thư viện AI.
-7. Sau lần cài đầu tiên, chỉ cần nhấp đúp **`Chay AI Gia Su.bat`**. File này cũng tự gọi bộ cài nếu thiếu thư viện.
-8. Không đóng hai cửa sổ Backend và Frontend được mở ở chế độ thu nhỏ trong lúc sử dụng.
+2. Cài [Python 3.12](https://www.python.org/downloads/). Khi cài nhớ chọn **Add python.exe to PATH**.
+3. Cài [Git](https://git-scm.com/download/win).
+4. Giải nén toàn bộ file ZIP vào một thư mục — không mở trực tiếp từ bên trong file ZIP.
+5. Tạo file `backend\.env` (xem mục 4) rồi điền `GEMINI_API_KEY`.
+6. Nhấp đúp **`Cai dat AI Gia Su.bat`**. File sẽ tự cài thư viện giao diện, tạo môi trường Python,
+   cài thư viện backend, build, khởi động cả hai và mở trình duyệt.
+7. Lần đầu có thể mất vài phút. Sau đó chỉ cần nhấp đúp **`Chay AI Gia Su.bat`**.
+8. Không đóng hai cửa sổ **Backend** và **Frontend** đang chạy thu nhỏ.
 
-Nếu Windows hiện cảnh báo SmartScreen, chọn **More info** → **Run anyway** khi bạn tin cậy file dự án.
+Nếu Windows hiện cảnh báo SmartScreen, chọn **More info** → **Run anyway**.
 
-## 4. Cài frontend lần đầu
+## 4. Khóa API và file `.env`
 
-Mở PowerShell trong thư mục dự án:
+1. Lấy khóa miễn phí tại <https://aistudio.google.com/apikey>.
+2. Chép `backend\.env.example` thành `backend\.env`.
+3. Mở `backend\.env` bằng Notepad, điền khóa vào dòng `GEMINI_API_KEY=`.
 
 ```powershell
-cd "C:\Users\HP\Desktop\Sáng tạo AI"
+Copy-Item backend\.env.example backend\.env
+notepad backend\.env
+```
+
+Các biến còn lại đều có giá trị mặc định hợp lý, để trống cũng chạy được. Ý nghĩa từng biến được
+ghi chú ngay trong `backend\.env.example`.
+
+> ⚠️ `backend\.env` nằm trong `.gitignore`. **Tuyệt đối không commit file này lên GitHub.**
+
+## 5. Cài và chạy thủ công
+
+Nếu không dùng file `.bat`, mở PowerShell tại thư mục dự án:
+
+```powershell
+# --- frontend ---
 npm install
-```
+npm run dev                  # → http://127.0.0.1:5173
 
-Nếu `npm` không được nhận diện, hãy đóng PowerShell, mở cửa sổ mới rồi thử lại.
-
-## 5. Chạy website
-
-```powershell
-cd "C:\Users\HP\Desktop\Sáng tạo AI"
-npm run dev
-```
-
-Mở địa chỉ:
-
-<http://127.0.0.1:5173>
-
-Người mới không cần chạy các lệnh trên; chỉ cần nhấp đúp **`Chay AI Gia Su.bat`**. Để dừng frontend, đóng cửa sổ Frontend hoặc nhấn `Ctrl + C`.
-
-## 6. Cài và chạy backend nhận diện tư thế
-
-### 6.1. Tạo môi trường Python
-
-Thông thường không cần chạy thủ công: `Cai dat AI Gia Su.bat` tự tạo môi trường `.venv` ngay trong thư mục dự án. Nếu cần chạy bằng lệnh:
-
-Chạy một lần:
-
-```powershell
-cd "C:\Users\HP\Desktop\Sáng tạo AI"
-py -3 -m venv .venv
+# --- backend (mở cửa sổ PowerShell thứ hai) ---
+py -3.12 -m venv .venv
 .venv\Scripts\python.exe -m pip install --upgrade pip
 .venv\Scripts\python.exe -m pip install -r backend\requirements.txt
-```
-
-Nếu lệnh `py` không có, dùng đường dẫn Python đã cài:
-
-```powershell
-python -m venv .venv
-```
-
-### 6.2. Khởi động API
-
-Mở PowerShell mới:
-
-```powershell
-cd "C:\Users\HP\Desktop\Sáng tạo AI"
 .venv\Scripts\python.exe -m uvicorn backend.app:app --host 127.0.0.1 --port 8000
 ```
 
-Giữ cửa sổ này mở trong lúc sử dụng camera.
+Kiểm tra backend đã sống chưa:
 
-Kiểm tra API bằng cách mở:
-
-<http://127.0.0.1:8000/api/health>
-
-Kết quả đúng có dạng:
-
-```json
-{"ok": true, "model": "...best.pt"}
+```powershell
+Invoke-WebRequest http://127.0.0.1:8000/api/health | Select-Object -ExpandProperty Content
 ```
 
-Frontend gọi API tại:
+Frontend mặc định gọi `http://127.0.0.1:8000`. Đổi địa chỉ backend bằng biến `VITE_API_BASE_URL`
+trong file `.env.local` ở thư mục gốc.
 
-```text
-http://127.0.0.1:8000/predict
-```
+## 6. Luồng demo đầy đủ
 
-Nếu muốn đổi địa chỉ API, tạo file `.env.local` trong thư mục dự án:
+1. Bấm **Tạo tài khoản mới**, nhập tên, email, mật khẩu và lớp.
+2. Làm khảo sát: chọn môn học, mục tiêu và số phút học mỗi ngày.
+3. Mở **Lộ trình** — danh sách bài dựng theo mục lục sách giáo khoa, mỗi bài có chương, tên bài, số trang.
+4. Chọn một bài rồi mở **Hỏi bài**. Thử cả ba cách: gõ chữ, chụp ảnh đề bài, bấm micro nói.
+5. Xem câu trả lời hiện dần từng chữ. Bấm số `[1]` để mở ảnh đúng trang sách được trích.
+6. Bấm biểu tượng loa để nghe Mimo đọc bài giảng.
+7. Bấm **Luyện tập** để làm trắc nghiệm — trả lời đúng liên tiếp thì câu sau khó hơn.
+8. Mở **Pomodoro** để học tập trung, thời gian được cộng vào nhiệm vụ hằng ngày.
+9. Mở **Hồ sơ** để xem XP, chuỗi ngày học và lịch sử hỏi đáp.
 
-```env
-VITE_POSTURE_API_URL=http://127.0.0.1:8000
-```
+## 7. Nạp sách giáo khoa vào kho vector
 
-Sau khi đổi biến môi trường, cần khởi động lại `npm run dev`.
+Lộ trình học và phần hỏi bài có trích dẫn đều cần kho vector SGK. Đặt các file PDF vào `backend\data`.
 
-## 7. Sử dụng camera tự động
+> Nạp vào database nào là do `DATABASE_URL` lúc chạy lệnh quyết định. Để trống → nạp vào SQLite ở máy.
+> Muốn nạp lên bản đã deploy thì đặt `DATABASE_URL` trỏ vào Postgres đó rồi chạy đúng lệnh dưới đây;
+> vector đã nằm trong cache nên lần nạp thứ hai gần như không tốn quota.
 
-1. Khởi động frontend và backend.
-2. Đăng ký hoặc đăng nhập.
-3. Mở **Tư thế học tập** trong menu.
-4. Nhấn **Bật camera & nhận diện**.
-5. Cho phép quyền Camera trên trình duyệt.
-6. Đặt camera ngang tầm mắt, đủ sáng và ngồi cách camera vừa phải.
-7. AI tự gửi khung hình khoảng mỗi 4 giây, không cần nhấn nút chụp.
-8. Xem kết quả `good/bad`, độ tin cậy và lời khuyên ở bên phải.
-9. Nhấn **Tắt camera** khi dùng xong.
+**Bước 1 — khai báo sách.** Mỗi cuốn phải có một dòng `Book(...)` trong
+[backend/rag/books.py](backend/rag/books.py): môn, lớp, tập, tên file PDF và độ lệch trang.
+File này là nguồn sự thật duy nhất. Thiếu khai báo thì bìa, mục lục và trang quảng cáo cũng bị nạp theo.
 
-Ảnh gửi tới backend chỉ dùng cho lần nhận diện. Ứng dụng không lưu video camera.
-
-### Nếu trình duyệt không cho phép camera
-
-- Dùng `http://127.0.0.1:5173`, không dùng đường dẫn file `file://`.
-- Nhấn biểu tượng khóa bên trái thanh địa chỉ và bật Camera.
-- Kiểm tra Windows Settings → Privacy & security → Camera.
-- Đóng ứng dụng khác đang chiếm camera.
-- Thử Chrome hoặc Edge mới nhất.
-
-## 8. Luồng demo đầy đủ
-
-1. Chọn **Đăng ký tài khoản**.
-2. Nhập họ tên, email/tài khoản, mật khẩu và lớp.
-3. Chọn môn học, mục tiêu và số phút học mỗi ngày.
-4. Chọn lộ trình đúng lớp hoặc vượt cấp.
-5. Làm bài kiểm tra đầu vào nếu chọn vượt cấp.
-6. Mở roadmap để học theo chương; chương sau chỉ mở khi hoàn thành chương trước.
-7. Dùng Pomodoro: thời gian học và nghỉ tự động chuyển theo timestamp.
-8. Mở Trợ lý AI để hỏi bài.
-9. Mở Tư thế học tập để bật camera nhận diện tự động.
-10. Mở Tiến độ để xem XP, chuỗi học, phiên Pomodoro và lịch sử.
-
-### Nạp dữ liệu curriculum vào kho vector
-
-Roadmap và AI Tutor cần vector SGK. Kho vector nằm trong chính database của dự án — bảng
-`sgk_chunks` trong `DATABASE_URL`, dùng `pgvector` khi là Postgres, dùng file SQLite
-`backend/local.db` khi chạy local. Không có dịch vụ ngoài và không có key nào phải đăng ký.
-Đặt các PDF SGK vào thư mục `backend/data`.
-
-> Nạp vào database nào là do `DATABASE_URL` lúc chạy lệnh quyết định. Để trống → nạp vào
-> SQLite ở máy. Muốn nạp lên production thì đặt `DATABASE_URL` trỏ vào Postgres đó rồi chạy
-> đúng lệnh dưới đây; vector đã có trong cache nên lần nạp thứ hai gần như không tốn gì.
-
-**Bước 1 — kiểm tra PDF trước khi nạp.** Nhiều bản SGK tải trên mạng là scan ảnh: người đọc được nhưng máy không trích được chữ nào. Nạp loại này chỉ tốn quota và làm bẩn kết quả tìm kiếm.
+**Bước 2 — kiểm tra PDF.** Nhiều bản SGK tải trên mạng là scan ảnh: người đọc được nhưng máy không
+trích được chữ nào. Nạp loại này chỉ tốn quota và làm bẩn kết quả tìm kiếm.
 
 ```powershell
 .venv\Scripts\python.exe -m backend.rag.check_pdf
 ```
 
-Quyển nào báo `SCAN ẢNH` thì phải tìm bản PDF khác. Cách tự kiểm tra: mở PDF rồi thử bôi đen một dòng chữ trong bài học — bôi được là dùng được.
+Quyển nào báo `SCAN ẢNH` thì phải tìm bản PDF khác. Cách tự kiểm tra: mở PDF rồi thử bôi đen một dòng
+chữ trong bài học — bôi được là dùng được.
 
-**Bước 2 — nạp.** Chạy từ thư mục gốc dự án:
+**Bước 3 — nạp.** Chạy từ thư mục gốc dự án:
 
 ```powershell
 .venv\Scripts\python.exe -m backend.rag.ingest                  # chỉ nạp quyển chưa có
@@ -179,149 +122,149 @@ Quyển nào báo `SCAN ẢNH` thì phải tìm bản PDF khác. Cách tự ki�
 .venv\Scripts\python.exe -m backend.rag.ingest --force          # nạp lại cả quyển đã có
 ```
 
-Nạp theo từng quyển và ghi nhận vào `backend/rag/.ingest_manifest.json`, nên dừng giữa chừng (hết quota, mất mạng, Ctrl+C) vẫn giữ nguyên các quyển đã xong. Lệnh còn hỏi thẳng kho xem quyển đó đã có chưa, nên nạp sang một database mới sẽ nạp lại đầy đủ chứ không bị manifest cũ làm bỏ qua. Mọi vector tạo ra đều được lưu vào `backend/rag/.embed_cache.sqlite3`, vì vậy chạy lại gần như không tốn quota.
+Lệnh nạp theo từng quyển và ghi nhận vào `backend/rag/.ingest_manifest.json`, nên dừng giữa chừng
+(hết quota, mất mạng, `Ctrl + C`) vẫn giữ nguyên các quyển đã xong. Lệnh cũng hỏi thẳng kho xem quyển
+đó đã có chưa, nên nạp sang một database mới sẽ nạp lại đầy đủ chứ không bị manifest cũ làm bỏ qua.
+Mọi vector tạo ra đều lưu vào `backend/rag/.embed_cache.sqlite3`, vì vậy chạy lại gần như không tốn quota.
 
-Gói miễn phí Gemini giới hạn **100 text/phút** (mỗi chunk tính là 1 request), nên khoảng 100 chunk mỗi phút. Bật billing thì tăng `EMBED_RPM` trong `.env`.
+Gói miễn phí Gemini giới hạn **100 text mỗi phút**, mà mỗi đoạn sách tính là một request — nên tốc độ
+khoảng 100 đoạn mỗi phút. Bật billing thì tăng `EMBED_RPM` trong `.env`.
 
-Tên file PDF cần chứa môn và lớp, ví dụ `TOAN8-Tap1.pdf`, `KHTN 7.pdf`. Sách nên được khai báo trong `backend/rag/books.py` trước khi nạp — thiếu khai báo thì bìa, mục lục và trang quảng cáo cũng bị nạp theo. Kiểm tra kết quả bằng:
+**Kiểm tra kết quả:**
 
 ```powershell
 Invoke-WebRequest http://127.0.0.1:8000/api/health | Select-Object -ExpandProperty Content
 ```
 
-Trường `rag.vectors` phải lớn hơn `0`, và `rag.backend` cho biết đang tìm kiếm bằng `pgvector` hay `memory`. Sau khi nạp xong, khởi động lại backend rồi tải lại trang roadmap.
+Trường `rag.vectors` phải lớn hơn `0`. Trường `rag.backend` cho biết đang tìm kiếm bằng `pgvector` hay
+`memory`. Nạp xong thì khởi động lại backend rồi tải lại trang lộ trình.
 
-Dữ liệu demo được lưu trong `localStorage` của trình duyệt, chưa dùng cơ sở dữ liệu thật.
-
-## 9. Kiểm tra dự án
+**Ảnh trang sách (chỉ cần khi deploy).** Thư mục PDF không đẩy lên GitHub được, nên bản deploy không có
+gì để render nút "Xem trang". Chạy một lần ở máy có PDF để render sẵn rồi upload lên Supabase Storage:
 
 ```powershell
-cd "C:\Users\HP\Desktop\Sáng tạo AI"
+.venv\Scripts\python.exe backend\rag\render_pages.py
+```
+
+## 8. Kiểm tra dự án
+
+```powershell
 npm run lint
 npm run build
+.venv\Scripts\python.exe -m pytest        # 214 ca kiểm thử backend
 ```
 
-Xem bản production:
+Bộ kiểm thử chất lượng trả lời chạy qua **API đã deploy**, không gọi hàm trong máy — để số liệu phản
+ánh đúng thứ người dùng mở, gồm cả mạng, máy chủ và biến môi trường:
 
 ```powershell
-npm run preview
+.venv\Scripts\python.exe bao-cao\bo-test\chay_test.py     # 28 ca
+.venv\Scripts\python.exe bao-cao\bo-test\lam_bang.py      # → bao-cao/bo-test/KET_QUA_TEST.md
 ```
 
-## 10. Huấn luyện lại model
+Muốn chạy bộ này với backend ở máy: thêm `--api http://127.0.0.1:8000`.
 
-Model hiện tại đã có sẵn tại:
-
-```text
-sitting posture.v4-sitting_posture_4keypoint.yolov8\best.pt
-```
-
-Dataset gồm 573 ảnh train, 55 ảnh validation và 27 ảnh test.
-
-Để huấn luyện lại bằng cấu hình demo:
-
-1. Đảm bảo đã cài môi trường `.venv` bằng file `Cai dat AI Gia Su.bat`.
-2. Nhấp đúp **`Huấn luyện model tư thế.bat`**.
-3. Chờ script hoàn tất.
-4. Weights mới sẽ được chép vào thư mục model và backend dùng ở lần khởi động tiếp theo.
-
-Hoặc chạy:
-
-```powershell
-cd "C:\Users\HP\Desktop\Sáng tạo AI"
-.venv\Scripts\python.exe backend\train_model.py
-```
-
-Huấn luyện trên CPU có thể mất nhiều thời gian. Không xóa `best.pt` nếu chưa có weights mới.
-
-## 11. Xóa dữ liệu demo để đăng ký lại
+## 9. Xóa dữ liệu ở trình duyệt để đăng nhập lại
 
 Nếu website tự động đăng nhập tài khoản cũ:
 
-1. Mở website.
-2. Nhấn `F12`.
-3. Chọn **Application** hoặc **Storage**.
-4. Chọn **Local Storage** → địa chỉ website.
-5. Xóa các khóa bắt đầu bằng `ai-tutor-`.
-6. Tải lại trang bằng `Ctrl + R`.
+1. Mở website, nhấn `F12`.
+2. Chọn tab **Application** (hoặc **Storage**).
+3. Chọn **Local Storage** → địa chỉ website.
+4. Xóa khóa `gia-su-ai-token` và các khóa bắt đầu bằng `aiTutor_`.
+5. Tải lại trang bằng `Ctrl + R`.
 
-## 12. Các lỗi thường gặp
+Dữ liệu tài khoản, lịch sử chat và kết quả luyện tập nằm trong database của backend, không nằm ở trình
+duyệt. Xóa localStorage chỉ là đăng xuất, không mất dữ liệu học.
+
+## 10. Các lỗi thường gặp
 
 ### `node is not recognized` hoặc `npm is not recognized`
 
-Cài Node.js LTS, đóng toàn bộ PowerShell rồi mở lại cửa sổ mới.
+Cài Node.js LTS, đóng toàn bộ cửa sổ PowerShell rồi mở lại cửa sổ mới.
 
 ### `python is not recognized`
 
-Cài Python 3.12 và chọn **Add Python to PATH**, hoặc dùng trực tiếp:
+Cài Python 3.12 và chọn **Add python.exe to PATH**, hoặc gọi thẳng `.venv\Scripts\python.exe`.
 
-```powershell
-.venv\Scripts\python.exe
-```
+### Mimo không trả lời, giao diện báo lỗi
+
+- Kiểm tra `backend\.env` đã có `GEMINI_API_KEY` chưa.
+- Mở <http://127.0.0.1:8000/api/health>, xem trường `rag.gemini_key` có phải `true` không.
+- Hết lượt gói miễn phí thì backend tự chuyển sang model dự phòng; hết cả ba thì phải đợi sang ngày mới.
+
+### Hỏi bài được nhưng không có số trích dẫn `[1]`
+
+Kho vector chưa có sách. Mở `/api/health` xem `rag.vectors`; bằng `0` thì quay lại mục 7 để nạp sách.
 
 ### Không kết nối được backend
 
 - Kiểm tra cửa sổ uvicorn còn đang chạy.
 - Mở <http://127.0.0.1:8000/api/health>.
-- Kiểm tra frontend đang gọi đúng `VITE_POSTURE_API_URL`.
-- Khởi động backend từ đúng thư mục dự án.
+- Kiểm tra frontend đang gọi đúng `VITE_API_BASE_URL`.
+- Chạy backend từ đúng thư mục gốc dự án.
+
+### Micro không dùng được
+
+Trình duyệt chỉ cho ghi âm khi trang mở bằng `https://` hoặc `localhost`. Mở bằng địa chỉ IP trong mạng
+LAN sẽ không ghi âm được.
 
 ### Cổng 5173 hoặc 8000 đã được sử dụng
 
-Frontend:
-
 ```powershell
 npm run dev -- --port 5174
-```
-
-Backend:
-
-```powershell
 .venv\Scripts\python.exe -m uvicorn backend.app:app --host 127.0.0.1 --port 8001
 ```
 
-Nếu đổi cổng backend, cập nhật `.env.local` rồi chạy lại frontend.
+Đổi cổng backend thì phải cập nhật `VITE_API_BASE_URL` trong `.env.local` rồi chạy lại frontend.
 
 ### Cài thư viện bị lỗi
-
-Đóng server và thử:
 
 ```powershell
 .venv\Scripts\python.exe -m pip install --upgrade pip
 .venv\Scripts\python.exe -m pip install -r backend\requirements.txt
-```
 
-Với frontend:
-
-```powershell
 Remove-Item -Recurse -Force node_modules
 npm install
 ```
 
-## 13. Cấu trúc thư mục chính
+## 11. Cấu trúc thư mục chính
 
-```text
-Sáng tạo AI/
-├── src/
-│   ├── App.tsx                  # Giao diện và logic ứng dụng
-│   ├── App.css                  # Giao diện responsive
-│   └── index.css                # CSS nền
+```
+AI2026-v2/
+├── src/                          # Frontend React
+│   ├── App.tsx                   # Trang chủ, lộ trình, hỏi bài, điều hướng
+│   ├── components/               # AuthPage, Onboarding, ProfilePage, PomodoroState…
+│   ├── contexts/                 # AuthContext, PomodoroContext
+│   ├── services/                 # chatRepository, storageService
+│   └── lib/                      # api.ts (gọi backend), audio.ts (ghi âm)
 ├── backend/
-│   ├── app.py                   # API FastAPI /health và /predict
-│   ├── train_model.py           # Script huấn luyện YOLO
-│   └── requirements.txt         # Thư viện Python
-├── sitting posture...yolov8/
-│   ├── best.pt                  # Model đang sử dụng
-│   └── train.yaml               # Cấu hình dataset
-├── Chay AI Gia Su.bat           # Mở frontend nhanh
-├── Huấn luyện model tư thế.bat  # Huấn luyện lại model
-├── package.json                 # Lệnh và thư viện frontend
-├── README.md                    # Tổng quan dự án
-└── SETUP.md                     # Tài liệu cài đặt này
+│   ├── app.py                    # FastAPI: chat streaming, quiz, lộ trình, giọng đọc, health
+│   ├── accounts.py               # Đăng ký, đăng nhập, hồ sơ, tiến độ, feedback
+│   ├── db.py                     # Bảng dữ liệu và truy vấn (SQLAlchemy)
+│   ├── learning.py               # Luyện tập thích ứng: độ khó, mức nắm bài
+│   ├── safety.py                 # Lọc tin nhắn nguy hiểm, số tổng đài 111
+│   ├── rag/
+│   │   ├── books.py              # Danh mục sách + mục lục — nguồn sự thật
+│   │   ├── ingest.py             # Nạp sách vào kho vector
+│   │   ├── retriever.py          # Tìm đoạn sách gần nghĩa nhất
+│   │   ├── vector_store.py       # Kho vector trong database dự án
+│   │   └── render_pages.py       # Render ảnh trang SGK lên Supabase Storage
+│   ├── tests/                    # 214 ca pytest
+│   └── data/                     # PDF sách giáo khoa (không đẩy lên GitHub)
+├── bao-cao/                      # Hồ sơ dự thi, biểu đồ, bộ kiểm thử chất lượng
+├── prompt-log/                   # Lịch sử câu lệnh đã dùng với công cụ AI
+├── Cai dat AI Gia Su.bat         # Cài đặt tự động
+└── Chay AI Gia Su.bat            # Khởi động lại sản phẩm
 ```
 
-## 14. Ghi chú bảo mật và phạm vi demo
+## 12. Ghi chú bảo mật và phạm vi
 
-- Tài khoản chỉ lưu local trên máy, mật khẩu chưa phù hợp cho production.
-- AI trợ lý hiện là mock service.
-- Model tư thế là bản demo huấn luyện nhanh trên CPU, độ chính xác thực tế phụ thuộc ánh sáng, góc camera và dữ liệu.
-- Không dùng kết quả model cho mục đích y tế hoặc đánh giá kỷ luật học sinh.
+- Đăng nhập bằng email + mật khẩu; mật khẩu được băm trước khi lưu. Backend chặn đoán mật khẩu theo
+  từng email (5 lần/phút) lẫn theo IP.
+- Khóa API Gemini chỉ nằm ở backend, không bao giờ gửi xuống trình duyệt.
+- Mimo là sản phẩm học tập, **không thay thế thầy cô hay người lớn**. Khi học sinh nhắn về chuyện bị
+  bắt nạt hoặc muốn tự làm hại mình, Mimo luôn khuyên nói với người lớn tin cậy và đưa số Tổng đài
+  quốc gia bảo vệ trẻ em 111.
+- Câu trả lời của AI không tất định: cùng một câu hỏi có lần kèm trích dẫn, có lần không. Kiến thức
+  quan trọng vẫn nên đối chiếu lại với sách.

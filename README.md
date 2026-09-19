@@ -1,66 +1,97 @@
-# Học cùng AI · Gia sư THCS
+# Mimo — Gia sư AI học theo sách giáo khoa cho học sinh THCS
 
-Website demo gia sư AI dành cho học sinh THCS, tập trung vào hành trình học Toán lớp 8.
+Mimo là gia sư AI cho học sinh lớp 6 đến lớp 9. Khác với chatbot thông thường, Mimo **trả lời dựa trên
+đúng sách giáo khoa các em đang học**: mỗi câu lấy từ sách đều có số trích dẫn `[1]`, bấm vào là mở ra
+ảnh đúng trang sách đó.
 
-## Tính năng
+Ba nguyên tắc sản phẩm được xây quanh:
 
-- Trang chủ với lộ trình, thống kê và nhiệm vụ hằng ngày.
-- Roadmap Toán 8 theo tài liệu `SGK Toán 8, Tập một-mau.pdf`, gồm trạng thái bài học và modal chi tiết.
-- Pomodoro có thể tùy chỉnh thời lượng, chạy/tạm dừng/đặt lại và lưu mục tiêu phiên.
-- Trợ lý AI Mimo với mock chat hướng dẫn giải bài theo từng bước.
-- Dashboard tiến độ với XP, chuỗi học, biểu đồ thời gian, điểm số và huy hiệu.
-- Responsive sidebar/bottom-friendly layout cho màn hình nhỏ.
-- Dashboard Tư thế học tập: mở camera hoặc tải ảnh, gửi tới API YOLO và lưu lịch sử good/bad.
+- **Không giải hộ.** Gặp bài tập, Mimo gợi ý bước đầu rồi hỏi lại để em tự làm tiếp.
+- **Nói theo sách.** Thuật ngữ và cách giải bám bộ *Kết nối tri thức với cuộc sống*, chương trình GDPT 2018.
+- **An toàn cho trẻ em.** Tin nhắn có dấu hiệu bị bắt nạt hoặc tự làm hại được xử lý riêng, luôn kèm số
+  Tổng đài quốc gia bảo vệ trẻ em 111 — kể cả khi mô hình AI lỗi hoặc hết lượt.
+
+## Sản phẩm làm được gì
+
+| Chức năng | Mô tả |
+|---|---|
+| Hỏi bài | Gõ, chụp ảnh đề hoặc bấm micro nói. Câu trả lời hiện dần từng chữ (SSE), công thức toán render bằng KaTeX |
+| Trích dẫn trang sách | Câu lấy từ SGK có số `[1]`, `[2]`; bấm vào mở ảnh đúng trang |
+| Lộ trình học | Dựng theo mục lục sách (chương, bài, số trang). Môn/lớp chưa có mục lục thì AI tự soạn theo GDPT 2018 |
+| Luyện tập thích ứng | Mimo tự soạn câu trắc nghiệm cho bài đang học; đúng liên tiếp thì khó lên, sai thì ôn lại |
+| Nghe giảng | Đọc câu trả lời bằng giọng tiếng Việt (edge-tts, giọng HoaiMy) |
+| Pomodoro | Hẹn giờ học tập trung, cộng vào nhiệm vụ hằng ngày |
+| Hồ sơ & tiến độ | XP, chuỗi ngày học, lịch sử hỏi đáp, đánh giá 👍/👎 từng câu trả lời |
+
+## Kiến trúc
+
+```
+React + Vite (Vercel)  ──►  FastAPI (Render)  ──►  Gemini  (giảng bài, đọc ảnh đề, soạn quiz)
+                                   │                Gemini Embedding  (vector hoá)
+                                   ├──►  Postgres + pgvector   tài khoản, chat, quiz, kho vector SGK
+                                   └──►  Supabase Storage      ảnh trang SGK render sẵn
+```
+
+Kho vector nằm trong **chính database của dự án** (bảng `sgk_chunks`), không dùng dịch vụ vector ngoài —
+xem [backend/rag/vector_store.py](backend/rag/vector_store.py).
+
+Chạy local mà để trống `DATABASE_URL` thì backend tự dùng SQLite `backend/local.db`.
 
 ## Chạy dự án
 
-**Cách đơn giản nhất:** nhấp đúp file `Cai dat AI Gia Su.bat`. File sẽ tự động cài thư viện, tạo môi trường Python, khởi động backend nhận diện tư thế, khởi động frontend và mở trình duyệt.
+**Cách đơn giản nhất (Windows):** nhấp đúp `Cai dat AI Gia Su.bat`. File tự cài thư viện, tạo môi trường
+Python, khởi động backend và frontend, rồi mở trình duyệt. Lần sau chỉ cần `Chay AI Gia Su.bat`.
 
-Sau lần đầu, có thể nhấp đúp `Chay AI Gia Su.bat` để khởi động lại.
-
-Xem thông tin đầy đủ tại [SETUP.md](./SETUP.md).
+**Thủ công:**
 
 ```bash
 npm install
-npm run dev
+npm run dev                  # frontend  → http://127.0.0.1:5173
+
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r backend\requirements.txt
+cp backend\.env.example backend\.env      # rồi điền GEMINI_API_KEY
+uvicorn backend.app:app --reload --port 8000    # backend → http://127.0.0.1:8000
 ```
 
-Mở URL được Vite hiển thị (mặc định là `http://localhost:5173`).
+Hướng dẫn từng bước cho người mới: [SETUP.md](SETUP.md). Đưa lên mạng: [DEPLOY.md](DEPLOY.md).
+
+## Nạp sách giáo khoa vào kho
+
+Sách PDF đặt trong `backend/data/` (thư mục này **không** được đẩy lên GitHub vì dung lượng lớn).
+Mỗi cuốn phải được khai trong [backend/rag/books.py](backend/rag/books.py) trước — file đó là nguồn sự
+thật duy nhất về môn, lớp, độ lệch trang và mục lục.
+
+```bash
+python backend\rag\check_pdf.py            # kiểm tra PDF có lớp chữ chưa (bản scan ảnh sẽ không nạp được)
+python backend\rag\ingest.py               # nạp sách chưa nạp vào kho vector
+python backend\rag\render_pages.py         # render ảnh trang lên Supabase Storage (chỉ cần khi deploy)
+```
 
 ## Kiểm tra
 
 ```bash
 npm run lint
 npm run build
+.venv\Scripts\python.exe -m pytest      # 214 ca kiểm thử backend
 ```
 
-Dữ liệu hiện là mock để demo. Có thể thay `getMockAnswer` trong `src/App.tsx` bằng API AI thật khi có backend.
+Ngoài pytest còn có bộ kiểm thử chất lượng trả lời, chạy qua **API đã deploy** chứ không gọi hàm trong máy:
 
-## Chỉnh dữ liệu roadmap
-
-Danh sách bài Toán 8 nằm trong `src/data/math8.ts`. Mỗi bài có `title`, `chapter`, `duration`, `status` và `accent`. Workspace hiện không có file PDF SGK đính kèm, vì vậy hãy thay danh sách này bằng mục lục đã xác minh từ PDF trước khi dùng làm dữ liệu học thuật chính thức.
-
-Tiến độ bài học và lịch sử chat được lưu ở `localStorage` với các khóa `mimo-completed` và `mimo-chat`. Xóa hai khóa này trong DevTools để reset dữ liệu demo.
-
-## Kết nối AI API
-
-Trong `TutorPage`, thay hàm `send` mock bằng `fetch('/api/chat', { method: 'POST', ... })`, sau đó đưa phản hồi API vào `setChat`. Không đặt API key ở frontend; proxy request qua backend để giữ bí mật thông tin xác thực.
-
-## Deploy
-
-Chạy `npm run build`, sau đó deploy thư mục `dist` lên Vercel, Netlify hoặc static hosting bất kỳ. Nếu dùng AI API hoặc nhận diện tư thế, cần deploy backend riêng và cấu hình biến môi trường tương ứng.
-
-## Nhận diện tư thế
-
-Model đã được huấn luyện từ 573 ảnh train, 55 ảnh validation và 27 ảnh test. Weights hiện tại nằm tại `sitting posture.v4-sitting_posture_4keypoint.yolov8\best.pt`, gồm 2 class `Bad` và `Good`.
-
-```powershell
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r backend\requirements.txt
-uvicorn backend.app:app --reload --port 8000
+```bash
+python bao-cao\bo-test\chay_test.py     # 28 ca: dễ, khó, ngoài sách, phải từ chối, mơ hồ, bẫy
+python bao-cao\bo-test\lam_bang.py      # → bao-cao/bo-test/KET_QUA_TEST.md
 ```
 
-Frontend gọi `http://127.0.0.1:8000/predict`. Có thể đổi URL bằng biến `VITE_POSTURE_API_URL`.
+## Bảo mật
 
-Để huấn luyện lại model bằng cấu hình demo nhanh, chạy file `Huấn luyện model tư thế.bat`. Model gốc `yolov8n-pose.pt` sẽ được tải tự động bởi Ultralytics nếu máy có Internet.
+- Đăng nhập bằng email + mật khẩu, backend cấp token JWT. Mật khẩu được băm, chặn đoán mật khẩu theo
+  từng email lẫn theo IP.
+- **Không** đặt API key ở frontend. Mọi lệnh gọi Gemini đi qua backend.
+- File `backend/.env` và `backend/local.db` nằm trong `.gitignore`, tuyệt đối không commit.
+
+## Hồ sơ dự án
+
+Hồ sơ dự thi, biểu đồ, ảnh minh chứng và kịch bản video nằm trong [bao-cao/](bao-cao/).
+Lịch sử câu lệnh đã dùng với công cụ AI nằm trong [prompt-log/](prompt-log/).

@@ -84,7 +84,8 @@ if not exist "backend\app.py" goto :project_incomplete
 if not exist "backend\requirements.txt" goto :project_incomplete
 if not exist "backend\.env" (
   echo [CANH BAO] Khong co backend\.env trong repository.
-  echo Hay tao file nay va dien GEMINI_API_KEY/PINECONE_API_KEY neu dung RAG.
+  echo Hay chep backend\.env.example thanh backend\.env va dien GEMINI_API_KEY.
+  echo Khong co key thi giao dien van mo duoc nhung Mimo se khong tra loi.
 )
 
 echo.
