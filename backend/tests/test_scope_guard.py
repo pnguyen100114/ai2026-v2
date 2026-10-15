@@ -94,3 +94,24 @@ def test_model_classification_preserves_child_safety_signal():
     assert parse_scope_response(
         '{"classification":"in_scope","safety_risk":"unknown"}'
     ) == (None, None)
+
+
+# Hỏi lách bằng "là gì" / "chỉ cần kết quả" - để Mimo tự xử thì nó vẫn "giải thích ngắn gọn".
+@pytest.mark.parametrize('message, subject, grade', [
+    ('Nguyên hàm của 2x là gì ạ?', 'Toán', 9),
+    ('Đạo hàm là gì? Cho em ví dụ với y = x^3 luôn nhé', 'Toán', 8),
+    ('Em chỉ cần kết quả thôi: log cơ số 2 của 8 bằng mấy?', 'Toán', 7),
+    ('Tính (1 + 1/n)^n khi n tiến tới vô cùng', 'Toán', 8),
+    ('E = mc² nghĩa là gì vậy Mimo', 'KHTN', 9),
+])
+def test_above_grade_topic_is_refused_even_when_asked_as_a_concept(message, subject, grade):
+    assert classify_scope(message, subject=subject, grade=grade).label == 'out_of_scope'
+
+
+@pytest.mark.parametrize('message, subject, grade', [
+    ('Đại học Quốc gia Hà Nội là gì, thành lập năm nào?', 'LSDL', 9),
+    ('Viết đoạn văn về giới hạn của bản thân', 'Ngữ văn', 8),
+    ('Tỉ số lượng giác sin của góc nhọn là gì?', 'Toán', 9),
+])
+def test_ordinary_words_near_advanced_topics_are_not_refused(message, subject, grade):
+    assert classify_scope(message, subject=subject, grade=grade).label != 'out_of_scope'
