@@ -46,7 +46,7 @@ def ask_quiz(client, app_mod, *, profile=None, context=LESSON_CONTEXT, reply=GEN
     (1.0, 5),
 ])
 def test_quiz_next_generates_question_for_current_lesson(client, app_mod, mastery, difficulty):
-    profile = {} if mastery is None else {'concepts': {CONCEPT_ID: {'mastery': mastery, 'attempts': 3}}}
+    profile = {} if mastery is None else {'concepts': {CONCEPT_ID: {'mastery': mastery}}}
 
     response, fake = ask_quiz(client, app_mod, profile=profile)
     body = response.json()
@@ -59,10 +59,6 @@ def test_quiz_next_generates_question_for_current_lesson(client, app_mod, master
     assert question['options'] == GENERATED['options']
     assert not {'answer', 'explanation', 'misconceptions'} & question.keys()  # không lộ đáp án
     assert body['profile'] == profile
-    stored_question = app_mod.question_store[question['question_id']]
-    assert stored_question['grade'] == STUDENT['grade']
-    assert stored_question['lesson'] == LESSON_CONTEXT['currentLesson']
-    assert stored_question['topic'] == LESSON_CONTEXT['currentTopic']
     forged = client.post('/api/quiz/next', json={'student': STUDENT, 'context': LESSON_CONTEXT, 'profile': {'concepts': {CONCEPT_ID: {'mastery': 1.0 if difficulty != 5 else 0.0}}}})
     assert forged.json()['question']['difficulty'] == difficulty  # hồ sơ gửi từ trình duyệt bị bỏ qua
     prompt = fake.calls[0]['contents']
@@ -70,11 +66,7 @@ def test_quiz_next_generates_question_for_current_lesson(client, app_mod, master
 
 
 def test_quiz_prompt_is_personalized_with_errors_and_recent_questions(client, app_mod):
-    profile = {'concepts': {CONCEPT_ID: {
-        'mastery': 0.3, 'attempts': 4, 'correct': 1,
-        'common_errors': ['nhầm ký hiệu ∈ và ∉'],
-        'error_counts': {'sign_error': 1.8},
-    }}}
+    profile = {'concepts': {CONCEPT_ID: {'mastery': 0.3, 'attempts': 4, 'correct': 1, 'common_errors': ['nhầm ký hiệu ∈ và ∉']}}}
     ask_quiz(client, app_mod)
 
     response, fake = ask_quiz(client, app_mod, profile=profile)
@@ -82,7 +74,6 @@ def test_quiz_prompt_is_personalized_with_errors_and_recent_questions(client, ap
     prompt = fake.calls[0]['contents']
     assert 'nhầm ký hiệu ∈ và ∉' in prompt
     assert GENERATED['question'] in prompt  # câu đã hỏi -> tránh lặp
-    assert 'sign_error' in prompt and 'ưu tiên câu hỏi luyện đúng kỹ năng này' in prompt
     assert 'luyện lại lỗi' in response.json()['question']['reason']
 
 
@@ -119,11 +110,11 @@ def test_quiz_next_quota(client, app_mod):
 
 
 @pytest.mark.parametrize('answer, hints_used, correct, mastery, error', [
-    ('1 ∈ A', 0, True, 0.47, None),
-    ('  1 ∈ a ', 0, True, 0.47, None),   # chuẩn hóa hoa/thường, khoảng trắng
-    ('1 ∈ A', 2, True, 0.45, None),      # dùng gợi ý -> mức tự chủ thấp hơn
-    ('2 ∉ A', 0, False, 0.28, 'nhầm ký hiệu ∈ và ∉'),  # ghi nhận lỗi sai cụ thể
-    ('4 ∈ A', 0, False, 0.28, 'sai hoặc chưa khớp đáp án'),
+    ('1 ∈ A', 0, True, 0.45, None),
+    ('  1 ∈ a ', 0, True, 0.45, None),   # chuẩn hóa hoa/thường, khoảng trắng
+    ('1 ∈ A', 2, True, 0.39, None),       # dùng gợi ý -> cộng ít điểm hơn
+    ('2 ∉ A', 0, False, 0.25, 'nhầm ký hiệu ∈ và ∉'),  # ghi nhận lỗi sai cụ thể
+    ('4 ∈ A', 0, False, 0.25, 'sai hoặc chưa khớp đáp án'),
 ])
 def test_quiz_answer_grades_and_updates_mastery(client, app_mod, answer, hints_used, correct, mastery, error):
     question_id = ask_quiz(client, app_mod)[0].json()['question']['question_id']
@@ -144,55 +135,17 @@ def test_quiz_answer_grades_and_updates_mastery(client, app_mod, answer, hints_u
 
     (args, _), = app_mod.save_quiz_attempt.calls
     assert args[1] == {'question_id': question_id, 'answer': answer, 'is_correct': correct,
-                       'hints_used': hints_used, 'difficulty': 2,
-                       'time_spent_seconds': None, 'expected_time_seconds': None,
-                       'error_tags': [], 'mastery': mastery}
+                       'hints_used': hints_used, 'mastery': mastery}
 
 
 def test_quiz_streak_moves_to_progression(client, app_mod):
-    profile = {'concepts': {CONCEPT_ID: {'mastery': 0.5, 'streak': 1, 'attempts': 1}}}
+    profile = {'concepts': {CONCEPT_ID: {'mastery': 0.5, 'streak': 1}}}
     question_id = ask_quiz(client, app_mod, profile=profile)[0].json()['question']['question_id']
 
     body = client.post('/api/quiz/answer', json={'question_id': question_id, 'answer': '1 ∈ A'}).json()
 
     assert body['next_action'] == 'progression'
     assert body['next_difficulty'] == 4  # câu mức 3 (mastery 0.5) -> tăng lên 4
-
-
-def test_quiz_answer_records_timing_and_personalizes_future_question(client, app_mod):
-    profile = {'concepts': {CONCEPT_ID: {
-        'mastery': 0.5,
-        'attempts': 3,
-        'evidence': [
-            {'difficulty': 3, 'time_spent_seconds': 24, 'time_reliable': True},
-            {'difficulty': 3, 'time_spent_seconds': 30, 'time_reliable': True, 'score': 0.7, 'weight': 1},
-            {'difficulty': 3, 'time_spent_seconds': 36, 'time_reliable': True, 'score': 0.7, 'weight': 1},
-        ],
-    }}}
-    question_id = ask_quiz(client, app_mod, profile=profile)[0].json()['question']['question_id']
-    body = client.post('/api/quiz/answer', json={
-        'question_id': question_id,
-        'answer': '1 ∈ A',
-        'hints_used': 1,
-        'time_spent_seconds': 42,
-    }).json()
-
-    assert body['assessment']['confidence'] == 'medium'
-    assert body['profile']['concepts'][CONCEPT_ID]['evidence'][-1]['time_spent_seconds'] == 42
-    (args, _), = app_mod.save_quiz_attempt.calls
-    assert args[1]['time_spent_seconds'] == 42
-    assert args[1]['expected_time_seconds'] == 30
-    assert args[1]['difficulty'] == 3
-
-
-def test_quiz_answer_rejects_invalid_elapsed_time(client, app_mod):
-    question_id = ask_quiz(client, app_mod)[0].json()['question']['question_id']
-    for invalid in (0, -1, 7201):
-        assert client.post('/api/quiz/answer', json={
-            'question_id': question_id,
-            'answer': '1 ∈ A',
-            'time_spent_seconds': invalid,
-        }).status_code == 422
 
 
 def test_quiz_answer_cannot_be_submitted_twice(client, app_mod):

@@ -32,13 +32,9 @@ try:
     )
     from backend.learning import (
         build_quiz_prompt, concept_id_for, concept_state, grade_answer, parse_generated_question,
-        public_question, reference_time_seconds, target_difficulty,
+        public_question, target_difficulty,
     )
     from backend.safety import SAFETY_OPENING, SAFETY_PROMPT, SAFETY_QUICK_REPLIES, detect_risk, leaks_answer, safety_addendum
-    from backend.scope_guard import (
-        MIMO_TUTOR_SYSTEM_INSTRUCTION, SCOPE_CLASSIFIER_INSTRUCTION, SUPPORTED_SUBJECTS, ScopeDecision,
-        build_classifier_input, classify_scope, is_follow_up, parse_scope_response,
-    )
 except ImportError:  # pragma: no cover
     from accounts import router as accounts_router
     from answer_cleanup import clean_answer, cited_numbers
@@ -50,13 +46,9 @@ except ImportError:  # pragma: no cover
     )
     from learning import (
         build_quiz_prompt, concept_id_for, concept_state, grade_answer, parse_generated_question,
-        public_question, reference_time_seconds, target_difficulty,
+        public_question, target_difficulty,
     )
     from safety import SAFETY_OPENING, SAFETY_PROMPT, SAFETY_QUICK_REPLIES, detect_risk, leaks_answer, safety_addendum
-    from scope_guard import (
-        MIMO_TUTOR_SYSTEM_INSTRUCTION, SCOPE_CLASSIFIER_INSTRUCTION, SUPPORTED_SUBJECTS, ScopeDecision,
-        build_classifier_input, classify_scope, is_follow_up, parse_scope_response,
-    )
 
 try:
     from backend.speech import TRANSCRIBE_PROMPT, speakable_text, synthesize_mp3
@@ -198,7 +190,6 @@ class QuizAnswerRequest(BaseModel):
     question_id: str = Field(..., min_length=1)
     answer: str = ''
     hints_used: int = Field(default=0, ge=0, le=3)
-    time_spent_seconds: int | None = Field(default=None, ge=1, le=7200)
 
 
 class SpeechRequest(BaseModel):
@@ -482,10 +473,7 @@ def _stream_gemini_text(contents: Any):
             for chunk in gemini_client.models.generate_content_stream(
                 model=model,
                 contents=contents,
-                config=types.GenerateContentConfig(
-                    max_output_tokens=MAX_OUTPUT_TOKENS,
-                    system_instruction=MIMO_TUTOR_SYSTEM_INSTRUCTION,
-                ),
+                config=types.GenerateContentConfig(max_output_tokens=MAX_OUTPUT_TOKENS),
             ):
                 text = getattr(chunk, 'text', None) or ''
                 if text:
@@ -500,69 +488,6 @@ def _stream_gemini_text(contents: Any):
     raise last_quota_error  # type: ignore[misc]
 
 
-def _model_scope_decision(
-    message: str,
-    *,
-    subject: str,
-    grade: int,
-    history: list[str] | None = None,
-    request: ChatRequest | None = None,
-) -> ScopeDecision:
-    """Use Gemini only for an ambiguous academic request or image that needs semantic review."""
-    if gemini_client is None:
-        return ScopeDecision('needs_clarification', 'scope_review_unavailable')
-    prompt = build_classifier_input(
-        message,
-        subject=subject,
-        grade=grade,
-        user_history=history,
-        image_request=bool(request and request.image_data),
-    )
-    contents: Any = prompt
-    if request and request.image_data:
-        try:
-            encoded = request.image_data.split(',', 1)[-1]
-            image_bytes = base64.b64decode(encoded, validate=True)
-            contents = [
-                types.Part.from_text(text=prompt),
-                types.Part.from_bytes(data=image_bytes, mime_type=request.image_mime_type or 'image/jpeg'),
-            ]
-        except (ValueError, TypeError) as exc:
-            logger.warning('Scope review could not decode attached image: %s', str(exc)[:200])
-            return ScopeDecision('needs_clarification', 'invalid_image_for_scope_review')
-    try:
-        response = _generate_content(
-            contents=contents,
-            config=types.GenerateContentConfig(
-                response_mime_type='application/json',
-                response_schema=types.Schema(
-                    type='OBJECT',
-                    properties={
-                        'classification': types.Schema(
-                            type='STRING',
-                            enum=['in_scope', 'out_of_scope', 'off_topic', 'needs_clarification'],
-                        ),
-                        'safety_risk': types.Schema(
-                            type='STRING',
-                            enum=['none', 'harm', 'self_harm'],
-                        ),
-                    },
-                    required=['classification', 'safety_risk'],
-                ),
-                max_output_tokens=64,
-                system_instruction=SCOPE_CLASSIFIER_INSTRUCTION,
-            ),
-        )
-    except Exception:
-        logger.exception('Gemini scope review failed')
-        return ScopeDecision('needs_clarification', 'scope_review_failed')
-    label, safety_risk = parse_scope_response(getattr(response, 'text', None) or '')
-    if label is None:
-        logger.warning('Gemini returned an invalid scope classification')
-        return ScopeDecision('needs_clarification', 'invalid_scope_review_output', safety_risk=safety_risk)
-    return ScopeDecision(label, 'model_review', safety_risk=safety_risk)
-
-
 def _quota_fallback(message: str, subject: str, grade: int) -> str:
     topic_hint = 'xác định dữ kiện, yêu cầu và quy tắc trong bài' if subject != 'Toán' else 'ghi ra dữ kiện đã cho, điều cần tìm và kiến thức liên quan'
     return (
@@ -570,11 +495,6 @@ def _quota_fallback(message: str, subject: str, grade: int) -> str:
         f'Với bài {subject} lớp {grade}, bước đầu tiên là **{topic_hint}**.\n\n'
         'Em thử viết ra bước đầu tiên của bài, lát nữa gửi lại để Mimo kiểm tra cùng em nhé?'
     )
-
-
-def _validate_supported_course(subject: str, grade: int) -> None:
-    if canonical_subject(subject) not in SUPPORTED_SUBJECTS or grade not in range(6, 10):
-        raise HTTPException(status_code=400, detail='Mimo hiện hỗ trợ các môn đã cấu hình cho học sinh lớp 6 đến lớp 9.')
 
 
 @app.post('/api/speech/tts')
@@ -626,7 +546,6 @@ def next_quiz(request: QuizNextRequest, user: dict[str, Any] = Depends(current_u
     context = request.context or {}
     subject = student.subject or 'Toán'
     grade = int(student.grade)
-    _validate_supported_course(subject, grade)
     lesson = str(context.get('currentLesson') or '').strip()
     topic = str(context.get('currentTopic') or lesson).strip()
     if not topic:
@@ -639,9 +558,7 @@ def next_quiz(request: QuizNextRequest, user: dict[str, Any] = Depends(current_u
     # Progress lives on the server; a profile sent by the browser could be stale (other device) or forged.
     profile = user.get('learningProfile') or {}
     state = concept_state(profile, concept_id)
-    has_prior_evidence = bool(int(state.get('attempts') or 0) or int(state.get('streak') or 0))
-    difficulty = target_difficulty(state['mastery']) if has_prior_evidence else 2
-    expected_time = reference_time_seconds(profile, concept_id, difficulty)
+    difficulty = target_difficulty(state['mastery'])
     try:
         matches = search_knowledge(f'{lesson} {topic}'.strip(), subject=subject, grade=grade, top_k=4, extra_filter=lesson_page_filter(subject, grade, topic))
     except Exception:
@@ -652,25 +569,13 @@ def next_quiz(request: QuizNextRequest, user: dict[str, Any] = Depends(current_u
         subject=subject, grade=grade, lesson=lesson, topic=topic, difficulty=difficulty, state=state,
         goal=str((user.get('onboarding') or {}).get('goal') or ''),
         context_text=context_text, recent_questions=recent_question_texts(user['id'], concept_id),
-        error_tags=state.get('priority_error_tags'),
     )
     try:
         response = _generate_content(
             contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type='application/json',
-                max_output_tokens=MAX_JSON_OUTPUT_TOKENS,
-                system_instruction=MIMO_TUTOR_SYSTEM_INSTRUCTION,
-            ),
+            config=types.GenerateContentConfig(response_mime_type='application/json', max_output_tokens=MAX_JSON_OUTPUT_TOKENS),
         )
         question = parse_generated_question(getattr(response, 'text', None) or '', subject=subject, concept_id=concept_id, concept=topic, difficulty=difficulty)
-        question.update({
-            'grade': grade,
-            'chapter': str(context.get('currentChapter') or ''),
-            'lesson': lesson,
-            'topic': topic,
-        })
-        question['expected_time_seconds'] = expected_time
     except ValueError as exc:
         logger.warning('Unusable generated quiz question: %s', exc)
         raise HTTPException(status_code=502, detail='Mimo soạn câu hỏi chưa ổn, em bấm tạo lại nhé.') from exc
@@ -690,21 +595,12 @@ def answer_quiz(request: QuizAnswerRequest, user: dict[str, Any] = Depends(curre
         raise HTTPException(status_code=404, detail='Không tìm thấy câu hỏi.')
     if has_quiz_attempt(user['id'], request.question_id):
         raise HTTPException(status_code=409, detail='Em đã trả lời câu này rồi, bấm "Câu khác" để luyện tiếp nhé.')
-    expected_time = question.get('expected_time_seconds')
-    result = grade_answer(
-        question, request.answer, user.get('learningProfile') or {}, request.hints_used,
-        time_spent_seconds=request.time_spent_seconds,
-        expected_time_seconds=expected_time,
-    )
+    result = grade_answer(question, request.answer, user.get('learningProfile') or {}, request.hints_used)
     save_quiz_attempt(user, {
         'question_id': request.question_id,
         'answer': request.answer,
         'is_correct': bool(result.get('is_correct')),
         'hints_used': request.hints_used,
-        'difficulty': question.get('difficulty'),
-        'time_spent_seconds': result.get('time_spent_seconds'),
-        'expected_time_seconds': expected_time,
-        'error_tags': result.get('error_tags') or [],
         'mastery': result.get('mastery'),
     }, result.get('profile'))
     return {'success': True, **result}
@@ -751,74 +647,6 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     topic = str(context.get('currentTopic') or '').strip()
     risk = detect_risk(message)
 
-    history = [item for item in (request.messages or []) if (item.get('content') or '').strip()]
-    user_history = [
-        (item.get('content') or '')[:800]
-        + (f"\nĐề bài trong ảnh: {str(item['image_text'])[:IMAGE_TEXT_MAX_LENGTH]}" if item.get('image_text') else '')
-        for item in history if item.get('role') == 'user'
-    ]
-    scope_query = message
-    if is_follow_up(message) and user_history:
-        scope_query = f'{user_history[-1]}\n{message}'
-    scope = classify_scope(scope_query, subject=subject, grade=int(grade), context=context)
-    scope_model_called = False
-    if not risk:
-        # Images need semantic review before retrieval because they may contain an out-of-scope
-        # exercise or instructions attempting to override the tutor policy.
-        if scope.label == 'out_of_scope' or (
-            scope.label == 'off_topic' and scope.reason == 'non_educational_service_request'
-        ):
-            pass
-        elif request.image_data:
-            scope_model_called = True
-            scope = _model_scope_decision(
-                message, subject=subject, grade=int(grade), history=user_history, request=request,
-            )
-        elif scope.needs_model_review:
-            scope_model_called = True
-            scope = _model_scope_decision(
-                scope_query, subject=subject, grade=int(grade), history=user_history,
-            )
-    logger.info(
-        'chat scope=%s reason=%s model_review=%s image=%s retrieval=%s',
-        scope.label, scope.reason, scope_model_called, bool(request.image_data),
-        not risk and scope.label == 'in_scope',
-    )
-    risk = scope.safety_risk or risk
-    if not risk and scope.label != 'in_scope':
-        if scope.label == 'out_of_scope':
-            scope_reply = (
-                'Kiến thức này nằm ngoài phạm vi chương trình mà Mimo hiện hỗ trợ, nên mình chưa thể '
-                'giải trực tiếp bài này. Nếu bạn muốn, mình có thể giúp bạn ôn lại những kiến thức '
-                'phù hợp với lớp đang học.'
-            )
-        elif scope.label == 'off_topic':
-            scope_reply = (
-                'Mimo được thiết kế để hỗ trợ bạn học tập theo chương trình THCS, nên mình không thể '
-                'xử lý yêu cầu này. Bạn muốn ôn tập môn nào hôm nay?'
-            )
-        else:
-            scope_reply = (
-                'Mimo chưa xác định được câu hỏi này thuộc phần học nào. Em cho Mimo biết môn, lớp '
-                'hoặc gửi rõ đề bài hơn nhé?'
-            )
-        done_payload = {
-            'type': 'done', 'content': scope_reply, 'sources': [],
-            'quick_replies': ['Em muốn ôn Toán', 'Em gửi rõ câu hỏi hơn'],
-            'understanding': None,
-        }
-
-        def scope_reply_events():
-            persist(scope_reply, done_payload)
-            yield _stream_event({'type': 'chunk', 'text': scope_reply})
-            yield _stream_event(done_payload)
-
-        return StreamingResponse(
-            scope_reply_events(),
-            media_type='text/event-stream',
-            headers={'Cache-Control': 'no-cache', 'Connection': 'keep-alive', 'X-Accel-Buffering': 'no'},
-        )
-
     # Ba việc chờ mạng dưới đây không cần kết quả của nhau, nên cùng khởi hành một lúc
     # (xem _io_pool). Kết quả được lấy ra đúng chỗ cần dùng ở bên dưới.
     matches_task = _io_pool.submit(search_knowledge, message, subject=subject, grade=grade, top_k=5)
@@ -838,13 +666,9 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         retrieval_error = ''
 
     # Pages of the lesson being studied keep short follow-ups ("cho em ví dụ khác") anchored to the right part of the book.
-    relevant_matches = [
-        item for item in matches
-        if item.get('text') and float(item.get('score', 0.0)) >= RAG_SCORE_THRESHOLD
-    ]
-    seen_pages = {_page_key(item) for item in relevant_matches[:3]}
+    seen_pages = {_page_key(item) for item in matches[:3]}
     lesson_pages = [item for item in lesson_pages_task.result() if _page_key(item) not in seen_pages][:LESSON_CONTEXT_PAGES] if lesson_pages_task is not None and not retrieval_error else []
-    context_matches = sorted(relevant_matches[:3] + lesson_pages, key=lambda item: float(item.get('score', 0.0)), reverse=True)
+    context_matches = sorted(matches[:3] + lesson_pages, key=lambda item: float(item.get('score', 0.0)), reverse=True)
     unique_matches: dict[tuple[Any, Any], dict[str, Any]] = {}
     # Lời chào và lời cảm ơn không được gắn trang sách, dù điểm tương đồng có cao tới đâu.
     if _la_cau_hoi_hoc_tap(message):
@@ -865,8 +689,30 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         for number, item in enumerate(cited_matches, start=1)
     )
 
+    # Học sinh hỏi một BÀI HỌC mà kho không có đoạn nào đủ gần: phải nói thẳng là sách của em
+    # không có bài đó. Nếu không, mô hình lấy trí nhớ của chính nó ra giảng, và cả lời hứa "chỉ
+    # dạy theo sách giáo khoa" sụp ngay tại đó - học sinh không có cách nào biết câu trả lời
+    # này không kiểm chứng được.
+    #
+    # KHÔNG gắn điều kiện vào điểm tương đồng. Đã đo: "Unit 1 Hobbies" (sách thiếu) đạt 0.715
+    # còn "Hai tam giác cạnh-góc-cạnh" (sách có) chỉ 0.686 - hai nhóm chồng lên nhau nên không
+    # ngưỡng nào tách được. Chính mô hình mới phân biệt được, vì nó đọc được nội dung đoạn
+    # sách: thực tế nó đã tự từ chối gắn [n] cho những đoạn không liên quan (chỗ cited_numbers
+    # bên dưới), chỉ là nó không nói cho em biết. Nên giao hẳn việc phán đoán cho nó.
+    #
+    # Không áp cho BÀI TẬP: một bài luyện tập hiếm khi có nguyên văn trong sách, nhưng vẫn giải
+    # được bằng khái niệm trong sách, nên vẫn giúp bình thường.
+    thieu_sach = (
+        '\n\nKHI CÁC ĐOẠN SGK Ở TRÊN KHÔNG NÓI VỀ ĐIỀU EM HỎI\n'
+        '- Nếu em hỏi một KHÁI NIỆM hoặc BÀI HỌC mà không đoạn nào ở trên thật sự dạy nó: vẫn '
+        'giải thích đầy đủ cho em, nhưng MỞ ĐẦU bằng đúng một câu ngắn cho em biết phần này '
+        f'không có trong sách {subject} lớp {grade} mà Mimo đang có, và nếu đoán được thì nói bài '
+        'đó thuộc lớp nào. Sau câu đó thì dạy bình thường. Không gắn [n] cho câu trả lời này.\n'
+        '- Nếu em nhờ giải một BÀI TẬP: hướng dẫn bình thường bằng khái niệm nền tảng của lớp em, '
+        'không cần câu mở đầu đó - bài tập vốn không có nguyên văn trong sách.'
+    ) if _la_cau_hoi_hoc_tap(message) and not risk else ''
 
-
+    history = [item for item in (request.messages or []) if (item.get('content') or '').strip()]
     # The photo itself is only sent in the turn it was attached; later turns see the problem Gemini copied out of it.
     previous = [
         f"{'Học sinh' if item.get('role') == 'user' else 'Mimo'}: {(item.get('content') or '')[:800]}"
@@ -904,7 +750,7 @@ CÁCH DẠY
 - Nếu lịch sử cho thấy em chưa hiểu: giải thích cách khác, đơn giản hơn, chia nhỏ bước. Nếu em đã vững: nâng mức thử thách một chút.
 - Kết thúc bằng đúng 1 câu hỏi ngắn để em tương tác (kiểm tra hiểu bài hoặc mời em làm bước tiếp theo).
 - Dùng thuật ngữ thống nhất theo SGK chương trình GDPT 2018 (ví dụ KHTN dùng tên IUPAC: acid, base, oxide, hydrogen, oxygen – không viết axit, bazơ, hiđro).
-- Bám sát thuật ngữ, ký hiệu, quy tắc trong Context SGK; tuân thủ phạm vi chương trình và quy tắc từ chối trong chỉ dẫn hệ thống.
+- Bám sát thuật ngữ, ký hiệu, quy tắc trong Context SGK; không dùng kiến thức vượt chương trình lớp {grade}. Không từ chối bài nâng cao chỉ vì không có nguyên văn đề; dùng khái niệm nền tảng phù hợp.
 - Nếu không đủ thông tin để trả lời chắc chắn, nói thật với em thay vì bịa.
 - Dựa vào "Kết quả luyện tập bài này" và "Những lần trước em học bài này" để dạy nối tiếp: không giảng lại y hệt điều đã giảng, chú ý các lỗi em hay mắc, chỉnh độ khó theo mức nắm bài. Không nhắc đến những dữ liệu này nếu em không hỏi.
 
@@ -921,9 +767,9 @@ SAU KHI TRẢ LỜI XONG, xuống dòng và viết đúng một dòng dạng:
 - understanding: một trong "mất gốc", "hiểu sơ", "đã hiểu" – ước lượng mức hiểu của em dựa trên hội thoại; ghi null nếu hội thoại chưa có nội dung bài học để đánh giá (chào hỏi, tâm sự, chuyện ngoài lề).{image_text_rule}
 
 Context SGK:
-{context_text or f'Chưa có đoạn SGK phù hợp được truy xuất cho môn {subject} lớp {grade}. Không khẳng định nội dung nào được trích từ SGK và không tạo citation. Chỉ trả lời phần chắc chắn thuộc chương trình; nếu thiếu căn cứ thì nói rõ và hỏi làm rõ.'}
+{context_text or f'Chưa có SGK phù hợp trong hệ thống: vẫn dạy bình thường theo kiến thức chuẩn của chương trình GDPT 2018 môn {subject} lớp {grade}, không trích dẫn tên sách hay số trang; câu nào không chắc thì nói thật.'}
 Nguồn được phép trích dẫn:
-{source_text or 'Không có nguồn đạt ngưỡng; không tự tạo tên sách hoặc số trang.'}
+{source_text or 'Không có nguồn đạt ngưỡng; không tự tạo tên sách hoặc số trang.'}{thieu_sach}
 Những lần trước em học bài này (ở các cuộc trò chuyện khác):
 {chr(10).join(earlier_lesson_turns) if earlier_lesson_turns else 'Chưa có.'}
 Lịch sử hội thoại gần đây:
@@ -1028,11 +874,7 @@ def _ai_roadmap(user: dict[str, Any], subject: str, grade: int) -> dict[str, Any
     try:
         response = _generate_content(
             contents=build_roadmap_prompt(subject, grade),
-            config=types.GenerateContentConfig(
-                response_mime_type='application/json',
-                max_output_tokens=MAX_JSON_OUTPUT_TOKENS,
-                system_instruction=MIMO_TUTOR_SYSTEM_INSTRUCTION,
-            ),
+            config=types.GenerateContentConfig(response_mime_type='application/json', max_output_tokens=MAX_JSON_OUTPUT_TOKENS),
         )
         roadmap = parse_generated_roadmap(getattr(response, 'text', None) or '', subject, grade)
     except ValueError as exc:
@@ -1059,7 +901,6 @@ def generate_roadmap(request: RoadmapRequest, user: dict[str, Any] = Depends(cur
     student = request.student
     subject = student.subject or 'Toán'
     grade = int(student.grade)
-    _validate_supported_course(subject, grade)
     # A textbook in the catalog: the roadmap is its table of contents, with printed pages.
     catalog_roadmap = build_catalog_roadmap(subject, grade)
     if catalog_roadmap is not None:

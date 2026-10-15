@@ -36,60 +36,6 @@ def test_register_then_login_requires_the_right_password(auth_client):
     assert sign_in(auth_client, email='AN@example.com', mode='login', password='bimat123').status_code == 200
 
 
-def test_quiz_evidence_and_attempt_metadata_are_persisted(auth_client):
-    user = db.create_user('quiz-evidence@example.com', 'An', 8, 'bimat123')
-    learning_profile = {'concepts': {'toan8.bien-doi': {
-        'mastery': 0.62,
-        'evidence': [{'difficulty': 3, 'time_spent_seconds': 42, 'error_tags': ['sign_error']}],
-    }}}
-    db.save_quiz_attempt(user, {
-        'question_id': 'quiz-evidence-1',
-        'answer': 'x',
-        'is_correct': False,
-        'hints_used': 2,
-        'difficulty': 3,
-        'time_spent_seconds': 42,
-        'expected_time_seconds': 30,
-        'error_tags': ['sign_error'],
-        'mastery': 0.62,
-    }, learning_profile)
-
-    with db.engine.connect() as connection:
-        attempt = connection.execute(
-            db.select(db.quiz_attempts).where(db.quiz_attempts.c.question_id == 'quiz-evidence-1')
-        ).mappings().one()
-    assert attempt['hints_used'] == 2
-    assert attempt['difficulty'] == 3
-    assert attempt['time_spent_seconds'] == 42
-    assert attempt['expected_time_seconds'] == 30
-    assert attempt['error_tags'] == ['sign_error']
-    assert db.get_user(user['id'])['learningProfile'] == learning_profile
-
-
-def test_legacy_quiz_attempt_table_is_migrated_for_adaptive_evidence(monkeypatch, tmp_path):
-    legacy_engine = create_engine(
-        f"sqlite:///{(tmp_path / 'legacy-quiz.db').as_posix()}",
-        connect_args={'check_same_thread': False},
-    )
-    monkeypatch.setattr(db, 'engine', legacy_engine)
-    with legacy_engine.begin() as connection:
-        connection.exec_driver_sql('''
-            CREATE TABLE quiz_attempts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id VARCHAR(36) NOT NULL,
-                question_id VARCHAR(80) NOT NULL,
-                answer TEXT NOT NULL,
-                is_correct BOOLEAN NOT NULL,
-                hints_used INTEGER NOT NULL DEFAULT 0,
-                mastery FLOAT,
-                created_at DATETIME NOT NULL
-            )
-        ''')
-    db.init_db()
-    columns = {column['name'] for column in db.inspect(legacy_engine).get_columns('quiz_attempts')}
-    assert {'difficulty', 'time_spent_seconds', 'expected_time_seconds', 'error_tags'} <= columns
-
-
 @pytest.mark.parametrize('body, status', [
     ({'mode': 'register', 'name': 'An', 'password': '123'}, 400),   # quá ngắn
     ({'mode': 'register', 'name': ' ', 'password': 'bimat123'}, 400),
@@ -283,9 +229,9 @@ def test_oversized_chat_input_rejected(client, payload):
 def test_long_history_is_trimmed_not_rejected(client, app_mod, monkeypatch):
     fake = FakeGemini(chunks=['ok'])
     monkeypatch.setattr(app_mod, 'gemini_client', fake)
-    history = [{'role': 'user', 'content': f'Giải thích bài học số {i}'} for i in range(200)]
+    history = [{'role': 'user', 'content': f'tin {i}'} for i in range(200)]
     stream(client, 'hỏi tiếp', messages=history)
-    assert 'bài học số 199' in fake.calls[0]['contents'] and 'bài học số 150' not in fake.calls[0]['contents']
+    assert 'tin 199' in fake.calls[0]['contents'] and 'tin 150' not in fake.calls[0]['contents']
 
 
 def test_admin_password_reset(auth_client, capsys):
