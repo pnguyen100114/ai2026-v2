@@ -139,10 +139,17 @@ def test_roadmap_endpoint_uses_catalog_without_rag_or_gemini(client, app_mod, mo
 
 def test_lesson_pages_and_quiz_search_use_lesson_filter(client, app_mod, monkeypatch):
     calls = []
-    monkeypatch.setattr(app_mod, 'search_knowledge', lambda *args, **kwargs: calls.append(kwargs) or [])
-    client.post('/api/chat/stream', json={'message': 'Cho em ví dụ khác', 'student': {'grade': 6, 'subject': 'KHTN'}, 'context': {'currentTopic': 'Lực là gì?'}})
-    assert calls[0].get('extra_filter') is None  # the student's own question searches the whole book
-    assert calls[1]['extra_filter']['page'] == {'$gte': 145, '$lte': 147}
+    monkeypatch.setattr(app_mod, 'search_knowledge', lambda *args, **kwargs: calls.append((args, kwargs)) or [])
+    client.post('/api/chat/stream', json={
+        'message': 'Cho em ví dụ khác',
+        'student': {'grade': 6, 'subject': 'KHTN'},
+        'context': {'currentTopic': 'Lực là gì?'},
+    })
+    # Both independent retrieval jobs run concurrently; assert by query, not completion order.
+    chat_search = next(kwargs for args, kwargs in calls if args[0] == 'Cho em ví dụ khác')
+    lesson_search = next(kwargs for args, kwargs in calls if args[0] == 'Lực là gì?')
+    assert chat_search.get('extra_filter') is None
+    assert lesson_search['extra_filter']['page'] == {'$gte': 145, '$lte': 147}
 
 
 def test_source_page_opens_the_file_of_an_aliased_book(client, app_mod, tmp_path, monkeypatch):

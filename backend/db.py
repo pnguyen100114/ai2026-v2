@@ -149,6 +149,10 @@ quiz_attempts = Table(
     Column('answer', Text, nullable=False),
     Column('is_correct', Boolean, nullable=False),
     Column('hints_used', Integer, nullable=False, default=0),
+    Column('difficulty', Integer),
+    Column('time_spent_seconds', Integer),
+    Column('expected_time_seconds', Integer),
+    Column('error_tags', JSON, nullable=False, default=list),
     Column('mastery', Float),
     Column('created_at', DateTime(timezone=True), nullable=False, default=_now),
 )
@@ -197,6 +201,16 @@ def init_db() -> None:
     if 'image_text' not in {column['name'] for column in inspect(engine).get_columns('messages')}:
         with engine.begin() as conn:
             conn.exec_driver_sql('ALTER TABLE messages ADD COLUMN image_text TEXT')
+    attempt_columns = {column['name'] for column in inspect(engine).get_columns('quiz_attempts')}
+    for name, sql_type in (
+        ('difficulty', 'INTEGER'),
+        ('time_spent_seconds', 'INTEGER'),
+        ('expected_time_seconds', 'INTEGER'),
+        ('error_tags', 'JSON'),
+    ):
+        if name not in attempt_columns:
+            with engine.begin() as conn:
+                conn.exec_driver_sql(f'ALTER TABLE quiz_attempts ADD COLUMN {name} {sql_type}')
     with engine.begin() as conn:
         # Idempotent cleanup: clear the old hardcoded lesson for students who are not in grade-8 math.
         conn.execute(update(users).where(
