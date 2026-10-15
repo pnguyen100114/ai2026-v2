@@ -82,7 +82,25 @@ type ChatMessage = {
 // `lesson` is the roadmap lesson label the chat is about; the backend uses it to add that lesson's pages and earlier chats.
 type ChatSession = { id: string; title: string; subject: string; grade: string; lesson?: string; createdAt: number; updatedAt: number; messages: ChatMessage[] }
 type LearningProfile = {
-  concepts?: Record<string, { mastery: number; attempts: number; correct: number; streak: number; common_errors?: string[] }>
+  concepts?: Record<string, {
+    mastery: number
+    attempts: number
+    correct: number
+    streak: number
+    baseline_mastery?: number
+    common_errors?: string[]
+    error_counts?: Record<string, number>
+    evidence?: Array<{
+      score: number
+      weight: number
+      is_correct: boolean
+      difficulty: number
+      hints_used: number
+      time_spent_seconds: number | null
+      expected_time_seconds: number | null
+      error_tags?: string[]
+    }>
+  }>
 }
 type QuizQuestion = {
   question_id: string
@@ -95,6 +113,7 @@ type QuizQuestion = {
   hint: string
   mastery: number
   reason: string
+  expected_time_seconds?: number
 }
 type QuizResult = {
   is_correct: boolean
@@ -103,7 +122,17 @@ type QuizResult = {
   mastery: number
   next_difficulty: number
   next_action: string
-  recommendation: { title: string; reason: string; action: { type: string; concept_id: string; difficulty: number } }
+  assessment: {
+    mastery_score: number
+    confidence: 'low' | 'medium' | 'high'
+    weak_topics: string[]
+    recurring_errors: string[]
+    recommended_difficulty: string
+    recommendation_reason: string
+    next_activity: string
+  }
+  error_tags: string[]
+  recommendation: { title: string; reason: string; action: { type: string; concept_id: string; difficulty: number; error_tag?: string } }
 }
 // GET /api/progress (backend/db.py learning_progress).
 type Progress = {
@@ -174,6 +203,7 @@ function topicFromLabel(label: string) {
 const RECENT_CHAT_LIMIT = 5
 // Must match MESSAGE_MAX_LENGTH in backend/app.py.
 const MESSAGE_MAX_LENGTH = 2000
+const ACCURACY_NOTICE = 'Mimo có thể nhầm lẫn, em nhớ đối chiếu lại với sách giáo khoa nhé!'
 const IMAGE_MAX_SIDE = 1600
 
 // Phone photos are several MB; re-encode to a JPEG that is plenty for reading a problem and fits the request limit.
@@ -369,11 +399,27 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [quizError, setQuizError] = useState('')
   const [hintsUsed, setHintsUsed] = useState(0)
+  const quizClock = useRef<{ elapsedMs: number; resumedAt: number | null }>({ elapsedMs: 0, resumedAt: null })
   const [progress, setProgress] = useState<Progress | null>(null)
   const [toast, setToast] = useState('')
   const roadmapRequest = useRef(0)
   const pomodoro = usePomodoro()
   const dailyMinutes = account.onboarding.dailyMinutes || 25
+
+  useEffect(() => {
+    const syncQuizClock = () => {
+      const clock = quizClock.current
+      if ((document.hidden || page !== 'tutor' || !quiz || quizResult) && clock.resumedAt !== null) {
+        clock.elapsedMs += performance.now() - clock.resumedAt
+        clock.resumedAt = null
+      } else if (!document.hidden && page === 'tutor' && clock.resumedAt === null && quiz && !quizResult) {
+        clock.resumedAt = performance.now()
+      }
+    }
+    document.addEventListener('visibilitychange', syncQuizClock)
+    syncQuizClock()
+    return () => document.removeEventListener('visibilitychange', syncQuizClock)
+  }, [page, quiz, quizResult])
 
   const showToast = useCallback((message: string) => setToast(message), [])
 
@@ -755,6 +801,7 @@ function App() {
       setQuizAnswer('')
       setQuizResult(null)
       setHintsUsed(0)
+      quizClock.current = { elapsedMs: 0, resumedAt: document.hidden ? null : performance.now() }
     } catch (err) {
       setQuizError(err instanceof Error && !(err instanceof TypeError) ? err.message : 'Mimo chưa tạo được câu luyện tập, em thử lại nhé.')
     } finally {
@@ -766,16 +813,25 @@ function App() {
     if (!quiz || !quizAnswer.trim()) return
     setQuizLoading(true)
     setQuizError('')
+    const elapsedMs = quizClock.current.elapsedMs
+      + (quizClock.current.resumedAt === null ? 0 : performance.now() - quizClock.current.resumedAt)
+    quizClock.current = { elapsedMs, resumedAt: null }
     try {
       const response = await apiFetch('/api/quiz/answer', {
         method: 'POST',
-        body: JSON.stringify({ question_id: quiz.question_id, answer: quizAnswer, hints_used: hintsUsed }),
+        body: JSON.stringify({
+          question_id: quiz.question_id,
+          answer: quizAnswer,
+          hints_used: hintsUsed,
+          time_spent_seconds: Math.max(1, Math.round(elapsedMs / 1000)),
+        }),
       })
       const payload = await response.json()
       if (!response.ok) throw new Error(payload.detail || 'Không thể chấm câu trả lời.')
       setQuizResult(payload)
       setLearningProfile(payload.profile)
     } catch (err) {
+      if (!document.hidden) quizClock.current.resumedAt = performance.now()
       setQuizError(err instanceof Error && !(err instanceof TypeError) ? err.message : 'Mimo chưa chấm được câu này, em thử lại nhé.')
     } finally {
       setQuizLoading(false)
@@ -1345,6 +1401,7 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
             <Send size={16} /> <span>Gửi câu hỏi</span>
           </button>
           </div>
+          <p className="chat-accuracy-note"><BookOpen size={13} aria-hidden="true" /> {ACCURACY_NOTICE}</p>
         </form>
         </section>
       </div>
@@ -1362,7 +1419,7 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
             ? <p className="quiz-hint"><Lightbulb size={14} /> <MathText content={quiz.hint} /></p>
             : <button type="button" className="text-btn quiz-hint-btn" onClick={onShowHint}><Lightbulb size={14} /> Xem gợi ý (được ít điểm hơn một chút)</button>)}
           {!quizResult && <button className="quiz-submit" type="button" onClick={onSubmitQuiz} disabled={quizLoading || !quizAnswer}>{quizLoading ? 'Đang chấm...' : 'Kiểm tra câu trả lời'}</button>}
-          {quizResult && <div className={`quiz-feedback ${quizResult.is_correct ? 'correct' : 'incorrect'}`}><strong>{quizResult.is_correct ? 'Tốt lắm!' : 'Mình cùng sửa lại nhé'}</strong><p><MathText content={quizResult.feedback} /></p><small><MathText content={quizResult.explanation} /></small><div className="recommendation"><b>{quizResult.recommendation.title}</b><span>{quizResult.recommendation.reason}</span></div><button className="text-btn" type="button" onClick={onLoadQuiz}>Làm câu tiếp theo <ChevronRight size={14} /></button></div>}
+          {quizResult && <div className={`quiz-feedback ${quizResult.is_correct ? 'correct' : 'incorrect'}`}><strong>{quizResult.is_correct ? 'Tốt lắm!' : 'Mình cùng sửa lại nhé'}</strong><p><MathText content={quizResult.feedback} /></p><small><MathText content={quizResult.explanation} /></small><div className="recommendation"><b>{quizResult.recommendation.title}</b><span>{quizResult.recommendation.reason}</span><small>Độ tin cậy của đánh giá: {quizResult.assessment.confidence === 'low' ? 'đang tích lũy' : quizResult.assessment.confidence === 'medium' ? 'vừa' : 'cao'}</small></div><button className="text-btn" type="button" onClick={onLoadQuiz}>Làm câu tiếp theo <ChevronRight size={14} /></button></div>}
         </div>}
       </section>
       {previewSource?.preview_url && <div className="source-modal-backdrop" role="presentation" onClick={() => setPreviewSource(null)}><div className="source-modal" role="dialog" aria-modal="true" aria-label="Xem trang sách" onClick={(event) => event.stopPropagation()}><div className="source-modal-head"><div><strong>{previewSource.title || previewSource.source || 'Trang SGK'}</strong><span>{[previewSource.lesson_title, `Trang ${previewSource.page || '-'}`].filter(Boolean).join(' · ')}</span></div><button type="button" onClick={() => setPreviewSource(null)} aria-label="Đóng xem trang"><X size={18} /></button></div><img src={apiUrl(previewSource.preview_url)} alt={`Trang ${previewSource.page || ''} trong ${previewSource.source || 'sách giáo khoa'}`} /></div></div>}

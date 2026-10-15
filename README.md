@@ -16,6 +16,7 @@ Ba nguyên tắc sản phẩm được xây quanh:
 | Chức năng | Mô tả |
 |---|---|
 | Hỏi bài | Gõ, chụp ảnh đề hoặc bấm micro nói. Câu trả lời hiện dần từng chữ (SSE), công thức toán render bằng KaTeX |
+| Giới hạn phạm vi | Chỉ hỗ trợ nội dung học phù hợp lớp 6–9 và các môn đã cấu hình; từ chối câu hỏi vượt cấp/lạc đề, làm rõ yêu cầu mơ hồ và bỏ qua chỉ dẫn ghi đè trong ảnh/lịch sử |
 | Trích dẫn trang sách | Câu lấy từ SGK có số `[1]`, `[2]`; bấm vào mở ảnh đúng trang |
 | Lộ trình học | Dựng theo mục lục sách (chương, bài, số trang). Môn/lớp chưa có mục lục thì AI tự soạn theo GDPT 2018 |
 | Luyện tập thích ứng | Mimo tự soạn câu trắc nghiệm cho bài đang học; đúng liên tiếp thì khó lên, sai thì ôn lại |
@@ -74,8 +75,16 @@ python backend\rag\render_pages.py         # render ảnh trang lên Supabase St
 ```bash
 npm run lint
 npm run build
-.venv\Scripts\python.exe -m pytest      # 214 ca kiểm thử backend
+.venv\Scripts\python.exe -m pytest      # bộ kiểm thử backend
 ```
+
+### Luyện tập thích ứng
+
+Mức thành thạo được ước lượng riêng cho từng chủ đề, không làm thay đổi độ khó gốc của câu hỏi. Mỗi câu trả lời thêm một bằng chứng vào `learning_profile`: điểm tín hiệu bắt đầu từ đúng/sai, được điều chỉnh nhẹ theo độ khó; câu đúng bị giảm tối đa 0,18 điểm tín hiệu khi đã dùng gợi ý. Điểm được làm trơn với prior bốn lượt ở mức thành thạo trước đó, để một câu đơn lẻ không làm thay đổi mạnh đánh giá.
+
+Thời gian chỉ tính khi trang luyện tập đang mở và tab trình duyệt hiển thị. Mimo chỉ dùng trung vị thời gian của ít nhất ba lượt cùng chủ đề/cùng mức khó làm mốc cá nhân. Nếu chưa đủ dữ liệu, thời gian không ảnh hưởng điểm; lượt nhanh bất thường (dưới 15% mốc) chỉ giảm trọng số bằng chứng còn 0,35, không tự kết luận học sinh yếu. Thời gian không hợp lệ bị bỏ qua.
+
+Tag lỗi lấy từ taxonomy riêng từng môn và chỉ được ghi khi phương án sai có tag hợp lệ do câu hỏi tạo ra; không suy luận tag chỉ từ việc trả lời sai. Mức ưu tiên tag giảm 10% sau mỗi lượt mới; lỗi lặp lại ưu tiên câu quiz luyện đúng kỹ năng đó. Số lượt hữu hiệu dưới 2 được báo độ tin cậy thấp, dưới 6 là vừa, còn lại là cao. Các lần làm mới được lưu vào `quiz_attempts`; migration thêm các cột mới dạng nullable để giữ tương thích dữ liệu cũ.
 
 Ngoài pytest còn có bộ kiểm thử chất lượng trả lời, chạy qua **API đã deploy** chứ không gọi hàm trong máy:
 
