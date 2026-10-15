@@ -142,3 +142,4 @@ textarea{font:inherit}
 .busy-modal p{margin:0;font-size:14px;line-height:1.55;color:#5b6b80}
 .busy-modal .primary-btn{margin-top:6px;min-width:120px;justify-content:center}
 .busy-spinner{width:34px;height:34px;border-radius:50%;border:3px solid #ffe1d8;border-top-color:#f26b4f;animation:spin .9s linear infinite}
+.chat-accuracy-note{display:flex;align-items:center;gap:6px;width:fit-content;max-width:100%;margin:8px auto 0;padding:4px 12px;border:1px solid #ffedd5;border-radius:999px;background:#fff7ed;color:#b45309cc;font-size:12px;line-height:1.4;text-align:center}.chat-accuracy-note svg{flex:0 0 auto}
