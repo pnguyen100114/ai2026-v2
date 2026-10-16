@@ -114,6 +114,8 @@ WATERMARK_PATTERNS = [
     r"S[áa]ch\s+chia\s+s[ẻe]\s+t[ạa]i\b.*",
     r"\bgiao-an-lop-\d+\b",
     r"\bday-va-hoc\b",
+    # TA8.pdf: chân trang của trang chia sẻ bản scan.
+    r"(?:https?://)?(?:www\.)?minh-pham\.info\S*",
 ]
 
 # TOAN8-Tap1.pdf mang một watermark bị xoay, nên pypdf đọc ra thành rác thay vì thành chữ:

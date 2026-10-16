@@ -85,6 +85,13 @@ def test_strip_watermarks_keeps_the_lesson_text_around_it():
     assert 'Đơn thức là biểu thức đại số' in cleaned
 
 
+def test_strip_watermarks_removes_the_ta8_footer():
+    from backend.rag import ingest
+
+    cleaned = ingest.strip_watermarks('www.minh-pham.info\nLOOKING BACK\nVocabulary\n36 Tiếng Anh 8\nwww.minh-pham.info')
+    assert 'minh-pham' not in cleaned and 'LOOKING BACK' in cleaned and '36 Tiếng Anh 8' in cleaned
+
+
 def test_every_pdf_name_maps_to_exactly_one_book():
     ids = [book.id for book in books.BOOKS]
     assert len(ids) == len(set(ids))
