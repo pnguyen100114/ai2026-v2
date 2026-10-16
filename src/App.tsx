@@ -383,6 +383,11 @@ function App() {
   const [currentSessionId, setCurrentSessionId] = useState(() => readStorage<string>(storageKey('gia-su-ai-current-session'), ''))
   const [chat, setChat] = useState<ChatMessage[]>(() => readStorage<ChatMessage[]>(storageKey('gia-su-ai-chat'), welcomeMessages(student)).map(normalizeMessage))
   const lastImageRef = useRef<{ userId: string; data: string; mime?: string } | null>(null)
+  // Read by the history loader, which resolves seconds after the effect that started it.
+  const latestChats = useRef({ sessions, currentSessionId })
+  useEffect(() => {
+    latestChats.current = { sessions, currentSessionId }
+  }, [sessions, currentSessionId])
   const [learningProfile, setLearningProfile] = useState<LearningProfile>(() => account.learningProfile as LearningProfile)
   const skipFirstProfileSave = useRef(true)
   const [quiz, setQuiz] = useState<QuizQuestion | null>(null)
@@ -473,9 +478,14 @@ function App() {
     repository.loadHistory().then((history) => {
       if (cancelled) return
       const remote = sessionsFromHistory(history, student)
-      const nextSessions = remote.length > 0 ? remote : [newSession(student)]
+      // /api/history takes ~2s (much longer on a Render cold start). A question asked meanwhile is
+      // not in it yet; replacing the chat with history wiped that question and Mimo's answer off screen.
+      const { sessions: local, currentSessionId: openId } = latestChats.current
+      const pending = local.filter((session) => hasQuestion(session) && !remote.some((item) => item.id === session.id))
+      const merged = [...pending, ...remote]
+      const nextSessions = merged.length > 0 ? merged : [newSession(student)]
       setSessions(nextSessions)
-      const current = nextSessions.find((session) => session.id === currentSessionId) ?? nextSessions[0]
+      const current = nextSessions.find((session) => session.id === openId) ?? nextSessions[0]
       setCurrentSessionId(current.id)
       setChat(current.messages)
     }).catch((err) => console.error('Không tải được lịch sử trò chuyện', err))
