@@ -107,7 +107,7 @@ class Course:
 BOOKS: list[Book] = [
     # --- Toán ---
     Book(id='toan6-tap1', subject='Toán', grade=6, volume=1, title='Toán 6 – Tập một',
-         files=('TOAN6 -TAP 1.pdf', 'TOAN -TAP 1.pdf', 'toan6-tap1.pdf'), page_offset=-1, last_page=62),
+         files=('TOAN6 -TAP 1.pdf', 'TOAN -TAP 1.pdf', 'toan6-tap1.pdf'), page_offset=-1),
     Book(id='toan6-tap2', subject='Toán', grade=6, volume=2, title='Toán 6 – Tập hai',
          files=('TOAN6-TAP 2.pdf',), page_offset=-1),
     Book(id='toan7-tap1', subject='Toán', grade=7, volume=1, title='Toán 7 – Tập một',
@@ -127,7 +127,7 @@ BOOKS: list[Book] = [
     # "NV - TAP 1/2.pdf" carries no grade in the name; identified as grade 6 from its contents
     # ("Bài 1. Tôi và các bạn", "Bài học đường đời đầu tiên").
     Book(id='nv6-tap1', subject='Ngữ văn', grade=6, volume=1, title='Ngữ văn 6 – Tập một',
-         files=('NV - TAP 1.pdf', 'NV6 - TAP 1.pdf'), page_offset=-1, last_page=68),
+         files=('NV - TAP 1.pdf', 'NV6 - TAP 1.pdf'), page_offset=-1),
     Book(id='nv6-tap2', subject='Ngữ văn', grade=6, volume=2, title='Ngữ văn 6 – Tập hai',
          files=('NV - TAP 2.pdf', 'NV6 - TAP 2.pdf'), page_offset=-1),
     Book(id='nv7-tap1', subject='Ngữ văn', grade=7, volume=1, title='Ngữ văn 7 – Tập một',
@@ -153,7 +153,7 @@ BOOKS: list[Book] = [
     Book(id='ta8', subject='Tiếng Anh', grade=8, volume=0, title='Tiếng Anh 8',
          files=('TA8.pdf',), page_offset=-2),
     Book(id='ta9', subject='Tiếng Anh', grade=9, volume=0, title='Tiếng Anh 9',
-         files=('TA9.pdf',), page_offset=-1, last_page=70),
+         files=('TA9.pdf',), page_offset=-2),
 
     # --- KHTN ---
     Book(id='khtn6', subject='KHTN', grade=6, volume=0, title='Khoa học tự nhiên 6',
@@ -591,7 +591,7 @@ COURSES: list[Course] = [
     ]),
     # Global Success has no "Bài": every unit section (Getting Started, A Closer Look 1...) is one
     # lesson, numbered through the course, and its title carries the unit because every unit has an
-    # "A Closer Look 1". Units past the end of a scan (Tiếng Anh 9) only have their first page.
+    # "A Closer Look 1". A unit past the end of a partial scan would keep only its first page.
     Course(subject='Tiếng Anh', grade=6, series='Global Success', numbered_lessons=False, outline=[
         *_gs_units(1, 1, [
             (1, 'My New School', (6, 8, 9, 11, 12, 13, 14, 15)),
@@ -684,9 +684,17 @@ COURSES: list[Course] = [
             (6, 'Vietnamese Lifestyle: Then and Now', (60, 62, 63, 64, 65, 67, 68, 69)),
         ]),
         (102, 'Review 2', 0, [(50, 'Review 2', 70)]),
-        *_gs_units(0, 51, [(7, 'Natural Wonders of the World', 72), (8, 'Tourism', 82), (9, 'World Englishes', 92)]),
+        *_gs_units(0, 51, [
+            (7, 'Natural Wonders of the World', (72, 74, 75, 76, 77, 79, 80, 81)),
+            (8, 'Tourism', (82, 84, 85, 86, 87, 88, 90, 91)),
+            (9, 'World Englishes', (92, 94, 95, 96, 97, 99, 100, 101)),
+        ]),
         (103, 'Review 3', 0, [(75, 'Review 3', 102)]),
-        *_gs_units(0, 76, [(10, 'Planet Earth', 104), (11, 'Electronic Devices', 114), (12, 'Career Choices', 124)]),
+        *_gs_units(0, 76, [
+            (10, 'Planet Earth', (104, 106, 107, 108, 109, 110, 112, 113)),
+            (11, 'Electronic Devices', (114, 116, 117, 118, 120, 121, 122, 123)),
+            (12, 'Career Choices', (124, 126, 127, 128, 129, 131, 132, 133)),
+        ]),
         (104, 'Review 4', 0, [(100, 'Review 4', 134)]),
     ]),
     # Ngữ văn: one "Bài" spans 20–30 pages, so each section (Tri thức ngữ văn, a reading text, Thực hành

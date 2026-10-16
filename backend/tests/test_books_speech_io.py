@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import base64
+import dataclasses
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
@@ -114,9 +115,20 @@ def test_catalog_roadmap_lists_all_lessons_with_pages_only_where_the_pdf_has_the
     assert lessons[0] == {'id': 'lesson_1_1', 'lesson': 1, 'title': 'Tập hợp', 'label': 'Bài 1: Tập hợp', 'volume': 1,
                           'status': 'locked', 'progress': 0,
                           'sources': [{'source': 'Toán 6 – Tập một', 'page': 5}]}
-    assert lessons[13]['sources'] == [{'source': 'Toán 6 – Tập một', 'page': 62}]  # last lesson in the partial scan
-    assert lessons[14]['sources'] == []  # after the end of the Tập một scan
+    assert lessons[14]['sources'] == [{'source': 'Toán 6 – Tập một', 'page': 67}]
     assert lessons[30]['sources'] == [{'source': 'Toán 6 – Tập hai', 'page': 38}]
+
+
+def test_lessons_past_the_end_of_a_partial_scan_keep_their_place_but_get_no_pages(monkeypatch):
+    # Every scan is complete now; this is how the catalog handled the 62-page Toán 6 Tập một.
+    partial = [dataclasses.replace(book, last_page=62) if book.id == 'toan6-tap1' else book for book in books.BOOKS]
+    monkeypatch.setattr(books, 'BOOKS', partial)
+    lessons = [lesson for chapter in books.build_catalog_roadmap('Toán', 6)['chapters'] for lesson in chapter['lessons']]
+    assert len(lessons) == 43
+    assert lessons[13]['sources'] == [{'source': 'Toán 6 – Tập một', 'page': 62}]  # last lesson in the scan
+    assert lessons[14]['sources'] == []
+    assert books.lesson_page_filter('Toán', 6, 'Phép cộng và phép trừ số nguyên')['page'] == {'$gte': 63, '$lte': 63}
+    assert books.lesson_page_filter('Toán', 6, 'Bài 15: Quy tắc dấu ngoặc') is None
 
 
 def test_catalog_roadmap_accepts_subject_alias():
@@ -157,9 +169,7 @@ def test_cited_page_carries_the_lesson_it_belongs_to():
 @pytest.mark.parametrize('subject, grade, topic', [
     ('KHTN', 6, 'Bài 41: Lực là gì?'),       # number does not match
     ('Tiếng Anh', 7, 'Bài 2: A Closer Look 1'),  # old AI-roadmap title: no unit, so no pages
-    ('Toán', 6, 'Bài 15: Quy tắc dấu ngoặc'),  # past the end of the Tập một scan
     ('Toán', 6, 'Phân số'),                   # not a lesson title
-    ('Tiếng Anh', 9, 'Unit 7 – Getting Started'),  # past the end of the scan
     ('Ngữ văn', 6, 'Bài 1: Bầu trời tuổi thơ'),
 ])
 def test_lesson_page_filter_none_without_book_pages(subject, grade, topic):
