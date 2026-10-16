@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -28,6 +29,54 @@ DANH_GIA = ('đúng', 'có chỗ sai', 'sai')
 COT = ['STT', 'Lần chạy', 'Nhóm', 'Môn', 'Lớp', 'Hội thoại trước', 'Câu hỏi của em',
        'Câu trả lời của Mimo', 'Trang sách Mimo trích', 'Điều cần đối chiếu',
        'Đánh giá (đúng / có chỗ sai / sai)', 'Chỗ sai (nếu có)', 'Thầy cô chấm']
+
+
+# Mimo viết công thức bằng LaTeX ("$x^2 + 2x + 1$"); app vẽ bằng KaTeX nên em thấy x² + 2x + 1,
+# còn Excel thì hiện nguyên dấu $ và ^. Đổi về chữ thường giống plainMath() ở
+# src/components/ChatMessageContent.tsx, để thầy cô đọc đúng thứ học sinh thấy.
+_SO_MU = str.maketrans('0123456789+-()n', '⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁽⁾ⁿ')
+_CHI_SO = str.maketrans('0123456789', '₀₁₂₃₄₅₆₇₈₉')
+_DOAN_TOAN = re.compile(r'(\$\$[\s\S]*?\$\$|\$[^$\n]*\$)')
+_NGOAC_TOAN = re.compile(r'\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)')
+_nhom = lambda s: s if re.fullmatch(r'[\w^.,²³]+', s) else f'({s})'
+_LATEX = [
+    (r'\\begin\{cases\}([\s\S]*?)\\end\{cases\}', lambda m: 'hệ [ ' + m[1].strip().replace('\\\\', ' ; ') + ' ]'),
+    (r'\\[dt]?frac\{([^{}]*)\}\{([^{}]*)\}', lambda m: f'{_nhom(m[1])}/{_nhom(m[2])}'),
+    (r'\\sqrt\{([^{}]*)\}', lambda m: f'√{_nhom(m[1])}'),
+    (r'\\(?:text|mathrm|mathbf|operatorname)\{([^{}]*)\}', lambda m: m[1]),
+    (r'\\(?:widehat|hat|angle)\{([^{}]*)\}', lambda m: f'góc {m[1]}'),
+    (r'\\overline\{([^{}]*)\}', lambda m: m[1]),
+    (r'\^\{?\\circ\}?', '°'),
+    (r'\^\{([^{}]*)\}', lambda m: m[1].translate(_SO_MU) if re.fullmatch(r'[\d+\-()n]+', m[1])
+     else f'^{m[1]}' if len(m[1]) == 1 else f'^({m[1]})'),
+    (r'\^(\d+)', lambda m: m[1].translate(_SO_MU)),
+    (r'_\{?(\d+)\}?', lambda m: m[1].translate(_CHI_SO)),
+]
+_KY_HIEU = {
+    'cdot': '·', 'times': '×', 'div': ':', 'pm': '±', 'le': '≤', 'leq': '≤', 'ge': '≥', 'geq': '≥',
+    'ne': '≠', 'neq': '≠', 'approx': '≈', 'pi': 'π', 'infty': '∞', 'int': '∫', 'Rightarrow': '⇒',
+    'Leftrightarrow': '⇔', 'rightarrow': '→', 'to': '→', 'in': '∈', 'notin': '∉', 'Omega': 'Ω',
+    'Delta': 'Δ', 'alpha': 'α', 'beta': 'β', 'lambda': 'λ', 'triangle': 'Δ', 'perp': '⊥',
+    'parallel': '//', 'ldots': '…', 'cdots': '…', 'dots': '…', 'lt': '<', 'gt': '>', '%': '%',
+    'sin': 'sin', 'cos': 'cos', 'tan': 'tan', 'cot': 'cot', 'log': 'log', 'ln': 'ln',
+}
+
+
+def _chu_toan(text: str) -> str:
+    for _ in range(3):  # phân số lồng nhau mở từ trong ra ngoài
+        for mau, thay in _LATEX:
+            text = re.sub(mau, thay, text)
+    text = re.sub(r'\\([a-zA-Z]+|%)', lambda m: _KY_HIEU.get(m[1], ''), text)
+    text = re.sub(r'\\[,;:! ]', ' ', text)
+    return re.sub(r' {2,}', ' ', text.replace('{', '').replace('}', ''))
+
+
+def chu_thuong(content: str) -> str:
+    content = _NGOAC_TOAN.sub(lambda m: f'$${m[1].strip()}$$' if m[1] is not None else f'${m[2].strip()}$', content or '')
+    phan = _DOAN_TOAN.split(content)
+    # Ngoài $...$ chỉ đổi số mũ, vì Gemini có lúc quên dấu $ ("x^2 - 4").
+    return ''.join(_chu_toan(p.strip('$').strip()) if i % 2 else re.sub(r'\^(\d+)', lambda m: m[1].translate(_SO_MU), p)
+                   for i, p in enumerate(phan))
 
 
 def _doc() -> dict:
@@ -43,11 +92,12 @@ def xuat() -> None:
         w = csv.writer(f)
         w.writerow(COT)
         for k in data['ket_qua']:
-            lich_su = '\n'.join(f"{'Em' if l['vai'] == 'user' else 'Mimo'}: {l['noi_dung']}"
+            lich_su = '\n'.join(f"{'Em' if l['vai'] == 'user' else 'Mimo'}: {chu_thuong(l['noi_dung'])}"
                                 for l in k.get('lich_su') or [])
             trang = '; '.join(f"{n.get('sach') or 'SGK'} tr.{n.get('trang')}" for n in k.get('nguon') or [])
             w.writerow([k['stt'], data['chay_luc'], k['nhom'], k['mon'], k['lop'], lich_su,
-                        k['cau_hoi'], k['tra_loi'], trang or '(không trích)', k['ghi_chu_cham'],
+                        chu_thuong(k['cau_hoi']), chu_thuong(k['tra_loi']), trang or '(không trích)',
+                        chu_thuong(k['ghi_chu_cham']),
                         k.get('nguoi_cham_kien_thuc') or '', k.get('nguoi_cham_ghi_chu') or '',
                         k.get('nguoi_cham_ten') or ''])
     print(f'Đã ghi {PHIEU} ({len(data["ket_qua"])} câu).')
