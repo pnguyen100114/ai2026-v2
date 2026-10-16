@@ -511,7 +511,7 @@ function App() {
       // Opening a chat or refreshing its greeting is not activity; only a new or edited last message moves it to the top.
       const changed = session.messages.length !== chat.length || session.messages.at(-1)?.content !== chat.at(-1)?.content
       const firstQuestion = chat.find((item) => item.role === 'user')
-      return { ...session, messages: chat, updatedAt: changed ? Date.now() : session.updatedAt, title: session.title === DEFAULT_SESSION_TITLE && firstQuestion ? plainMath(firstQuestion.content).slice(0, 42) : session.title }
+      return { ...session, messages: chat, updatedAt: changed ? Date.now() : session.updatedAt, title: (session.title === DEFAULT_SESSION_TITLE || session.title === 'Cuộc trò chuyện hiện tại') && firstQuestion ? plainMath(firstQuestion.content).slice(0, 42) : session.title }
     }))
   }, [chat, currentSessionId])
 
