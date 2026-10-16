@@ -190,7 +190,8 @@ YÊU CẦU
 - 3 hoặc 4 phương án, chỉ một phương án đúng; phương án sai phản ánh lỗi sai thường gặp.
 - Trả thêm error_tags là object ánh xạ phương án sai sang MỘT tag trong bộ tag cho môn {subject}; chỉ gắn tag khi cách suy luận sai thật sự thể hiện lỗi đó. Không gắn tag cho đáp án đúng hoặc khi chưa đủ bằng chứng.
 - Công thức toán viết bằng LaTeX đặt giữa hai dấu $, ví dụ $3x^2y$, $\\frac{{3}}{{4}}$ — giao diện
-  render bằng KaTeX như phần giảng bài. Chữ thường không bọc trong $.
+  render bằng KaTeX như phần giảng bài. Chữ thường không bọc trong $. Quy tắc này áp dụng cho CẢ
+  question, TỪNG phương án trong options, answer, hint và explanation; không dùng \\( \\) hay \\[ \\].
 - Gợi ý (hint) chỉ mở hướng làm, không lộ đáp án.
 
 Câu đã hỏi gần đây:
