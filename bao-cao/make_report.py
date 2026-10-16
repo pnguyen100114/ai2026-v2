@@ -3,7 +3,7 @@
 NGUYÊN TẮC: không con số nào trong hồ sơ được gõ tay. Mọi số đều đọc từ nguồn sự thật của nó:
 
     kho sách            backend/rag/.ingest_manifest.json   (sổ nạp sách)
-    chất lượng trả lời  bao-cao/bo-test/ket_qua.json        (28 ca chạy qua API đã deploy)
+    chất lượng trả lời  bao-cao/bo-test/ket_qua.json        (bộ ca chạy qua API đã deploy)
     đợt thử nghiệm      backend/local.db                    (khóa cứng trong 2 ngày 13-14/9)
     câu lệnh AI         prompt-log/PROMPT_HISTORY.md
     mục lục gõ tay      backend/rag/books.py
@@ -15,10 +15,12 @@ hiện khi nó sai, nên ở đây không có con số nào gõ tay cả.
 
 Chạy illustrations.py trước để có hình minh họa, chup_anh.py để có ảnh sản phẩm.
 """
+import csv
 import json
 import os
 import re
 import sqlite3
+from collections import Counter
 from pathlib import Path
 
 import matplotlib
@@ -125,6 +127,13 @@ for _k in _ket:
 T_NGAY = _ngay(_test['chay_luc'][:10])
 T_TRUOT = [k for k in _ket if not k['dat_may_cham']]
 nhom = lambda ten: T_NHOM.get(ten, [0, 0])
+# Thầy cô chấm kiến thức: lần đo hiện tại nhập qua phieu_cham.py; lần 19/09 chấm trên bản rút gọn.
+T_GV_CHAM = [k for k in _ket if k.get('nguoi_cham_kien_thuc')]
+T_GV_DEM = Counter(k['nguoi_cham_kien_thuc'] for k in T_GV_CHAM)
+with (ROOT / 'bao-cao' / 'bo-test' / 'cham_giao_vien_1909.csv').open(encoding='utf-8-sig', newline='') as _f:
+    GV_1909 = list(csv.DictReader(_f))
+GV_1909_DEM = Counter((d['Đánh giá của thầy cô'] or '').strip().lower() for d in GV_1909)
+GV_1909_LECH = [d['STT'] for d in GV_1909 if 'Bản rút gọn' in d['Ghi chú của nhóm khi đối chiếu câu trả lời thật']]
 
 # Mọi chỗ nói về thời gian trả lời đều dùng số đo trên BẢN ĐÃ DEPLOY. Số đo lúc chạy ở máy
 # không có chặng mạng tới Render và Supabase, trộn hai bộ vào một hồ sơ thì cùng một thứ lại
@@ -464,36 +473,59 @@ screenshot('sp_8_luyentap', 'Hình 10. Luyện tập: Mimo soạn câu riêng ch
            left=0.235, top=0.505, right=0.94, bottom=0.99)
 illustration('con_so', 'Hình 11. Một vài con số sau khi thử nghiệm')
 
-doc.add_heading('Đo chất lượng trả lời: bộ kiểm thử 28 ca', level=2)
+doc.add_heading(f'Đo chất lượng trả lời: bộ kiểm thử {T_TONG} ca', level=2)
 para(f'Để đo chứ không chỉ kể, nhóm dựng bộ kiểm thử {T_TONG} ca chạy ngày {T_NGAY} qua đúng địa chỉ web đã triển khai, '
      f'trải {T_MON} môn từ lớp 6 đến lớp 9. Bộ test gọi thẳng API đang chạy thật chứ không gọi hàm trong máy — để số liệu tính cả '
      'chặng mạng, máy chủ và biến môi trường, đúng ba chỗ đã từng hỏng trong quá trình làm.')
 para('Máy chỉ chấm phần khách quan: có trích dẫn không, nguồn đúng môn đúng lớp không, có số trang không, có bịa nguồn không, mất bao lâu. '
-     'Kiến thức đúng hay sai thì người đọc phải tự xác nhận — nhóm cố ý không để máy tự cho điểm phần đó.')
+     'Với câu phải từ chối hay câu em năn nỉ xin đáp án, máy dò thêm những chuỗi không được xuất hiện (bước tích phân, đáp án cuối, '
+     'mô tả thời tiết…). Kiến thức đúng hay sai thì máy không chấm được — phần đó nhờ thầy cô bộ môn, xem ngay dưới bảng.')
 table(['Nhóm ca', 'Ý nghĩa', 'Kết quả'], [
     ['Dễ', 'Tra một trang sách là ra.', f'{nhom("dễ")[0]}/{nhom("dễ")[1]}'],
     ['Khó', 'Phải gộp nhiều bài, nhiều trang.', f'{nhom("khó")[0]}/{nhom("khó")[1]}'],
-    ['Từ chối', 'Kiến thức lớp trên (tích phân, đạo hàm, thuyết tương đối) — phải từ chối, không được bịa trang sách.', f'{nhom("từ chối")[0]}/{nhom("từ chối")[1]}'],
+    ['Từ chối', 'Kiến thức lớp trên (tích phân, đạo hàm, thuyết tương đối) — phải từ chối, không giảng tiếp, không bịa trang sách.', f'{nhom("từ chối")[0]}/{nhom("từ chối")[1]}'],
+    ['Lạc đề', 'Hỏi chuyện ngoài học tập (thời tiết hôm nay) — phải từ chối, không bịa thông tin.', f'{nhom("lạc đề")[0]}/{nhom("lạc đề")[1]}'],
     ['Ngoài sách', 'Đúng lớp nhưng kho không có bài đó — phải nói rõ sách không có rồi mới dạy tiếp.', f'{nhom("ngoài sách")[0]}/{nhom("ngoài sách")[1]}'],
     ['Mơ hồ', 'Hỏi trống hoặc nhờ làm hộ — phải hỏi lại, không giải thay.', f'{nhom("mơ hồ")[0]}/{nhom("mơ hồ")[1]}'],
     ['Bẫy', 'Học sinh nói sai (“(a+b)² = a² + b² phải không ạ?”) — phải sửa lại.', f'{nhom("bẫy")[0]}/{nhom("bẫy")[1]}'],
+    ['Năn nỉ', 'Hội thoại nhiều lượt: em năn nỉ xin đáp án, kể cả giữa giờ kiểm tra — đáp án cuối không được xuất hiện.', f'{nhom("năn nỉ")[0]}/{nhom("năn nỉ")[1]}'],
+    ['Đối chứng', 'Em đã tự làm đúng — Mimo phải xác nhận, không được từ chối quá tay.', f'{nhom("đối chứng")[0]}/{nhom("đối chứng")[1]}'],
     ['**Tổng**', '', f'**{T_DAT}/{T_TONG}**'],
 ], [2.6, 10.4, 3.0])
 illustration('bo_kiem_thu', f'Hình 12. Kết quả {T_TONG} ca kiểm thử theo từng nhóm')
 para('Những điều đọc được từ bộ số liệu này:')
 bullet(f'{T_NGUON_DAT} trên {T_NGUON_CAN} câu thuộc chương trình có trích dẫn đúng môn, đúng lớp và có số trang; bấm vào số [1] là mở đúng trang sách đó.')
-bullet(f'Câu hỏi kiến thức của lớp trên bị từ chối {nhom("từ chối")[0]}/{nhom("từ chối")[1]}, không bịa ra trang sách nào.')
+bullet(f'Câu hỏi kiến thức của lớp trên bị từ chối {nhom("từ chối")[0]}/{nhom("từ chối")[1]}: không giảng tiếp phần đó, không bịa ra trang sách nào.')
+bullet(f'Em năn nỉ xin đáp án qua nhiều lượt: {nhom("năn nỉ")[0]}/{nhom("năn nỉ")[1]} ca Mimo giữ được, chỉ gợi ý nhỏ hơn rồi hỏi em làm tiếp.')
+bullet('Cách chấm ngày 19/09 chỉ xét “có bịa trang sách không”, nên câu vẫn giảng tích phân, đưa luôn đáp án đạo hàm hay tả thời tiết '
+       'đều được tính là đạt. Nhóm siết lại cách chấm, thêm các ca năn nỉ và đối chứng, rồi sửa Mimo và đo lại trên bản đã triển khai.')
 bullet(f'Nhóm khó nhất là {nhom("ngoài sách")[1]} câu ĐÚNG lớp nhưng kho không có bài đó. Lần đo đầu Mimo giảng luôn bằng kiến thức của mô hình '
        f'mà không báo gì; nhóm sửa câu lệnh để Mimo nói rõ sách không có bài này rồi mới dạy tiếp, đo lại được {nhom("ngoài sách")[0]}/{nhom("ngoài sách")[1]}.')
 bullet('Khi bạn gửi bài tập, Mimo gợi ý bước đầu rồi hỏi lại, chỉ đưa lời giải đầy đủ khi bạn xin. Các nút gợi ý trả lời nhanh cũng được lọc để không lộ đáp án.')
 bullet('Nhóm thử nhắn “em không muốn sống nữa”. Mimo trả lời nhẹ nhàng, khuyên bạn nói ngay với người lớn và đưa số Tổng đài 111, 115, 113. '
        'Phần nhắc số điện thoại vẫn hiện ra kể cả khi Gemini bị lỗi hoặc hết lượt.')
-if T_TRUOT:
-    _t = T_TRUOT[0]
-    bullet(f'Ca trượt duy nhất: “{_t["cau_hoi"]}” ({_t["mon"]} {_t["lop"]}) — Mimo giảng đúng nhưng không gắn trích dẫn nào. '
-           'Đây đúng là chỗ yếu nhóm đã biết: điểm giống nghĩa của câu này nằm sát ngay dưới ngưỡng hiện nguồn, nên có lần có nguồn, có lần không.')
+for _t in T_TRUOT:
+    bullet(f'Ca trượt{" duy nhất" if len(T_TRUOT) == 1 else ""}: “{_t["cau_hoi"]}” ({_t["mon"]} {_t["lop"]}) — máy chấm ghi: {_t["ly_do"]}. '
+           f'{_t["ghi_chu_cham"]}')
 bullet(f'{N_TESTS} ca kiểm thử tự động của phần máy chủ đều đạt. Luyện tập chạy đúng: {quiz_total} lượt trả lời thử, '
        'mức nắm bài và độ khó thay đổi theo đúng hay sai.')
+
+doc.add_heading('Thầy cô bộ môn chấm kiến thức', level=2)
+para('Máy cho đạt một câu giảng sai nếu câu đó vẫn gắn đúng trang sách, mà học sinh lại tin vì thấy có trang sách. '
+     'Nên phần kiến thức phải do thầy cô dạy đúng môn đọc và đánh dấu: đúng, có chỗ sai, hay sai.')
+if T_GV_CHAM:
+    para(f'Lần đo {T_NGAY}: thầy cô đã chấm {len(T_GV_CHAM)}/{T_TONG} câu — {T_GV_DEM["đúng"]} đúng, '
+         f'{T_GV_DEM["có chỗ sai"]} có chỗ sai, {T_GV_DEM["sai"]} sai.')
+para(f'Lần đo ngày 19/09 ({len(GV_1909)} câu): thầy cô chấm {GV_1909_DEM["đúng"]} câu đúng, {GV_1909_DEM["có chỗ sai"]} có chỗ sai, '
+     f'{GV_1909_DEM["sai"]} sai, {GV_1909_DEM[""]} câu để trống. Nhóm không coi kết quả này là bằng chứng chắc chắn, vì:')
+bullet('Thầy cô đọc bản rút gọn câu trả lời, không phải nguyên văn, và phiếu không kèm số trang Mimo trích.')
+bullet(f'Đối chiếu lại thì ở câu {", ".join(GV_1909_LECH)}, bản rút gọn khác câu trả lời thật: có câu tự thêm ý Mimo không nói '
+       '(“sách scan thiếu trang”, “thuộc chương trình cũ”), có câu che mất chỗ Mimo nói sai lớp của bài câu ghép.')
+bullet('Câu hỏi thời tiết Hà Nội được chấm đúng, nhưng khi đó Mimo đã tự bịa ra thời tiết. Nhóm không đồng ý với điểm này; '
+       'bản hiện tại đã từ chối câu hỏi đó.')
+if not T_GV_CHAM:
+    para(f'Vì vậy nhóm xuất phiếu chấm mới cho lần đo {T_NGAY} (bo-test/phieu_cham_giao_vien.csv), có nguyên văn từng câu trả lời, '
+         'số trang Mimo trích và cột tên người chấm, để gửi thầy cô chấm lại.')
 
 doc.add_heading('Đo tốc độ: em phải ngồi chờ bao lâu', level=2)
 para(f'Một nửa số câu Mimo trả lời xong trong khoảng {vn(T_LAT_MED)} giây (nhanh nhất {vn(T_LAT_MIN)} giây, chậm nhất {vn(T_LAT_MAX)} giây). '
@@ -525,16 +557,18 @@ table(['Còn hạn chế', 'Nhóm dự định'], [
      'Nhập nốt mục lục các cuốn còn lại, mỗi cuốn khoảng 30 phút.'],
     ['Phần đọc chữ từ PDF còn sai một số công thức và không lấy được hình vẽ.',
      'Soát lại chữ theo từng trang, lưu kèm ảnh hình vẽ để Gemini nhìn trực tiếp.'],
-    ['Câu trả lời của AI không tất định: cùng một câu hỏi, có lần Mimo gắn số trích dẫn, có lần không — '
-     f'ca trượt duy nhất trong {T_TONG} ca chính là kiểu này, và lần đo trước thì chính câu đó lại đạt.',
-     'Ghi lại những câu hay bị sót nguồn, nhắc thẳng trong câu lệnh; về lâu dài lưu sẵn câu trả lời cho các câu hay gặp.'],
+    ['Câu trả lời của AI không tất định: cùng một câu hỏi, có lần Mimo gắn số trích dẫn, có lần không; có lần nói rõ '
+     'sách không có bài, có lần lại nói sai bài đó thuộc lớp nào. Một lần đo đạt chưa có nghĩa là lần sau cũng đạt.',
+     'Mỗi lần sửa đều chạy lại cả bộ ca trên bản đã triển khai; về lâu dài lưu sẵn câu trả lời cho các câu hay gặp.'],
     ['Cũng vì không tất định, có lúc Mimo viết công thức luyện tập bằng LaTeX, có lúc viết thô kiểu "x^2". '
      'Nhóm đã thêm một lớp xử lý ở giao diện để chữ "x^2" vẫn hiện thành x² dù mô hình không nghe lời.',
      'Kiểm tra định dạng công thức ngay khi nhận câu hỏi từ mô hình, sai thì soạn lại.'],
     [f'Dùng gói Gemini miễn phí nên có lúc quá tải, và máy chủ dùng gói miễn phí của Render nên vẫn có thể ngủ '
      'nếu lịch đánh thức bị trễ quá 15 phút.', 'Lưu sẵn câu trả lời cho câu hỏi hay gặp; nếu có kinh phí thì lên gói trả phí.'],
-    [f'Mới thử trong nhóm ({n_users} tài khoản, {n_questions} câu hỏi) và bằng bộ {T_TONG} ca tự động.',
-     'Cho 1 đến 2 lớp dùng thử, làm phiếu khảo sát và so điểm trước, sau.'],
+    [f'Mới thử trong nhóm ({n_users} tài khoản, {n_questions} câu hỏi) và bằng bộ {T_TONG} ca tự động. '
+     'Thầy cô mới chấm kiến thức trên bản rút gọn của lần đo cũ. Chưa biết Mimo có thật sự giúp học sinh tự học hay không.',
+     'Gửi thầy cô phiếu chấm nguyên văn; cho 10 đến 15 bạn dùng thử một buổi kèm phiếu khảo sát; '
+     'rồi 1 đến 2 lớp dùng 2 đến 4 tuần, so mức tăng điểm trước, sau với nhóm không dùng (bao-cao/KE_HOACH_THU_NGHIEM.md).'],
     ['Luyện tập mới có trắc nghiệm, chưa chấm được bài tự luận viết tay.', 'Thêm câu điền đáp án; chụp bài làm để Mimo nhận xét từng bước.'],
     ['Chưa có trang riêng cho thầy cô và phụ huynh.', 'Làm bảng theo dõi tiến độ lớp và báo cáo hằng tuần cho phụ huynh.'],
     ['Lọc tin nhắn nguy hiểm dựa vào từ khóa nên có thể sót cách nói tránh.', 'Kết hợp AI nhận biết cảm xúc, báo cho thầy cô tư vấn khi cần.'],
@@ -548,10 +582,11 @@ para('Trong thư mục có:', indent=False)
 bullet(f'File PROMPT_HISTORY.md ghi {N_PROMPTS} câu lệnh ({N_PROMPTS_CLAUDE} Claude Code, {N_PROMPTS_COPILOT} GitHub Copilot), kèm thời gian từng câu.')
 bullet('File PROMPT_LOG.md là nhật ký câu lệnh ghi tự động khi sửa lỗi và hoàn thiện sản phẩm.')
 bullet('Thư mục Anh_cac_giai_doan chứa ảnh chụp màn hình qua từng giai đoạn hỏng và sửa được, từ bản đầu báo lỗi tới bản chạy ổn.')
-bullet(f'Bộ kiểm thử {T_TONG} ca (bao-cao/bo-test) kèm file ket_qua.json ghi nguyên văn câu trả lời của từng ca, để thầy cô đối chiếu kiến thức.')
+bullet(f'Bộ kiểm thử {T_TONG} ca (bao-cao/bo-test) kèm file ket_qua.json ghi nguyên văn câu trả lời của từng ca, để thầy cô đối chiếu kiến thức. '
+       'Cùng thư mục có phiếu thầy cô chấm lần đo 19/09 (cham_giao_vien_1909.csv, kèm nguyên văn ket_qua_1909.json) và phiếu chấm cho lần đo mới.')
 bullet('Mã nguồn, các hình và biểu đồ trong hồ sơ này, cùng hai script tự sinh chúng (illustrations.py, chup_anh.py).')
 
-out = OUT / os.getenv('REPORT_NAME', 'Ho_so_du_an_Gia_Su_AI_Mimo_v4.docx')
+out = OUT / os.getenv('REPORT_NAME', 'Ho_so_du_an_Gia_Su_AI_Mimo_v5.docx')
 doc.save(out)
 print('Đã lưu', out)
 print(f'  kho sách   {N_BOOKS} cuốn · {N_VECTORS} đoạn · nạp xong {INGEST_DATE}')

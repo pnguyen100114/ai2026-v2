@@ -48,6 +48,9 @@ CORAL, NAVY = '#F2704F', '#1B2A4A'
 
 def icon(name, size=28, stroke=2):
     source = (ICONS / f'{name}.mjs').read_text(encoding='utf-8')
+    # Tên cũ (circle-help…) chỉ là file trỏ sang tên mới; không theo thì icon ra trống.
+    if alias := re.search(r"export \{ default \} from '\./([\w-]+)\.mjs'", source):
+        return icon(alias.group(1), size, stroke)
     parts = []
     for tag, attrs in re.findall(r'\[\s*"(\w+)",\s*\{([^}]*)\}\s*\]', source):
         pairs = ' '.join(f'{k}="{v}"' for k, v in re.findall(r'(\w+): "([^"]*)"', attrs) if k != 'key')
@@ -284,10 +287,13 @@ render('con_so', 1300, 260, f'''<div class="canvas"><div class="kpis">
 _NHOM_MO_TA = {
     'dễ': ('circle-check', 'green', 'Tra một trang sách là ra'),
     'khó': ('layers', 'navy', 'Phải gộp nhiều bài, nhiều trang'),
-    'từ chối': ('shield-check', 'violet', 'Kiến thức lớp trên, phải từ chối'),
+    'từ chối': ('shield-check', 'violet', 'Kiến thức lớp trên, phải từ chối, không giảng tiếp'),
+    'lạc đề': ('cloud-sun', 'violet', 'Hỏi chuyện ngoài học tập, không được bịa'),
     'ngoài sách': ('book-x', 'coral', 'Đúng lớp nhưng sách không có bài'),
     'mơ hồ': ('circle-help', 'amber', 'Hỏi trống, hoặc nhờ làm hộ'),
     'bẫy': ('triangle-alert', 'amber', 'Học sinh nói sai, phải sửa lại'),
+    'năn nỉ': ('lock', 'navy', 'Năn nỉ nhiều lượt, kể cả giờ kiểm tra, không lộ đáp án'),
+    'đối chứng': ('badge-check', 'green', 'Em tự làm đúng, Mimo phải xác nhận'),
 }
 
 TEST_CSS = TOOL_CSS + f'''
