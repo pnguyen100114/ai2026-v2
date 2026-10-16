@@ -1207,6 +1207,7 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
   const [commentDraft, setCommentDraft] = useState('')
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const chatWindowRef = useRef<HTMLDivElement | null>(null)
+  const draftRef = useRef<HTMLTextAreaElement | null>(null)
   const recorderRef = useRef<Recorder | null>(null)
   const recordTimerRef = useRef<number | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -1229,6 +1230,14 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
     const chatWindow = chatWindowRef.current
     if (chatWindow) chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' })
   }, [chat, loading])
+
+  // The message box starts one line tall and grows with the draft, up to the CSS max-height.
+  useEffect(() => {
+    const box = draftRef.current
+    if (!box) return
+    box.style.height = 'auto'
+    box.style.height = `${box.scrollHeight}px`
+  }, [draft])
 
   const submitDraft = () => {
     if (loading || (!draft.trim() && !imageAttachment)) return
@@ -1384,24 +1393,23 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
 
       <div className="tutor-workspace">
         <aside className="tutor-context">
+          <div className="tutor-lesson">
+            <span className="context-label"><BookOpen size={11} /> ĐANG HỌC</span>
+            <strong>{lessonName || 'Chưa chọn bài'}</strong>
+            <p>{chatScope}</p>
+          </div>
           <button className="new-chat-btn" type="button" onClick={onNewChat}><Plus size={16} /> Cuộc trò chuyện mới</button>
           <div className="tutor-history">
             <span className="context-label">GẦN ĐÂY</span>
             <div className="chat-history-list">{recentSessions.map(renderSessionItem)}</div>
             {totalSessions > recentSessions.length && <button type="button" className="all-chats-btn" onClick={onShowAllChats}><History size={14} /> Xem tất cả <b>{totalSessions}</b></button>}
           </div>
-          <div className="context-divider" />
-          <div className="tutor-lesson">
-            <span className="context-label"><BookOpen size={11} /> ĐANG HỌC</span>
-            <strong>{lessonName || 'Chưa chọn bài'}</strong>
-            <p>{chatScope}</p>
-          </div>
         </aside>
 
         <section className="chat-shell" aria-label="Hội thoại với Gia sư AI">
           <div className="chat-header">
             <div className="chat-avatar"><Sparkles size={18} /></div>
-            <div><strong>Mimo, Gia sư AI</strong><span><i /> Đang sẵn sàng hỗ trợ</span></div>
+            <div><strong>Mimo, Gia sư AI</strong><span><i /> {chatScope}</span></div>
             <span className="grounded-label">{curriculumOnly ? 'Theo chương trình GDPT 2018' : 'Theo sách giáo khoa'}</span>
             <button type="button" className="chat-header-btn" onClick={onShowAllChats} title="Các cuộc trò chuyện" aria-label="Các cuộc trò chuyện"><History size={16} /></button>
             <button type="button" className="chat-header-btn" onClick={onNewChat} title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới"><Plus size={16} /></button>
@@ -1445,12 +1453,14 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
         <form className="chat-form" onSubmit={handleSubmit} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); handleFile(event.dataTransfer.files[0]) }}>
           {inputNotice && <div className="attachment-chip input-notice" role="alert"><span>{inputNotice}</span><button type="button" onClick={() => setInputNotice('')} aria-label="Đóng thông báo"><X size={13} /></button></div>}
           {imageAttachment && <div className="attachment-chip"><img src={imageAttachment.data} alt="" className="attachment-preview" /><span>{imageAttachment.name}</span><button type="button" onClick={() => setImageAttachment(null)} aria-label="Bỏ ảnh"><X size={13} /></button></div>}
+          <div className="composer-box">
           <textarea
+            ref={draftRef}
             value={draft}
             maxLength={MESSAGE_MAX_LENGTH}
             onChange={(event) => setDraft(event.target.value)}
             onPaste={(event) => { const image = Array.from(event.clipboardData.files).find((file) => file.type.startsWith('image/')); if (image) { event.preventDefault(); handleFile(image) } }}
-            rows={3}
+            rows={1}
             placeholder="Nhắn cho Mimo... (ví dụ: Em chưa hiểu bước 2 của bài này)"
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
@@ -1464,6 +1474,7 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
             : <button className="send-btn" type="submit" disabled={!draft.trim() && !imageAttachment} aria-label="Gửi câu hỏi">
             <Send size={16} /> <span>Gửi câu hỏi</span>
           </button>}
+          </div>
           </div>
           <p className="chat-accuracy-note"><BookOpen size={13} aria-hidden="true" /> {ACCURACY_NOTICE}</p>
         </form>
