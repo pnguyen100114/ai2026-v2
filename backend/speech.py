@@ -50,7 +50,7 @@ _LATEX_WORDS = [
 
 
 def _speak_math(expression: str) -> str:
-    text = expression
+    text = expression.replace('²', '^2').replace('³', '^3')
     # Innermost first so nested fractions and roots read in order.
     for _ in range(4):
         text = re.sub(r'\\[dt]?frac\{([^{}]*)\}\{([^{}]*)\}', r' \1 phần \2 ', text)
@@ -73,12 +73,67 @@ def _speak_math(expression: str) -> str:
     return re.sub(r'[{}()\[\]|]', ' ', text)
 
 
+# Gemini có lúc quên dấu $ ("\frac{5}{x^2}y", "x^2 - 4"). Giao diện bọc lại các cụm đó để vẽ
+# (normalizeMath trong ChatMessageContent.tsx); giọng đọc cũng phải đọc chúng như công thức.
+_BARE_COMMAND = re.compile(
+    r'\\(?:[dt]?frac|sqrt|cdot|times|div|pm|neq?|leq?|geq?|approx|infty|pi|alpha|beta|Delta|triangle|angle'
+    r'|parallel|perp|circ|in|notin|subset|subseteq|Rightarrow|Leftrightarrow|implies|iff|text|mathrm|mathbb|left|right|%)(?![a-zA-Z])'
+)
+# Dấu phép toán, một chữ cái, hay cụm ASCII có số/mũ ("2x", "x^2"); "khi", "của" là chữ thường.
+_MATH_WORD = re.compile(r"[-+=<>*/:×·≤≥≠]|[A-Za-z]|[-−]?[A-Za-z0-9^_{}()|',.²³]*[\d^_{}²³][A-Za-z0-9^_{}()|',.²³]*")
+_IS_FORMULA = re.compile(r'\\[a-zA-Z%]|[\^²³]')
+
+
+def _split_words(text: str) -> list[str]:
+    """Tách theo khoảng trắng ngoài ngoặc nhọn; từ ở vị trí chẵn, khoảng trắng ở vị trí lẻ."""
+    parts, current, depth, in_space = [], '', 0, False
+    for char in text:
+        if char == '{':
+            depth += 1
+        elif char == '}':
+            depth = max(0, depth - 1)
+        is_space = depth == 0 and char.isspace()
+        if is_space != in_space:
+            parts.append(current)
+            current, in_space = '', is_space
+        current += char
+    parts.append(current)
+    return parts
+
+
+def _speak_bare_math(text: str) -> str:
+    if not _BARE_COMMAND.search(text) and not re.search(r'[\^²³]', text):
+        return text
+    parts = _split_words(text)
+
+    def is_math(index: int) -> bool:
+        return bool(_BARE_COMMAND.search(parts[index]) or _MATH_WORD.fullmatch(parts[index]))
+
+    result, index = [], 0
+    while index < len(parts):
+        if index % 2 or not is_math(index):
+            result.append(parts[index])
+            index += 1
+            continue
+        last = index
+        while last + 2 < len(parts) and '\n' not in parts[last + 1] and is_math(last + 2):
+            last += 2
+        run = ''.join(parts[index:last + 1])
+        if _IS_FORMULA.search(run):
+            body = run.rstrip('.,;:!?')
+            run = _speak_math(body) + run[len(body):]
+        result.append(run)
+        index = last + 1
+    return ''.join(result)
+
+
 def speakable_text(markdown: str) -> str:
     """Turn a Markdown + LaTeX answer into plain Vietnamese a voice can read ("x^2" -> "x bình phương")."""
     text = markdown or ''
     text = re.sub(r'\[\d+(?:\s*[,;]\s*\d+)*\]', '', text)  # citation markers
     text = re.sub(r'\$\$(.+?)\$\$|\$(.+?)\$', lambda match: _speak_math(match.group(1) or match.group(2)), text, flags=re.DOTALL)
     text = re.sub(r'\\\((.+?)\\\)|\\\[(.+?)\\\]', lambda match: _speak_math(match.group(1) or match.group(2)), text, flags=re.DOTALL)
+    text = _speak_bare_math(text)
     text = re.sub(r'`+', '', text)
     text = re.sub(r'!?\[([^\]]*)\]\([^)]*\)', r'\1', text)  # links, images
     text = re.sub(r'^\s{0,3}(?:#{1,6}|>|[-*+]|\d+[.)])\s+', '', text, flags=re.MULTILINE)

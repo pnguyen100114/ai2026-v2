@@ -170,6 +170,10 @@ def test_source_page_opens_the_file_of_an_aliased_book(client, app_mod, tmp_path
     ('$$\\frac{1}{2} \\cdot \\sqrt{9}$$', '1 phần 2 nhân căn bậc hai của 9'),
     ('**Chú ý:** $a^{n} \\ne -3$ 😊', 'Chú ý: a mũ n khác âm 3'),
     ('- Bước 1\n- Bước 2\n\nXong!', 'Bước 1 Bước 2. Xong!'),
+    # Gemini quên dấu $: vẫn đọc như công thức, chữ thường và dấu câu quanh đó giữ nguyên.
+    ('\\frac{5}{x^2}y', '5 phần x bình phương y'),
+    ('Rút gọn \\frac{x + 1}{2} khi x = 1.', 'Rút gọn x cộng 1 phần 2 khi x = 1.'),
+    ('Biểu thức -7x^3y^2 và x² - 4.', 'Biểu thức âm 7x lập phương y bình phương và x bình phương trừ 4.'),
 ])
 def test_speakable_text_reads_math_in_vietnamese(markdown, spoken):
     assert speakable_text(markdown) == spoken
