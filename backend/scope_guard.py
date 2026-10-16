@@ -98,6 +98,21 @@ def is_follow_up(message: str) -> bool:
     return bool(_FOLLOW_UP.search(_plain(message)))
 
 
+# Em nói đang ngồi trong giờ kiểm tra. Prompt cấm đưa cả công thức lẫn gợi ý, nhưng đo trên bản
+# deploy 16/10 model vẫn "nhắc lại hằng đẳng thức để em áp dụng" - tức là gợi ý. Bắt bằng code.
+# Chỉ thì hiện tại: "mai kiểm tra" là ôn bài, còn "đang kiểm tra lại kết quả" là tự soát bài.
+_TAKING_TEST = re.compile(
+    r'\bdang (?:lam )?(?:bai )?(?:kiem tra|thi)\b(?! lai)'
+    r'|\btrong (?:gio|phong) (?:kiem tra|thi)\b'
+    r'|\bsap thu bai\b'
+    r'|\b(?:sap|gan) het gio (?:lam bai )?(?:kiem tra|thi)\b'
+)
+
+
+def is_taking_test(message: str) -> bool:
+    return bool(_TAKING_TEST.search(_plain(message)))
+
+
 def classify_scope(
     message: str,
     *,

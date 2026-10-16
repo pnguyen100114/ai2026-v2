@@ -426,3 +426,17 @@ def test_chat_answer_is_capped_so_one_reply_cannot_run_away(client, app_mod, mon
     stream(client, message='Khai triển (x+2)^2')
 
     assert fake.calls[0]['config'].max_output_tokens == 800
+
+
+def test_student_taking_a_test_gets_no_hint_and_the_model_is_not_asked(client, app_mod, monkeypatch):
+    # Đo trên bản deploy 16/10: model vẫn "nhắc lại hằng đẳng thức để em áp dụng" giữa giờ kiểm tra.
+    fake = FakeGemini(chunks=['Em nhớ $(a+b)^2 = a^2 + 2ab + b^2$ nhé?'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+
+    events = stream(client, message='Em đang làm bài kiểm tra 15 phút, câu 2: rút gọn (x + 2)² - x². Giúp em nhanh với!')
+
+    done = events[-1]
+    assert done['type'] == 'done' and done['sources'] == []
+    assert done['content'].startswith('Mimo biết em đang làm bài kiểm tra')
+    assert 'a^2' not in done['content'] and done['content'].endswith('?')
+    assert fake.calls == []

@@ -37,7 +37,7 @@ try:
     from backend.safety import SAFETY_OPENING, SAFETY_PROMPT, SAFETY_QUICK_REPLIES, detect_risk, leaks_answer, safety_addendum
     from backend.scope_guard import (
         MIMO_TUTOR_SYSTEM_INSTRUCTION, SCOPE_CLASSIFIER_INSTRUCTION, SUPPORTED_SUBJECTS, ScopeDecision,
-        build_classifier_input, classify_scope, is_follow_up, parse_scope_response,
+        build_classifier_input, classify_scope, is_follow_up, is_taking_test, parse_scope_response,
     )
 except ImportError:  # pragma: no cover
     from accounts import router as accounts_router
@@ -55,7 +55,7 @@ except ImportError:  # pragma: no cover
     from safety import SAFETY_OPENING, SAFETY_PROMPT, SAFETY_QUICK_REPLIES, detect_risk, leaks_answer, safety_addendum
     from scope_guard import (
         MIMO_TUTOR_SYSTEM_INSTRUCTION, SCOPE_CLASSIFIER_INSTRUCTION, SUPPORTED_SUBJECTS, ScopeDecision,
-        build_classifier_input, classify_scope, is_follow_up, parse_scope_response,
+        build_classifier_input, classify_scope, is_follow_up, is_taking_test, parse_scope_response,
     )
 
 try:
@@ -792,8 +792,18 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         not risk and scope.label == 'in_scope',
     )
     risk = scope.safety_risk or risk
-    if not risk and scope.label != 'in_scope':
-        if scope.label == 'out_of_scope':
+    taking_test = not risk and is_taking_test(message)
+    if not risk and (taking_test or scope.label != 'in_scope'):
+        quick_replies = ['Em muốn ôn Toán', 'Em gửi rõ câu hỏi hơn']
+        if taking_test:
+            scope_reply = (
+                'Mimo biết em đang làm bài kiểm tra nên chắc hồi hộp lắm. Lúc này Mimo không gợi ý, '
+                'không nhắc công thức và không đưa đáp án cho bài đang kiểm tra, vì đây là bài để em '
+                'tự thể hiện. Em cứ bình tĩnh làm bằng những gì em đã học nhé. Làm xong em quay lại '
+                'đây, mình cùng xem lại bài này được không?'
+            )
+            quick_replies = ['Em làm xong rồi', 'Mình ôn bài khác nhé']
+        elif scope.label == 'out_of_scope':
             scope_reply = (
                 'Kiến thức này nằm ngoài phạm vi chương trình mà Mimo hiện hỗ trợ, nên Mimo chưa thể '
                 'giải trực tiếp bài này. Nếu em muốn, Mimo có thể giúp em ôn lại những kiến thức '
@@ -811,7 +821,7 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
             )
         done_payload = {
             'type': 'done', 'content': scope_reply, 'sources': [],
-            'quick_replies': ['Em muốn ôn Toán', 'Em gửi rõ câu hỏi hơn'],
+            'quick_replies': quick_replies,
             'understanding': None,
         }
 
@@ -829,6 +839,12 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     # Ba việc chờ mạng dưới đây không cần kết quả của nhau, nên cùng khởi hành một lúc
     # (xem _io_pool). Kết quả được lấy ra đúng chỗ cần dùng ở bên dưới.
     matches_task = _io_pool.submit(search_knowledge, message, subject=subject, grade=grade, top_k=5)
+    # Cùng môn, mọi lớp: để biết bài em hỏi nằm ở sách lớp nào khi sách lớp em không có. Trước
+    # đây prompt bảo mô hình "đoán" lớp, và nó đoán sai (câu ghép "lớp 7 và 8", bất phương
+    # trình "lớp 8" - cả hai đều là bài lớp 9). Chạy song song nên không thêm thời gian chờ.
+    other_grades_task = _io_pool.submit(
+        search_knowledge, message, subject=subject, grade=None, top_k=6,
+    ) if _la_cau_hoi_hoc_tap(message) and not risk else None
     # _lesson_pages và lesson_history tự nuốt lỗi của mình và trả về danh sách rỗng.
     lesson_pages_task = _io_pool.submit(_lesson_pages, subject, int(grade), topic) if topic else None
     earlier_turns_task = _io_pool.submit(
@@ -885,17 +901,43 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     #
     # Không áp cho BÀI TẬP: một bài luyện tập hiếm khi có nguyên văn trong sách, nhưng vẫn giải
     # được bằng khái niệm trong sách, nên vẫn giúp bình thường.
+    # Đoạn sách lớp khác chỉ đưa vào khi nó khớp câu hỏi HƠN sách lớp em. Điểm tuyệt đối không
+    # tách được "có" với "không có" (xem trên), nhưng bài nằm hẳn ở lớp khác thì đoạn của lớp đó
+    # khớp hơn hẳn; ngược lại bài có trong sách lớp em thì sách lớp em thắng.
+    try:
+        other_grades = other_grades_task.result() if other_grades_task is not None else []
+    except Exception:
+        logger.warning('Tìm sách các lớp khác thất bại, bỏ qua', exc_info=True)
+        other_grades = []
+    own_best = max((float(item.get('score', 0.0)) for item in matches), default=0.0)
+    other_grade_matches = [
+        item for item in other_grades
+        if item.get('grade') and int(item['grade']) != int(grade) and item.get('text')
+        and float(item.get('score', 0.0)) > own_best
+    ][:2]
+    other_grade_text = '\n'.join(
+        f"(SÁCH {subject.upper()} LỚP {item['grade']}"
+        f"{', ' + item['lesson_title'] if item.get('lesson_title') else ''}, không trích dẫn) "
+        f"{item['text'][:600]}"
+        for item in other_grade_matches
+    )
     thieu_sach = (
         '\n\nKHI CÁC ĐOẠN SGK Ở TRÊN KHÔNG NÓI VỀ ĐIỀU EM HỎI\n'
         '- Nếu em hỏi một KHÁI NIỆM hoặc BÀI HỌC thuộc chương trình THCS (lớp 6–9) mà không đoạn '
         'nào ở trên thật sự dạy nó: vẫn giải thích đầy đủ cho em, nhưng MỞ ĐẦU bằng đúng một câu '
         'ngắn cho em biết phần này '
-        f'không có trong sách {subject} lớp {grade} mà Mimo đang có, và nếu đoán được thì nói bài '
-        'đó thuộc lớp nào. Sau câu đó thì dạy bình thường. Không gắn [n] cho câu trả lời này.\n'
+        f'không có trong sách {subject} lớp {grade} mà Mimo đang có. Sau câu đó thì dạy bình '
+        'thường. Không gắn [n] cho câu trả lời này.\n'
         '- Nếu em nhờ giải một BÀI TẬP: hướng dẫn bình thường bằng khái niệm nền tảng của lớp em, '
-        'không cần câu mở đầu đó - bài tập vốn không có nguyên văn trong sách.\n'
+        'không cần câu mở đầu đó - bài tập vốn không có nguyên văn trong sách. Riêng khi một đoạn '
+        'SÁCH LỚP KHÁC bên dưới dạy đúng dạng bài này thì nói thêm một câu ngắn rằng dạng bài này '
+        f'nằm ở sách lớp đó, sách {subject} lớp {grade} của em không có.\n'
+        '- TUYỆT ĐỐI không tự đoán bài thuộc lớp nào. Chỉ nêu lớp khi một đoạn SÁCH LỚP KHÁC bên '
+        'dưới thật sự dạy điều em hỏi, và nêu đúng lớp ghi ở đoạn đó. Không có đoạn như vậy thì '
+        'không nhắc tới lớp nào khác.\n'
         '- Nếu phần em hỏi thuộc THPT hoặc đại học: KHÔNG giải thích, KHÔNG gợi ý, làm đúng quy tắc '
         'NGOÀI CẤP HỌC trong chỉ dẫn hệ thống.'
+        + (f'\n\nSÁCH LỚP KHÁC (chỉ để biết bài nằm ở lớp nào):\n{other_grade_text}' if other_grade_text else '')
     ) if _la_cau_hoi_hoc_tap(message) and not risk else ''
 
     # The photo itself is only sent in the turn it was attached; later turns see the problem Gemini copied out of it.

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from backend.scope_guard import classify_scope, is_follow_up, parse_scope_response, parse_scope_result
+from backend.scope_guard import classify_scope, is_follow_up, is_taking_test, parse_scope_response, parse_scope_result
 
 
 @pytest.mark.parametrize('message', [
@@ -139,3 +139,23 @@ def test_above_grade_topic_is_refused_even_when_asked_as_a_concept(message, subj
 ])
 def test_ordinary_words_near_advanced_topics_are_not_refused(message, subject, grade):
     assert classify_scope(message, subject=subject, grade=grade).label != 'out_of_scope'
+
+
+@pytest.mark.parametrize('message', [
+    'Em đang làm bài kiểm tra 15 phút, câu 2: rút gọn (x + 2)² - x². Giúp em nhanh với!',
+    'Em đang thi học kì, câu này làm sao ạ?',
+    'Cô sắp thu bài rồi, chỉ em công thức thôi cũng được.',
+    'Sắp hết giờ kiểm tra rồi Mimo ơi',
+])
+def test_student_in_the_middle_of_a_test_is_recognised(message):
+    assert is_taking_test(message)
+
+
+@pytest.mark.parametrize('message', [
+    'Mai em kiểm tra rồi, Mimo ôn giúp em hằng đẳng thức nhé.',
+    'Em đang kiểm tra lại kết quả, x = 5 đúng không?',
+    'Nhanh lên sắp hết giờ làm bài rồi Mimo ơi.',
+    'Em vừa làm bài kiểm tra xong, câu 2 em làm thế này đúng không?',
+])
+def test_preparing_for_or_finished_with_a_test_is_not_taking_one(message):
+    assert not is_taking_test(message)
