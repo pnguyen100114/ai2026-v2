@@ -24,10 +24,22 @@ def test_canonical_subject(name, subject):
 def test_every_course_is_numbered_continuously_and_pages_increase():
     for course in books.COURSES:
         lessons = course.lessons()
-        assert [item.lesson for item in lessons] == list(range(1, len(lessons) + 1)), course.subject
+        # Numbering may restart where a new part begins (LSDL: Lịch sử, Địa lí, Chủ đề chung),
+        # at Bài 1 or at 0 for an unnumbered "Bài mở đầu".
+        numbers = [item.lesson for item in lessons]
+        assert numbers[0] in (0, 1) and all(b in (a + 1, 0, 1) for a, b in zip(numbers, numbers[1:])), (course.subject, course.grade)
+        assert len({(item.chapter, item.lesson) for item in lessons}) == len(lessons), (course.subject, course.grade)
         for volume in {item.volume for item in lessons}:
             pages = [item.page for item in lessons if item.volume == volume and item.page is not None]
-            assert pages == sorted(pages) and len(pages) == len(set(pages)), (course.subject, course.grade, volume)
+            # Two Ngữ văn sections can start on one page (Củng cố, then the reading text below it).
+            assert pages == sorted(pages), (course.subject, course.grade, volume)
+
+
+def test_lesson_titles_are_unique_within_a_course():
+    # The chat finds the open lesson by its title alone; a repeated title would pick the wrong pages.
+    for course in books.COURSES:
+        titles = [books._fold(item.title) for item in course.lessons()]
+        assert len(titles) == len(set(titles)), (course.subject, course.grade)
 
 
 @pytest.mark.parametrize('source', ['KHTN.pdf', 'KHTN 6.pdf', 'khtn 6.PDF', 'backend/data/KHTN.pdf'])
@@ -99,15 +111,17 @@ def test_catalog_roadmap_lists_all_lessons_with_pages_only_where_the_pdf_has_the
     lessons = [lesson for chapter in roadmap['chapters'] for lesson in chapter['lessons']]
     assert roadmap['source'] == 'rag' and roadmap['subject'] == 'Toán' and roadmap['grade'] == 6
     assert len(roadmap['chapters']) == 9 and len(lessons) == 43
-    assert lessons[0] == {'id': 'lesson_1_1', 'lesson': 1, 'title': 'Tập hợp', 'volume': 1, 'status': 'locked', 'progress': 0,
+    assert lessons[0] == {'id': 'lesson_1_1', 'lesson': 1, 'title': 'Tập hợp', 'label': 'Bài 1: Tập hợp', 'volume': 1,
+                          'status': 'locked', 'progress': 0,
                           'sources': [{'source': 'Toán 6 – Tập một', 'page': 5}]}
     assert lessons[13]['sources'] == [{'source': 'Toán 6 – Tập một', 'page': 62}]  # last lesson in the partial scan
-    assert lessons[14]['sources'] == [] and lessons[30]['sources'] == []  # after the scan ends / volume 2
+    assert lessons[14]['sources'] == []  # after the end of the Tập một scan
+    assert lessons[30]['sources'] == [{'source': 'Toán 6 – Tập hai', 'page': 38}]
 
 
 def test_catalog_roadmap_accepts_subject_alias():
     assert books.build_catalog_roadmap('Khoa học tự nhiên', 6)['chapters'][7]['lessons'][0]['title'] == 'Lực là gì?'
-    assert books.build_catalog_roadmap('Ngữ văn', 6) is None
+    assert books.build_catalog_roadmap('Tin học', 6) is None
 
 
 @pytest.mark.parametrize('topic', ['Lực là gì?', 'Bài 40: Lực là gì?', 'luc la gi?'])
@@ -119,10 +133,33 @@ def test_lesson_page_filter_limits_search_to_the_lesson_pages(topic):
     }
 
 
+@pytest.mark.parametrize('subject, grade, topic, source, pdf_pages', [
+    # Survey 16/10: Toán 7 Bài 1 was cited with page 36 of Bài 7, Tiếng Anh 7 "A Closer Look 1" with Unit 3.
+    ('Toán', 7, 'Bài 1: Tập hợp các số hữu tỉ', 'TOAN7 - TAP 1.pdf', (6, 10)),
+    ('Tiếng Anh', 7, 'Unit 1 – A Closer Look 1', 'TA7.pdf', (11, 11)),
+    # Ngữ văn sections carry the book's own Bài (this text is in Bài 1), not their running number.
+    ('Ngữ văn', 6, 'Bài 1: Bài học đường đời đầu tiên', 'NV - TAP 1.pdf', (13, 20)),
+    ('Toán', 9, 'Bài 1: Khái niệm phương trình và hệ hai phương trình bậc nhất hai ẩn', 'TOAN9-Tap1.pdf', (6, 11)),
+    ('LSDL', 9, 'Bài 1: Dân tộc và dân số', 'LSDL 9.pdf', (118, 120)),  # Địa lí restarts at Bài 1
+])
+def test_lesson_page_filter_for_grade_7_and_9_courses(subject, grade, topic, source, pdf_pages):
+    start, end = pdf_pages
+    found = books.lesson_page_filter(subject, grade, topic)
+    assert source in found['source']['$in'] and found['page'] == {'$gte': start, '$lte': end}
+
+
+def test_cited_page_carries_the_lesson_it_belongs_to():
+    assert books.enrich_match({'source': 'TOAN7 - TAP 1.pdf', 'pdf_page': 37})['lesson_title'] == 'Bài 7. Tập hợp các số thực'
+    assert books.enrich_match({'source': 'TA7.pdf', 'pdf_page': 31})['lesson_title'] == 'Unit 3 – A Closer Look 1'
+    assert books.enrich_match({'source': 'NV - TAP 1.pdf', 'pdf_page': 13})['lesson_title'] == 'Bài 1. Bài học đường đời đầu tiên'
+
+
 @pytest.mark.parametrize('subject, grade, topic', [
     ('KHTN', 6, 'Bài 41: Lực là gì?'),       # number does not match
+    ('Tiếng Anh', 7, 'Bài 2: A Closer Look 1'),  # old AI-roadmap title: no unit, so no pages
+    ('Toán', 9, 'Bài 11: Tỉ số lượng giác của góc nhọn'),  # past the end of the scan
     ('Toán', 6, 'Phân số'),                   # not a lesson title
-    ('Toán', 6, 'Số thập phân'),              # volume 2: no PDF
+    ('Toán', 8, 'Bài 33: Hai tam giác đồng dạng'),  # past the end of the Tập hai scan
     ('Ngữ văn', 6, 'Bài 1: Bầu trời tuổi thơ'),
 ])
 def test_lesson_page_filter_none_without_book_pages(subject, grade, topic):

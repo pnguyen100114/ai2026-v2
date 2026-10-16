@@ -193,8 +193,8 @@ def _curriculum_from_catalog(subject: Any, grade: Any) -> List[Dict[str, Any]]:
             'book_type': 'sgk',
             'content_type': 'theory',
             'title': lesson.title,
-            'lesson_title': f'Bài {lesson.lesson}. {lesson.title}',
-            'text': f'Bài {lesson.lesson}. {lesson.title} — {lesson.chapter_title}',
+            'lesson_title': course.label(lesson, '. '),
+            'text': f"{course.label(lesson, '. ')} — {lesson.chapter_title}",
         })
     return rows
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any, Literal
 
 try:
@@ -73,20 +74,34 @@ _KNOWN_CURRICULUM_ALIASES = (
 )
 
 
+# A lesson title only counts as a curriculum match when it is specific enough: the catalog also has
+# one-word titles ("Góc", "Muối") and a Ngữ văn text called "Tiếng Việt", which would turn "dịch bài
+# hát này sang tiếng Việt" into a lesson question.
+MIN_MATCH_TITLE_LENGTH = 11
+
+
 def _course_titles(subject: str) -> list[str]:
     canonical = canonical_subject(subject)
     return [
-        _plain(lesson.title)
+        title
         for course in COURSES
         if course.subject == canonical
         for lesson in course.lessons()
+        if len(title := _plain(lesson.title)) >= MIN_MATCH_TITLE_LENGTH
     ]
+
+
+@lru_cache(maxsize=None)
+def _course_title_pattern(subject: str) -> re.Pattern[str] | None:
+    # One pattern per subject: the catalog holds hundreds of lesson titles.
+    titles = sorted(set(_course_titles(subject)), key=len, reverse=True)
+    return re.compile(r'(?<!\w)(?:' + '|'.join(map(re.escape, titles)) + r')(?!\w)') if titles else None
 
 
 def _matches_configured_course(query: str, subject: str) -> bool:
     normalized = _plain(query)
-    titles = _course_titles(subject)
-    if any(title and title in normalized for title in titles):
+    pattern = _course_title_pattern(canonical_subject(subject))
+    if pattern is not None and pattern.search(normalized):
         return True
     return any(
         course_subject == canonical_subject(subject) and pattern.search(normalized)

@@ -156,6 +156,8 @@ type RoadmapLesson = {
   id: string
   lesson: number
   title: string
+  // From the textbook catalog: "Bài 7: ...", or the book's own unit where lessons are sections ("Unit 1 – A Closer Look 1").
+  label?: string
   volume?: number
   status: 'locked' | 'recommended' | 'review' | 'active'
   progress: number
@@ -193,7 +195,15 @@ function lessonTopic(lesson: RoadmapLesson) {
 }
 
 function lessonLabel(lesson: RoadmapLesson) {
-  return `Bài ${lesson.lesson}: ${lessonTopic(lesson)}`
+  return lesson.label || `Bài ${lesson.lesson}: ${lessonTopic(lesson)}`
+}
+
+// Titles that carry the book's own label ("Unit 1: Hobbies", "Bài 1. Tôi và các bạn", "Địa lí – Chương 1. ...")
+// are shown as they are; a bare title gets "Chương N:" in front.
+const OWN_LABEL_TITLE = /^(chương|unit|review|bài\s+(?:\d+|mở đầu)|phần|chủ đề|mở đầu|ôn tập|lịch sử|địa lí)(?=[\s.:–-]|$)/iu
+
+function chapterHeading(chapter: { chapter: number, title: string }) {
+  return OWN_LABEL_TITLE.test(chapter.title.trim()) ? chapter.title : `Chương ${chapter.chapter}: ${chapter.title}`
 }
 
 function topicFromLabel(label: string) {
@@ -1121,7 +1131,7 @@ function RoadmapPage({ student, roadmap, loading, error, stats, lessonStatus, on
           {roadmap.chapters.map((chapter) => (
             <div key={chapter.id} className="section-block roadmap-chapter">
               <div className="section-head">
-                <h2>Chương {chapter.chapter}: {chapter.title}</h2>
+                <h2>{chapterHeading(chapter)}</h2>
               </div>
               <div className="lesson-stack">
                 {chapter.lessons.map((lesson) => {
@@ -1131,7 +1141,7 @@ function RoadmapPage({ student, roadmap, loading, error, stats, lessonStatus, on
                     <div key={lesson.id} className="lesson-row">
                       <div className={`lesson-badge status-${status}`} title={LESSON_BADGES[status].label}>{LESSON_BADGES[status].icon}</div>
                       <div className="lesson-meta">
-                        <strong>{lesson.lesson}. {lesson.title}</strong>
+                        <strong>{lesson.label || `${lesson.lesson}. ${lesson.title}`}</strong>
                         <small>{LESSON_BADGES[status].label} · {lesson.sources?.[0]?.source ? `${lesson.sources[0].source} · Trang ${lesson.sources[0].page || '-'}` : roadmap.source === 'ai' ? 'Theo chương trình GDPT 2018' : 'Mimo chưa có trang sách của bài này'}</small>
                       </div>
                       {current && <span className="status-pill">Đang học</span>}

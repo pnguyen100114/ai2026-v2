@@ -225,7 +225,13 @@ def test_quiz_requires_login(anon_client):
 
 # ---------------------------------------------------------------- roadmap
 
-def test_roadmap_generate_success(client, app_mod, monkeypatch):
+@pytest.fixture
+def no_catalog(app_mod, monkeypatch):
+    """Every supported course is in books.py now; these tests cover the paths for a course that is not."""
+    monkeypatch.setattr(app_mod, 'build_catalog_roadmap', lambda subject, grade: None)
+
+
+def test_roadmap_generate_success(client, app_mod, monkeypatch, no_catalog):
     curriculum = [make_match(score=0.876, lesson=f'Bài {i}') for i in range(12)]
     seen = {}
     monkeypatch.setattr(app_mod, 'get_curriculum', lambda subject, grade: seen.update(get=(subject, grade)) or curriculum)
@@ -239,7 +245,7 @@ def test_roadmap_generate_success(client, app_mod, monkeypatch):
     assert body['sources'][0] == {'source': 'Toan 8 tap 1.pdf', 'page': 12, 'chapter': 'Chương 1', 'lesson': 'Bài 0', 'score': 0.88}
 
 
-def test_roadmap_generate_not_found(client, app_mod, monkeypatch):
+def test_roadmap_generate_not_found(client, app_mod, monkeypatch, no_catalog):
     monkeypatch.setattr(app_mod, 'get_curriculum', lambda subject, grade: [])
     assert client.post('/api/roadmap/generate', json={'student': NO_BOOK_STUDENT}).status_code == 404  # không SGK, không Gemini
 
@@ -251,7 +257,7 @@ AI_OUTLINE = {'chapters': [
 ]}
 
 
-def test_roadmap_falls_back_to_ai_outline_when_no_textbook(client, app_mod, monkeypatch):
+def test_roadmap_falls_back_to_ai_outline_when_no_textbook(client, app_mod, monkeypatch, no_catalog):
     monkeypatch.setattr(app_mod, 'get_curriculum', lambda subject, grade: [])
     fake = FakeGemini(text=json.dumps(AI_OUTLINE, ensure_ascii=False))
     app_mod.gemini_client = fake
@@ -269,14 +275,14 @@ def test_roadmap_falls_back_to_ai_outline_when_no_textbook(client, app_mod, monk
     assert again['roadmap'] == roadmap and len(fake.calls) == 1  # lưu lại, không gọi Gemini lần hai
 
 
-def test_roadmap_uses_ai_outline_when_textbook_lacks_lesson_structure(client, app_mod, monkeypatch):
+def test_roadmap_uses_ai_outline_when_textbook_lacks_lesson_structure(client, app_mod, monkeypatch, no_catalog):
     curriculum = [make_match(lesson=None) for _ in range(50)] + [make_match(lesson=f'Bài {i}') for i in (4, 8, 40)]
     monkeypatch.setattr(app_mod, 'get_curriculum', lambda subject, grade: curriculum)
     app_mod.gemini_client = FakeGemini(text=json.dumps(AI_OUTLINE, ensure_ascii=False))
     assert client.post('/api/roadmap/generate', json={'student': NO_BOOK_STUDENT}).json()['roadmap']['source'] == 'ai'
 
 
-def test_roadmap_ai_fallback_also_covers_rag_errors(client, app_mod, monkeypatch):
+def test_roadmap_ai_fallback_also_covers_rag_errors(client, app_mod, monkeypatch, no_catalog):
     def broken(subject, grade):
         raise RuntimeError('Pinecone down')
     monkeypatch.setattr(app_mod, 'get_curriculum', broken)
@@ -285,7 +291,7 @@ def test_roadmap_ai_fallback_also_covers_rag_errors(client, app_mod, monkeypatch
 
 
 @pytest.mark.parametrize('text, status', [('không phải json', 502), ('{"chapters": [{"title": "A", "lessons": []}]}', 502)])
-def test_roadmap_ai_fallback_invalid_output(client, app_mod, monkeypatch, text, status):
+def test_roadmap_ai_fallback_invalid_output(client, app_mod, monkeypatch, no_catalog, text, status):
     monkeypatch.setattr(app_mod, 'get_curriculum', lambda subject, grade: [])
     app_mod.gemini_client = FakeGemini(text=text)
     assert client.post('/api/roadmap/generate', json={'student': NO_BOOK_STUDENT}).status_code == status
@@ -297,7 +303,7 @@ def test_roadmap_ai_fallback_invalid_output(client, app_mod, monkeypatch, text, 
     ('vat-ly_9', 'Vat Ly', 9),
     ('ngu-van_abc', 'Ngu Van', 8),
 ])
-def test_roadmap_by_id_parses_subject_and_grade(client, app_mod, monkeypatch, roadmap_id, subject, grade):
+def test_roadmap_by_id_parses_subject_and_grade(client, app_mod, monkeypatch, no_catalog, roadmap_id, subject, grade):
     monkeypatch.setattr(app_mod, 'get_curriculum', lambda s, g: [make_match()])
     monkeypatch.setattr(app_mod, 'build_roadmap', lambda cur, s, g: {'subject': s, 'grade': g})
 
