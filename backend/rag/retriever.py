@@ -39,7 +39,9 @@ except Exception as exc:  # pragma: no cover
     STORE_BACKEND = None
     _store_error = exc
 
-gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+# Embedding one question takes well under a second; without a limit a stalled call would hold
+# the chat worker forever (google-genai waits indefinitely by default).
+gemini_client = genai.Client(api_key=GEMINI_API_KEY, http_options=types.HttpOptions(timeout=int(os.getenv('EMBED_QUERY_TIMEOUT_MS', '20000'))))
 
 
 def _normalize_grade(value: Any) -> Optional[int]:

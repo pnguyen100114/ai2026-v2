@@ -69,6 +69,13 @@ class FeedbackIn(BaseModel):
     comment: str | None = Field(default=None, max_length=1000)
 
 
+class SourceReportIn(BaseModel):
+    message_id: str = Field(..., min_length=1, max_length=64)
+    source: str = Field(..., min_length=1, max_length=255)
+    pdf_page: int | None = Field(default=None, ge=0, le=2000)
+    reason: Literal['wrong_page', 'wrong_book', 'unrelated']
+
+
 @router.post('/auth/email')
 def sign_in_with_email(body: EmailSignIn, request: Request) -> dict[str, Any]:
     # A whole class often shares one school IP, so this only stops floods; password guessing is limited per email below.
@@ -163,4 +170,11 @@ def delete_session(session_id: str, user: dict[str, Any] = Depends(db.current_us
 def give_feedback(body: FeedbackIn, user: dict[str, Any] = Depends(db.current_user)) -> dict[str, bool]:
     if not db.save_feedback(user['id'], body.message_id, body.rating, body.comment):
         raise HTTPException(status_code=404, detail='Không tìm thấy câu trả lời để đánh giá.')
+    return {'success': True}
+
+
+@router.post('/source-report')
+def report_source(body: SourceReportIn, user: dict[str, Any] = Depends(db.current_user)) -> dict[str, bool]:
+    if not db.save_source_report(user['id'], body.message_id, body.source, body.pdf_page, body.reason):
+        raise HTTPException(status_code=404, detail='Không tìm thấy trang sách này trong câu trả lời.')
     return {'success': True}

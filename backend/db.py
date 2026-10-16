@@ -141,6 +141,27 @@ feedback = Table(
     Column('updated_at', DateTime(timezone=True), nullable=False, default=_now),
 )
 
+# A student tapping "Trang này không đúng?" on a cited textbook page. A snapshot, not a foreign key:
+# the usual next step is "Thử lại", which deletes the very answer being reported.
+SOURCE_REPORT_REASONS = ('wrong_page', 'wrong_book', 'unrelated')
+source_reports = Table(
+    'source_reports', metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('message_id', String(64), nullable=False),
+    # Deleting the chat deletes its reports, including those on answers already replaced by "Thử lại".
+    Column('session_id', String(64), nullable=False, index=True),
+    Column('user_id', String(36), ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
+    Column('reason', String(20), nullable=False),
+    Column('source', String(255), nullable=False),
+    Column('book_title', String(255)),
+    Column('lesson_title', String(255)),
+    Column('page', Integer),
+    Column('pdf_page', Integer),
+    Column('question', Text),
+    Column('answer', Text),
+    Column('created_at', DateTime(timezone=True), nullable=False, default=_now),
+)
+
 quiz_attempts = Table(
     'quiz_attempts', metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
@@ -481,6 +502,7 @@ def delete_session(user_id: str, session_id: str) -> None:
         # Explicit child deletes: SQLite does not enforce ON DELETE CASCADE by default.
         message_ids = select(messages.c.id).where(messages.c.session_id == session_id, messages.c.user_id == user_id)
         conn.execute(delete(feedback).where(feedback.c.message_id.in_(message_ids)))
+        conn.execute(delete(source_reports).where(source_reports.c.session_id == session_id, source_reports.c.user_id == user_id))
         conn.execute(delete(messages).where(messages.c.session_id == session_id, messages.c.user_id == user_id))
         conn.execute(delete(chat_sessions).where(chat_sessions.c.id == session_id, chat_sessions.c.user_id == user_id))
 
@@ -499,6 +521,42 @@ def save_feedback(user_id: str, message_id: str, rating: str, comment: str | Non
         else:
             conn.execute(insert(feedback).values(message_id=message_id, user_id=user_id, **values))
     return True
+
+
+def save_source_report(user_id: str, message_id: str, source: str, pdf_page: int | None, reason: str) -> bool:
+    """Record that a cited page looked wrong. False when the answer or that citation is not the student's."""
+    with engine.begin() as conn:
+        answer = conn.execute(select(messages.c.session_id, messages.c.content, messages.c.sources, messages.c.created_at).where(
+            messages.c.id == message_id, messages.c.user_id == user_id, messages.c.role == 'assistant')).first()
+        if not answer:
+            return False
+        # Only a page this answer really cited; the client only says which one.
+        cited = next((item for item in answer.sources or [] if isinstance(item, dict) and item.get('source') == source
+                      and (item.get('pdf_page') or item.get('page')) == pdf_page), None)
+        if cited is None:
+            return False
+        question = conn.execute(select(messages.c.prompt, messages.c.content).where(
+            messages.c.session_id == answer.session_id, messages.c.role == 'user', messages.c.created_at <= answer.created_at,
+        ).order_by(messages.c.created_at.desc()).limit(1)).first()
+        values = {
+            'reason': reason, 'book_title': (cited.get('title') or '')[:255] or None,
+            'lesson_title': (cited.get('lesson_title') or '')[:255] or None, 'page': cited.get('page'),
+            'question': (question.prompt or question.content) if question else None, 'answer': answer.content, 'created_at': _now(),
+        }
+        key = (source_reports.c.message_id == message_id, source_reports.c.user_id == user_id,
+               source_reports.c.source == source, source_reports.c.pdf_page == pdf_page)
+        # Tapping another reason for the same page changes the report instead of counting it twice.
+        if conn.execute(select(source_reports.c.id).where(*key)).first():
+            conn.execute(update(source_reports).where(*key).values(**values))
+        else:
+            conn.execute(insert(source_reports).values(message_id=message_id, session_id=answer.session_id, user_id=user_id,
+                                                       source=source[:255], pdf_page=pdf_page, **values))
+    return True
+
+
+def list_source_reports() -> list[dict[str, Any]]:
+    with engine.connect() as conn:
+        return [dict(row._mapping) for row in conn.execute(select(source_reports).order_by(source_reports.c.created_at)).all()]
 
 
 def save_chat_turn(

@@ -7,6 +7,7 @@ import logging
 import re
 import sys
 import time
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
@@ -34,7 +35,7 @@ try:
         build_quiz_prompt, concept_id_for, concept_state, grade_answer, parse_generated_question,
         public_question, reference_time_seconds, target_difficulty,
     )
-    from backend.safety import SAFETY_OPENING, SAFETY_PROMPT, SAFETY_QUICK_REPLIES, detect_risk, leaks_answer, safety_addendum
+    from backend.safety import SAFETY_OPENING, SAFETY_PROMPT, SAFETY_QUICK_REPLIES, conversation_risk, leaks_answer, safety_addendum
     from backend.scope_guard import (
         MIMO_TUTOR_SYSTEM_INSTRUCTION, SCOPE_CLASSIFIER_INSTRUCTION, SUPPORTED_SUBJECTS, ScopeDecision,
         build_classifier_input, classify_scope, is_follow_up, is_taking_test, parse_scope_response,
@@ -52,7 +53,7 @@ except ImportError:  # pragma: no cover
         build_quiz_prompt, concept_id_for, concept_state, grade_answer, parse_generated_question,
         public_question, reference_time_seconds, target_difficulty,
     )
-    from safety import SAFETY_OPENING, SAFETY_PROMPT, SAFETY_QUICK_REPLIES, detect_risk, leaks_answer, safety_addendum
+    from safety import SAFETY_OPENING, SAFETY_PROMPT, SAFETY_QUICK_REPLIES, conversation_risk, leaks_answer, safety_addendum
     from scope_guard import (
         MIMO_TUTOR_SYSTEM_INSTRUCTION, SCOPE_CLASSIFIER_INSTRUCTION, SUPPORTED_SUBJECTS, ScopeDecision,
         build_classifier_input, classify_scope, is_follow_up, is_taking_test, parse_scope_response,
@@ -98,6 +99,13 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.1-flash-lite')
 # Free-tier quota is counted per model, so when one runs out the next one usually still answers.
 GEMINI_FALLBACK_MODELS = [model.strip() for model in os.getenv('GEMINI_FALLBACK_MODELS', 'gemini-3.5-flash-lite,gemini-3.5-flash').split(',') if model.strip()]
+# google-genai waits forever by default. httpx applies this to each read, so a streamed answer can
+# run longer as long as words keep coming; a stalled one ends with an error the student can retry
+# instead of holding a chat-io worker and the student's screen. Keep it below the browser's own
+# idle limit (CHAT_IDLE_TIMEOUT_MS in src/App.tsx) so the student sees Mimo's message, not a timeout.
+GEMINI_TIMEOUT_MS = int(os.getenv('GEMINI_TIMEOUT_MS', '45000'))
+# How long a chat waits for the textbook search and the other lookups started alongside it.
+CHAT_LOOKUP_TIMEOUT = float(os.getenv('CHAT_LOOKUP_TIMEOUT', '40'))
 
 # A tutoring answer needs a few hundred tokens; without a ceiling one rambling reply can cost
 # several times a normal one. Structured replies get their own, larger budget because a cut-off
@@ -157,7 +165,7 @@ def _la_cau_hoi_hoc_tap(message: str) -> bool:
 
 if GEMINI_API_KEY:
     try:
-        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+        gemini_client = genai.Client(api_key=GEMINI_API_KEY, http_options=types.HttpOptions(timeout=GEMINI_TIMEOUT_MS))
     except Exception:  # pragma: no cover
         gemini_client = None
 else:
@@ -419,6 +427,17 @@ _lesson_pages_cache: dict[tuple[str, int, str], list[dict[str, Any]]] = {}
 _io_pool = ThreadPoolExecutor(max_workers=12, thread_name_prefix='chat-io')
 
 
+def _lookup_result(task: Any) -> list[dict[str, Any]]:
+    """Result of an optional extra lookup for the prompt; a failure or a slow one just leaves it out."""
+    if task is None:
+        return []
+    try:
+        return task.result(timeout=CHAT_LOOKUP_TIMEOUT)
+    except Exception:
+        logger.warning('Chat lookup failed or timed out, answering without it', exc_info=True)
+        return []
+
+
 def _page_key(item: dict[str, Any]) -> tuple[Any, Any]:
     return item.get('source'), item.get('pdf_page') or item.get('page')
 
@@ -581,7 +600,19 @@ def _model_scope_decision(
     return ScopeDecision(label, 'model_review', safety_risk=safety_risk)
 
 
+# When Gemini cannot answer something that is not a lesson question ("em buồn quá", "hôm nay em
+# bị điểm kém"). A study tip would answer the wrong thing, and the message may be a worry that no
+# keyword in safety.py caught, so it still points to real help.
+BUSY_NOT_A_LESSON = (
+    'Mimo đang hơi quá tải nên chưa trả lời kỹ được lượt này 😅 Em gửi lại sau ít phút nhé. '
+    'Nếu em đang có chuyện buồn hay lo lắng, em hãy kể với bố mẹ hoặc thầy cô, hoặc gọi '
+    '**Tổng đài quốc gia bảo vệ trẻ em 111** (miễn phí, 24/7).'
+)
+
+
 def _quota_fallback(message: str, subject: str, grade: int) -> str:
+    if not _la_cau_hoi_hoc_tap(message):
+        return BUSY_NOT_A_LESSON
     topic_hint = 'xác định dữ kiện, yêu cầu và quy tắc trong bài' if subject != 'Toán' else 'ghi ra dữ kiện đã cho, điều cần tìm và kiến thức liên quan'
     return (
         f'Hôm nay nhiều bạn hỏi Mimo quá nên Mimo đang hơi quá tải một chút 😅 Trong lúc chờ, em thử cách này nhé:\n\n'
@@ -730,7 +761,8 @@ def answer_quiz(request: QuizAnswerRequest, user: dict[str, Any] = Depends(curre
 
 @app.post('/api/chat/stream')
 def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_user)):
-    message = (request.message or '').strip()
+    # NFC: Unikey's "Unicode tổ hợp" sends decomposed letters, which no keyword or regex here matches.
+    message = unicodedata.normalize('NFC', request.message or '').strip()
     if not message:
         raise HTTPException(status_code=400, detail='Tin nhắn không được để trống.')
     check_chat_rate(user)
@@ -767,14 +799,13 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     grade = student.grade or context.get('grade') or 8
     lesson = str((request.session or {}).get('lesson') or context.get('currentLesson') or '').strip()
     topic = str(context.get('currentTopic') or '').strip()
-    risk = detect_risk(message)
-
     history = [item for item in (request.messages or []) if (item.get('content') or '').strip()]
     user_history = [
         (item.get('content') or '')[:800]
         + (f"\nĐề bài trong ảnh: {str(item['image_text'])[:IMAGE_TEXT_MAX_LENGTH]}" if item.get('image_text') else '')
         for item in history if item.get('role') == 'user'
     ]
+    risk = conversation_risk(message, user_history)
     scope_query = message
     if is_follow_up(message) and user_history:
         scope_query = f'{user_history[-1]}\n{message}'
@@ -864,7 +895,7 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     ) if lesson else None
 
     try:
-        matches = matches_task.result()
+        matches = matches_task.result(timeout=CHAT_LOOKUP_TIMEOUT)
     except Exception as exc:
         logger.exception('RAG retrieval failed for chat message')
         matches = []
@@ -878,14 +909,14 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         if item.get('text') and float(item.get('score', 0.0)) >= RAG_SCORE_THRESHOLD
     ]
     seen_pages = {_page_key(item) for item in relevant_matches[:3]}
-    lesson_pages = [item for item in lesson_pages_task.result() if _page_key(item) not in seen_pages][:LESSON_CONTEXT_PAGES] if lesson_pages_task is not None and not retrieval_error else []
+    lesson_pages = [item for item in _lookup_result(lesson_pages_task) if _page_key(item) not in seen_pages][:LESSON_CONTEXT_PAGES] if not retrieval_error else []
     context_matches = sorted(relevant_matches[:3] + lesson_pages, key=lambda item: float(item.get('score', 0.0)), reverse=True)
 
     # Đoạn sách lớp khác chỉ đưa vào khi nó khớp câu hỏi HƠN sách lớp em. Điểm tuyệt đối không
     # tách được "có" với "không có" (xem thieu_sach bên dưới), nhưng bài nằm hẳn ở lớp khác thì
     # đoạn của lớp đó khớp hơn hẳn; ngược lại bài có trong sách lớp em thì sách lớp em thắng.
     try:
-        other_grades = other_grades_task.result() if other_grades_task is not None else []
+        other_grades = other_grades_task.result(timeout=CHAT_LOOKUP_TIMEOUT) if other_grades_task is not None else []
     except Exception:
         logger.warning('Tìm sách các lớp khác thất bại, bỏ qua', exc_info=True)
         other_grades = []
@@ -978,8 +1009,8 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     marker_example = '{"quick_replies":["...","..."],"understanding":"...","image_text":"..."}' if request.image_data else '{"quick_replies":["...","..."],"understanding":"..."}'
     earlier_lesson_turns = [
         f"{'Học sinh' if item['role'] == 'user' else 'Mimo'}: {item['content'][:300]}"
-        for item in earlier_turns_task.result()
-    ] if earlier_turns_task is not None else []
+        for item in _lookup_result(earlier_turns_task)
+    ]
     progress_text = _lesson_progress(user, subject, int(grade), topic)
     student_name = student.name if student.name and student.name != 'Học sinh' else 'em'
     prompt = f'''Bạn là Mimo – trợ lý học tập AI thân thiện, như một người anh/chị lớn giỏi giang, kiên nhẫn, luôn đồng hành cùng học sinh THCS.
@@ -1047,7 +1078,8 @@ Tin nhắn hiện tại của học sinh: {message}'''
         yield _stream_event(done_payload)
 
     def event_generator():
-        if retrieval_error and not risk:
+        # Chit-chat and feelings need no book, so a search outage must not turn them into an error.
+        if retrieval_error and not risk and _la_cau_hoi_hoc_tap(message):
             yield _stream_event({'type': 'error', 'message': 'Mimo chưa mở được sách giáo khoa lúc này. Em thử gửi lại sau ít phút nhé.'})
             return
         if gemini_client is None:
@@ -1122,7 +1154,10 @@ Tin nhắn hiện tại của học sinh: {message}'''
                 yield _stream_event(done_payload)
             else:
                 logger.exception('Gemini stream failed')
-                yield _stream_event({'type': 'error', 'message': 'Mimo bị ngắt kết nối giữa chừng. Em bấm "Thử lại" nhé.'})
+                error_text = 'Mimo bị ngắt kết nối giữa chừng. Em bấm "Thử lại" nhé.'
+                if not _la_cau_hoi_hoc_tap(message):
+                    error_text += ' Nếu em đang có chuyện buồn hay lo lắng, em hãy kể với bố mẹ, thầy cô hoặc gọi Tổng đài 111 (miễn phí, 24/7).'
+                yield _stream_event({'type': 'error', 'message': error_text})
 
     return StreamingResponse(
         event_generator(),

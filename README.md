@@ -70,6 +70,13 @@ python backend\rag\ingest.py               # nạp sách chưa nạp vào kho ve
 python backend\rag\render_pages.py         # render ảnh trang lên Supabase Storage (chỉ cần khi deploy)
 ```
 
+Khi xem ảnh một trang được trích, học sinh có nút **"Trang này không đúng?"** để báo sai trang, sai sách hoặc
+trang không liên quan. Xem những trang bị báo nhiều nhất (đọc database trong `backend/.env`):
+
+```bash
+python -m backend.source_reports
+```
+
 ## Kiểm tra
 
 ```bash

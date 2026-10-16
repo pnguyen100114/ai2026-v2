@@ -41,3 +41,9 @@ export function deleteSession(sessionId: string) {
 export function saveFeedback(messageId: string, rating: 'up' | 'down', comment?: string) {
   return apiJson('/api/feedback', { method: 'POST', body: JSON.stringify({ message_id: messageId, rating, comment }) })
 }
+
+export type SourceReportReason = 'wrong_page' | 'wrong_book' | 'unrelated'
+
+export function reportSource(messageId: string, source: string, pdfPage: number | undefined, reason: SourceReportReason) {
+  return apiJson('/api/source-report', { method: 'POST', body: JSON.stringify({ message_id: messageId, source, pdf_page: pdfPage, reason }) })
+}

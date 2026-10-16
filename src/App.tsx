@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Circle,
   Copy,
+  Flag,
   Clock3,
   Flame,
   GraduationCap,
@@ -59,6 +60,8 @@ type SourceRef = {
   preview_url?: string
   pdf_page?: number
 }
+/** A cited page opened from one answer; `messageId` lets the student report it as wrong. */
+type OpenedSource = SourceRef & { messageId: string }
 type ChatMessage = {
   id: string
   sender: ChatRole
@@ -214,6 +217,9 @@ const RECENT_CHAT_LIMIT = 5
 // Must match MESSAGE_MAX_LENGTH in backend/app.py.
 const MESSAGE_MAX_LENGTH = 2000
 const ACCURACY_NOTICE = 'Mimo có thể nhầm lẫn, em nhớ đối chiếu lại với sách giáo khoa nhé!'
+// No byte from the server for this long means the connection is stuck (phone changed network, server
+// asleep). Longer than the backend's own Gemini limit (GEMINI_TIMEOUT_MS) so its message wins when it can.
+const CHAT_IDLE_TIMEOUT_MS = 60_000
 const IMAGE_MAX_SIDE = 1600
 
 // Phone photos are several MB; re-encode to a JPEG that is plenty for reading a problem and fits the request limit.
@@ -393,6 +399,7 @@ function App() {
   const [currentSessionId, setCurrentSessionId] = useState(() => readStorage<string>(storageKey('gia-su-ai-current-session'), ''))
   const [chat, setChat] = useState<ChatMessage[]>(() => readStorage<ChatMessage[]>(storageKey('gia-su-ai-chat'), welcomeMessages(student)).map(normalizeMessage))
   const lastImageRef = useRef<{ userId: string; data: string; mime?: string } | null>(null)
+  const chatStream = useRef<{ controller: AbortController; stoppedBy?: 'student' | 'idle' } | null>(null)
   // Read by the history loader, which resolves seconds after the effect that started it.
   const latestChats = useRef({ sessions, currentSessionId })
   useEffect(() => {
@@ -631,10 +638,19 @@ function App() {
     setChat([...baseChat, userMessage, assistantMessage])
     setChatLoading(true)
     setChatError('')
+    const stream: { controller: AbortController; stoppedBy?: 'student' | 'idle' } = { controller: new AbortController() }
+    chatStream.current = stream
+    let idleTimer: ReturnType<typeof setTimeout> | undefined
+    const waitForServer = () => {
+      clearTimeout(idleTimer)
+      idleTimer = setTimeout(() => { stream.stoppedBy = 'idle'; stream.controller.abort() }, CHAT_IDLE_TIMEOUT_MS)
+    }
+    waitForServer()
 
     try {
       const response = await apiFetch('/api/chat/stream', {
         method: 'POST',
+        signal: stream.controller.signal,
         body: JSON.stringify({
           session: currentSession && {
             id: currentSession.id,
@@ -686,6 +702,7 @@ function App() {
       }
       while (true) {
         const { value, done } = await reader.read()
+        waitForServer()
         buffer += decoder.decode(value || new Uint8Array(), { stream: !done })
         const events = buffer.split(/\r?\n\r?\n/)
         buffer = events.pop() || ''
@@ -696,13 +713,33 @@ function App() {
         }
       }
     } catch (err) {
-      const message = err instanceof Error && !(err instanceof TypeError) ? err.message : 'Mimo chưa kết nối được. Em kiểm tra mạng rồi bấm "Thử lại" nhé.'
-      patchAnswer((item) => item.content.trim() ? item : { ...item, content: message, text: message, failed: true })
+      const withNote = (item: ChatMessage, note: string) => ({ ...item, content: `${item.content}\n\n_${note}_`, text: `${item.text}\n\n_${note}_` })
+      if (stream.stoppedBy === 'student') {
+        // The student pressed "Dừng": not a failure, so no "trục trặc" title. Keep what Mimo wrote so far;
+        // "Trả lời lại câu này" in the action bar re-asks it.
+        const note = 'Em đã dừng câu trả lời này.'
+        patchAnswer((item) => item.content.trim() ? withNote(item, note) : { ...item, content: `_${note}_`, text: `_${note}_` })
+        return
+      }
+      const message = stream.stoppedBy === 'idle'
+        ? 'Mimo chờ lâu quá mà chưa nhận được trả lời. Em kiểm tra mạng rồi bấm "Thử lại" nhé.'
+        : err instanceof Error && !(err instanceof TypeError) ? err.message : 'Mimo chưa kết nối được. Em kiểm tra mạng rồi bấm "Thử lại" nhé.'
+      // A half-written answer must not look finished: show why it stopped and offer "Thử lại".
+      patchAnswer((item) => item.content.trim() ? { ...withNote(item, message), failed: true } : { ...item, content: message, text: message, failed: true })
       setChatError('')
     } finally {
+      clearTimeout(idleTimer)
+      if (chatStream.current === stream) chatStream.current = null
       setChatLoading(false)
       void refreshProgress()
     }
+  }
+
+  const stopAnswer = () => {
+    const stream = chatStream.current
+    if (!stream) return
+    stream.stoppedBy = 'student'
+    stream.controller.abort()
   }
 
   // Re-ask the student question that produced the assistant message at `assistantIndex`, replacing that answer.
@@ -982,7 +1019,7 @@ function App() {
         )}
 
         {page === 'tutor' && (
-          <TutorPage student={student} chatScope={chatScope} curriculumOnly={chatFollowsCurriculumOnly} lessonName={openSession?.lesson || student.currentLesson} recentSessions={subjectSessions.slice(0, RECENT_CHAT_LIMIT)} totalSessions={sortedSessions.length} renderSessionItem={renderSessionItem} onNewChat={createNewChat} onShowAllChats={() => setShowAllChats(true)} chat={chat} loading={chatLoading} error={chatError} onSend={(message, imageData, imageMimeType) => void sendMessage(message, imageData, imageMimeType)} onFeedback={giveFeedback} onRetry={retryFrom} quiz={quiz} quizAnswer={quizAnswer} quizResult={quizResult} quizLoading={quizLoading} quizError={quizError} hintShown={hintsUsed > 0} onShowHint={() => setHintsUsed((count) => Math.max(count, 1))} onQuizAnswer={setQuizAnswer} onLoadQuiz={loadQuiz} onSubmitQuiz={submitQuizAnswer} />
+          <TutorPage student={student} chatScope={chatScope} curriculumOnly={chatFollowsCurriculumOnly} lessonName={openSession?.lesson || student.currentLesson} recentSessions={subjectSessions.slice(0, RECENT_CHAT_LIMIT)} totalSessions={sortedSessions.length} renderSessionItem={renderSessionItem} onNewChat={createNewChat} onShowAllChats={() => setShowAllChats(true)} chat={chat} loading={chatLoading} error={chatError} onSend={(message, imageData, imageMimeType) => void sendMessage(message, imageData, imageMimeType)} onStop={stopAnswer} onFeedback={giveFeedback} onRetry={retryFrom} quiz={quiz} quizAnswer={quizAnswer} quizResult={quizResult} quizLoading={quizLoading} quizError={quizError} hintShown={hintsUsed > 0} onShowHint={() => setHintsUsed((count) => Math.max(count, 1))} onQuizAnswer={setQuizAnswer} onLoadQuiz={loadQuiz} onSubmitQuiz={submitQuizAnswer} />
         )}
 
         {page === 'profile' && <ProfilePage name={student.name} email={account.email} grade={student.grade} onRename={(name) => setStudent((current) => ({ ...current, name }))} />}
@@ -1158,9 +1195,9 @@ function RoadmapPage({ student, roadmap, loading, error, stats, lessonStatus, on
   )
 }
 
-function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessions, totalSessions, renderSessionItem, onNewChat, onShowAllChats, chat, loading, error, onSend, onFeedback, onRetry, quiz, quizAnswer, quizResult, quizLoading, quizError, hintShown, onShowHint, onQuizAnswer, onLoadQuiz, onSubmitQuiz }: { student: StudentProfile; chatScope: string; curriculumOnly: boolean; lessonName: string; recentSessions: ChatSession[]; totalSessions: number; renderSessionItem: (session: ChatSession) => React.ReactNode; onNewChat: () => void; onShowAllChats: () => void; chat: ChatMessage[]; loading: boolean; error: string; onSend: (message: string, imageData?: string, imageMimeType?: string) => void; onFeedback: (index: number, feedback: 'up' | 'down', comment?: string) => void; onRetry: (assistantIndex: number) => void; quiz: QuizQuestion | null; quizAnswer: string; quizResult: QuizResult | null; quizLoading: boolean; quizError: string; hintShown: boolean; onShowHint: () => void; onQuizAnswer: (answer: string) => void; onLoadQuiz: () => void; onSubmitQuiz: () => void }) {
+function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessions, totalSessions, renderSessionItem, onNewChat, onShowAllChats, chat, loading, error, onSend, onStop, onFeedback, onRetry, quiz, quizAnswer, quizResult, quizLoading, quizError, hintShown, onShowHint, onQuizAnswer, onLoadQuiz, onSubmitQuiz }: { student: StudentProfile; chatScope: string; curriculumOnly: boolean; lessonName: string; recentSessions: ChatSession[]; totalSessions: number; renderSessionItem: (session: ChatSession) => React.ReactNode; onNewChat: () => void; onShowAllChats: () => void; chat: ChatMessage[]; loading: boolean; error: string; onSend: (message: string, imageData?: string, imageMimeType?: string) => void; onStop: () => void; onFeedback: (index: number, feedback: 'up' | 'down', comment?: string) => void; onRetry: (assistantIndex: number) => void; quiz: QuizQuestion | null; quizAnswer: string; quizResult: QuizResult | null; quizLoading: boolean; quizError: string; hintShown: boolean; onShowHint: () => void; onQuizAnswer: (answer: string) => void; onLoadQuiz: () => void; onSubmitQuiz: () => void }) {
   const [draft, setDraft] = useState('')
-  const [previewSource, setPreviewSource] = useState<SourceRef | null>(null)
+  const [previewSource, setPreviewSource] = useState<OpenedSource | null>(null)
   const [imageAttachment, setImageAttachment] = useState<{ data: string; mime: string; name: string } | null>(null)
   const [inputNotice, setInputNotice] = useState('')
   const [voiceState, setVoiceState] = useState<'idle' | 'recording' | 'transcribing'>('idle')
@@ -1323,8 +1360,13 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
       .catch(() => setInputNotice('Mimo chưa mở được ảnh này (ví dụ ảnh HEIC của iPhone). Em chụp màn hình ảnh đó hoặc chọn ảnh JPG/PNG nhé.'))
   }
 
+  // Once the student has asked something, the big heading only pushes the conversation down.
+  const chatting = chat.some((entry) => entry.role === 'user')
+
   return (
-    <div className="page">
+    <div className="page tutor-page">
+      {/* Heading + chat fill exactly one screen, so the message box never sits below the fold. */}
+      <div className={`tutor-main ${chatting ? 'is-chatting' : ''}`}>
       <div className="tutor-intro">
         <div>
           <span className="section-kicker">GÓC HỌC CÙNG MIMO</span>
@@ -1376,11 +1418,11 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
               {isThinking ? <div className="typing-indicator"><i /><i /><i /><span>Mimo đang suy nghĩ...</span></div> : <div className="chat-body">
                 {entry.failed && <strong className="failed-title">Ôi, Mimo gặp trục trặc rồi 😥</strong>}
                 {entry.imagePreview && <img className="message-image" src={entry.imagePreview} alt="Ảnh đề bài em đã gửi" />}
-                <ChatMessageContent content={entry.content} sources={entry.sources} onCite={setPreviewSource} />
+                <ChatMessageContent content={entry.content} sources={entry.sources} onCite={(source) => setPreviewSource({ ...source, messageId: entry.id })} />
               </div>}
               {entry.failed && <button type="button" className="retry-btn" disabled={loading} onClick={() => onRetry(index)}><RefreshCcw size={15} /> Thử lại</button>}
               {isLast && !loading && entry.role === 'assistant' && entry.quickReplies && entry.quickReplies.length > 0 && <div className="reply-chips">{entry.quickReplies.slice(0, 3).map((reply) => <button key={reply} type="button" onClick={() => onSend(reply)}><MathText content={reply} /></button>)}</div>}
-              {entry.role === 'assistant' && index > 0 && !entry.failed && !(loading && isLast) && <SourcePageThumbs content={entry.content} sources={entry.sources} onOpen={setPreviewSource} />}
+              {entry.role === 'assistant' && index > 0 && !entry.failed && !(loading && isLast) && <SourcePageThumbs content={entry.content} sources={entry.sources} onOpen={(source) => setPreviewSource({ ...source, messageId: entry.id })} />}
               {entry.role === 'assistant' && entry.content && !entry.failed && index > 0 && !(loading && isLast) && <div className="message-action-bar">
                 <button type="button" title={speakingIndex === index ? (speechLoading ? 'Mimo đang chuẩn bị giọng đọc…' : 'Dừng đọc') : 'Nghe giảng'} onClick={() => void handleSpeak(entry, index)}>{speakingIndex === index ? (speechLoading ? <LoaderCircle size={14} className="spin" /> : <VolumeX size={14} />) : <Volume2 size={14} />}</button>
                 <button type="button" title="Sao chép" onClick={() => void navigator.clipboard?.writeText(plainMath(entry.content).replace(/[*_#`]/g, ''))}><Copy size={14} /></button>
@@ -1417,13 +1459,16 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
               }
             }}
           />
-          <div className="chat-form-footer"><div className="input-tools"><button type="button" title={voiceState === 'recording' ? 'Bấm để dừng ghi âm' : 'Hỏi bằng giọng nói'} aria-label={voiceState === 'recording' ? 'Dừng ghi âm' : 'Hỏi bằng giọng nói'} aria-pressed={voiceState === 'recording'} disabled={voiceState === 'transcribing'} onClick={() => void handleVoiceInput()} className={voiceState === 'recording' ? 'active recording' : ''}>{voiceState === 'recording' ? <Square size={13} fill="currentColor" /> : <Mic size={15} />}</button><button type="button" title="Tải hoặc chụp ảnh đề bài" onClick={() => fileInputRef.current?.click()}><Paperclip size={15} /></button><input ref={fileInputRef} type="file" accept="image/*" capture="environment" hidden onChange={(event) => handleFile(event.target.files?.[0])} /><span className={voiceState !== 'idle' ? 'voice-status' : undefined} role={voiceState !== 'idle' ? 'status' : undefined}>{voiceState === 'recording' ? 'Mimo đang nghe em nói... bấm nút vuông để dừng' : voiceState === 'transcribing' ? 'Mimo đang chép lại lời em nói...' : draft.length > MESSAGE_MAX_LENGTH - 300 ? `${draft.length}/${MESSAGE_MAX_LENGTH} ký tự` : 'Enter để gửi · Shift + Enter để xuống dòng'}</span></div><button className="send-btn" type="submit" disabled={loading || (!draft.trim() && !imageAttachment)} aria-label="Gửi câu hỏi">
+          <div className="chat-form-footer"><div className="input-tools"><button type="button" title={voiceState === 'recording' ? 'Bấm để dừng ghi âm' : 'Hỏi bằng giọng nói'} aria-label={voiceState === 'recording' ? 'Dừng ghi âm' : 'Hỏi bằng giọng nói'} aria-pressed={voiceState === 'recording'} disabled={voiceState === 'transcribing'} onClick={() => void handleVoiceInput()} className={voiceState === 'recording' ? 'active recording' : ''}>{voiceState === 'recording' ? <Square size={13} fill="currentColor" /> : <Mic size={15} />}</button><button type="button" title="Tải hoặc chụp ảnh đề bài" onClick={() => fileInputRef.current?.click()}><Paperclip size={15} /></button><input ref={fileInputRef} type="file" accept="image/*" hidden onChange={(event) => handleFile(event.target.files?.[0])} /><span className={voiceState !== 'idle' ? 'voice-status' : undefined} role={voiceState !== 'idle' ? 'status' : undefined}>{voiceState === 'recording' ? 'Mimo đang nghe em nói... bấm nút vuông để dừng' : voiceState === 'transcribing' ? 'Mimo đang chép lại lời em nói...' : draft.length > MESSAGE_MAX_LENGTH - 300 ? `${draft.length}/${MESSAGE_MAX_LENGTH} ký tự` : 'Enter để gửi · Shift + Enter để xuống dòng'}</span></div>{loading
+            ? <button className="send-btn" type="button" onClick={onStop} aria-label="Dừng câu trả lời"><Square size={13} fill="currentColor" /> <span>Dừng</span></button>
+            : <button className="send-btn" type="submit" disabled={!draft.trim() && !imageAttachment} aria-label="Gửi câu hỏi">
             <Send size={16} /> <span>Gửi câu hỏi</span>
-          </button>
+          </button>}
           </div>
           <p className="chat-accuracy-note"><BookOpen size={13} aria-hidden="true" /> {ACCURACY_NOTICE}</p>
         </form>
         </section>
+      </div>
       </div>
       <section className="adaptive-quiz-panel" aria-label="Bài luyện tập thích ứng">
         <div className="adaptive-quiz-head">
@@ -1442,7 +1487,7 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
           {quizResult && <div className={`quiz-feedback ${quizResult.is_correct ? 'correct' : 'incorrect'}`}><strong>{quizResult.is_correct ? 'Tốt lắm!' : 'Mình cùng sửa lại nhé'}</strong><p><MathText content={quizResult.feedback} /></p><small><MathText content={quizResult.explanation} /></small><div className="recommendation"><b>{quizResult.recommendation.title}</b><span>{quizResult.recommendation.reason}</span><small>Độ tin cậy của đánh giá: {quizResult.assessment.confidence === 'low' ? 'đang tích lũy' : quizResult.assessment.confidence === 'medium' ? 'vừa' : 'cao'}</small></div><button className="text-btn" type="button" onClick={onLoadQuiz}>Làm câu tiếp theo <ChevronRight size={14} /></button></div>}
         </div>}
       </section>
-      {previewSource?.preview_url && <div className="source-modal-backdrop" role="presentation" onClick={() => setPreviewSource(null)}><div className="source-modal" role="dialog" aria-modal="true" aria-label="Xem trang sách" onClick={(event) => event.stopPropagation()}><div className="source-modal-head"><div><strong>{previewSource.title || previewSource.source || 'Trang SGK'}</strong><span>{[previewSource.lesson_title, `Trang ${previewSource.page || '-'}`].filter(Boolean).join(' · ')}</span></div><button type="button" onClick={() => setPreviewSource(null)} aria-label="Đóng xem trang"><X size={18} /></button></div><img src={apiUrl(previewSource.preview_url)} alt={`Trang ${previewSource.page || ''} trong ${previewSource.source || 'sách giáo khoa'}`} /></div></div>}
+      {previewSource?.preview_url && <SourcePreview key={`${previewSource.messageId}:${previewSource.pdf_page ?? previewSource.page}`} source={previewSource} onClose={() => setPreviewSource(null)} />}
     </div>
   )
 }
@@ -1457,6 +1502,44 @@ function citedPages(content: string, sources?: SourceRef[]) {
 const UNCITED_NOTE_MIN_LENGTH = 150
 
 // Small images of the cited textbook pages, so figures (geometry, science diagrams) are visible right under the answer.
+const SOURCE_REPORT_REASONS = [
+  { reason: 'wrong_page', label: 'Sai trang' },
+  { reason: 'wrong_book', label: 'Sai sách / sai lớp' },
+  { reason: 'unrelated', label: 'Không liên quan câu hỏi' },
+] as const
+
+// The page image is where a student notices a citation does not match; one tap reports it (backend/source_reports.py lists them).
+function SourcePreview({ source, onClose }: { source: OpenedSource; onClose: () => void }) {
+  const [report, setReport] = useState<'idle' | 'choosing' | 'sending' | 'sent' | 'failed'>('idle')
+  const send = async (reason: (typeof SOURCE_REPORT_REASONS)[number]['reason']) => {
+    setReport('sending')
+    try {
+      await repository.reportSource(source.messageId, source.source || '', source.pdf_page ?? source.page, reason)
+      setReport('sent')
+    } catch (err) {
+      console.error('Không gửi được báo cáo trang sách', err)
+      setReport('failed')
+    }
+  }
+  return (
+    <div className="source-modal-backdrop" role="presentation" onClick={onClose}>
+      <div className="source-modal" role="dialog" aria-modal="true" aria-label="Xem trang sách" onClick={(event) => event.stopPropagation()}>
+        <div className="source-modal-head"><div><strong>{source.title || source.source || 'Trang SGK'}</strong><span>{[source.lesson_title, `Trang ${source.page || '-'}`].filter(Boolean).join(' · ')}</span></div><button type="button" onClick={onClose} aria-label="Đóng xem trang"><X size={18} /></button></div>
+        <img src={apiUrl(source.preview_url || '')} alt={`Trang ${source.page || ''} trong ${source.source || 'sách giáo khoa'}`} />
+        {source.source && <div className="source-report" role="status">
+          {report === 'idle' && <button type="button" className="source-report-open" onClick={() => setReport('choosing')}><Flag size={14} /> Trang này không đúng?</button>}
+          {(report === 'choosing' || report === 'sending') && <>
+            <span>Trang này sai ở đâu?</span>
+            <div className="source-report-reasons">{SOURCE_REPORT_REASONS.map(({ reason, label }) => <button key={reason} type="button" disabled={report === 'sending'} onClick={() => void send(reason)}>{label}</button>)}</div>
+          </>}
+          {report === 'sent' && <span className="source-report-done">Cảm ơn em! Mimo đã ghi lại để kiểm tra trang này 💛</span>}
+          {report === 'failed' && <span>Mimo chưa ghi lại được, em thử lại sau nhé. <button type="button" className="source-report-open" onClick={() => setReport('choosing')}>Thử lại</button></span>}
+        </div>}
+      </div>
+    </div>
+  )
+}
+
 function SourcePageThumbs({ content, sources, onOpen }: { content: string; sources?: SourceRef[]; onOpen: (source: SourceRef) => void }) {
   const pages = citedPages(content, sources)
   if (pages.length === 0) {

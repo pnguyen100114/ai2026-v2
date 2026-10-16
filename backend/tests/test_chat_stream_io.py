@@ -393,6 +393,37 @@ def test_quota_error_emits_fallback_answer(client, app_mod, monkeypatch):
     assert len(app_mod.save_chat_turn.calls) == 1
 
 
+def test_quota_error_on_a_feeling_gets_no_study_tip_but_points_to_help(client, app_mod, monkeypatch):
+    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(error=RuntimeError('429 RESOURCE_EXHAUSTED')))
+
+    events = stream(client, 'hôm nay em buồn lắm')
+
+    assert 'bước đầu tiên' not in events[0]['text']
+    assert '111' in events[0]['text']
+
+
+def test_retrieval_error_does_not_block_chit_chat(client, app_mod, monkeypatch):
+    def boom(*args, **kwargs):
+        raise RuntimeError('pinecone down')
+    monkeypatch.setattr(app_mod, 'search_knowledge', boom)
+    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=['Mimo nghe em đây.']))
+
+    events = stream(client, 'hôm nay em buồn lắm')
+
+    assert joined_text(events) == 'Mimo nghe em đây.' and events[-1]['type'] == 'done'
+
+
+def test_failed_lesson_page_lookup_does_not_fail_the_chat(client, app_mod, monkeypatch):
+    def boom(*args, **kwargs):
+        raise KeyError('evicted twice')
+    monkeypatch.setattr(app_mod, '_lesson_pages', boom)
+    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=['Trả lời bình thường.']))
+
+    events = stream(client, context={'currentTopic': 'Hằng đẳng thức'})
+
+    assert events[-1]['type'] == 'done'
+
+
 class QuotaThenAnswer(FakeGemini):
     """First model is out of quota, the next one answers."""
 

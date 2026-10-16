@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import unicodedata
+
 import pytest
 from sqlalchemy import create_engine, update
 
@@ -214,9 +216,42 @@ def test_progress_requires_login_and_valid_grade(auth_client):
     ('từ từ giải thích cho em', None),
     ('bài này khó muốn chết', None),
     ('Giải thích (a+b)^2', None),
+    # Unaccented, teen spelling and decomposed (NFD) text: how kids actually type.
+    ('em muon tu sat', safety.SELF_HARM),
+    ('em muốn chết', safety.SELF_HARM),
+    ('em mun chet', safety.SELF_HARM),
+    ('em buồn quá muốn chết', safety.SELF_HARM),
+    ('em chán lắm, muốn chết', safety.SELF_HARM),
+    ('e ko muốn sống nữa', safety.SELF_HARM),
+    ('em k muon song nua', safety.SELF_HARM),
+    ('em chán sống lắm', safety.SELF_HARM),
+    ('em muon tu sat vi khong hieu dao ham', safety.SELF_HARM),
+    (unicodedata.normalize('NFD', 'em không muốn sống nữa'), safety.SELF_HARM),
+    ('em bi ep lam viec', safety.HARM),
+    # Hyperbole and ordinary maths stay lessons.
+    ('mệt quá muốn chết', None),
+    ('đói muốn chết rồi', None),
+    ('học toán chán muốn chết', None),
+    ('em không thích sống ở quê', None),
+    ('đường thẳng đi qua từ hai điểm', None),
 ])
 def test_detect_risk(message, risk):
     assert safety.detect_risk(message) == risk
+
+
+@pytest.mark.parametrize('message, earlier, risk', [
+    # Mimo's own safety quick replies have no risk words; they continue the disclosure.
+    ('Em nên nói với ai ạ?', ['em muốn chết'], safety.SELF_HARM),
+    ('Em muốn kể thêm', ['mấy bạn hay trêu em', 'Em nên nói với ai ạ?'], safety.HARM),
+    # The student chose to go back to the lesson, now and in the turns after.
+    ('Mình học tiếp nhé', ['mấy bạn hay trêu em'], None),
+    ('Giải x + 2 = 5', ['mấy bạn hay trêu em', 'Mình học tiếp nhé'], None),
+    # Long ago in the chat no longer counts.
+    ('Giải x + 2 = 5', ['mấy bạn hay trêu em', 'a', 'b', 'c'], None),
+    ('Giải x + 2 = 5', [], None),
+])
+def test_conversation_risk_carries_over_recent_disclosure(message, earlier, risk):
+    assert safety.conversation_risk(message, earlier) == risk
 
 
 @pytest.mark.parametrize('reply, leaks', [
@@ -267,6 +302,20 @@ def test_self_harm_message_always_gets_hotline(client, app_mod, monkeypatch, gem
     assert '111' in events[0]['text'] and '115' in events[0]['text']
 
 
+def test_safety_quick_reply_stays_in_safety_mode(client, app_mod, monkeypatch):
+    retrievals = []
+    monkeypatch.setattr(app_mod, 'search_knowledge', lambda *a, **k: retrievals.append(k) or [make_match(grade=7, score=0.95)])
+    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(error=RuntimeError('429 RESOURCE_EXHAUSTED')))
+    history = [{'role': 'user', 'content': 'em muốn chết'}, {'role': 'assistant', 'content': 'Mimo ở đây với em.'}]
+
+    events = stream(client, 'Em nên nói với ai ạ?', messages=history)
+
+    text = ''.join(e['text'] for e in events if e['type'] == 'chunk')
+    assert '111' in text and 'Mimo không tìm thấy' not in text and 'bước đầu tiên' not in text
+    assert events[-1]['quick_replies'] == safety.SAFETY_QUICK_REPLIES[safety.SELF_HARM]
+    assert all(k.get('grade') is not None for k in retrievals)  # no "which grade is this lesson in" search
+
+
 def test_quick_replies_revealing_the_answer_are_dropped(client, app_mod, monkeypatch):
     monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=[f'Em tính x nhé?{MARKER}{{"quick_replies":["Em tính ra x = 6 rồi","Cho em gợi ý thêm"]}}']))
     assert stream(client, '2x + 5 = 17')[-1]['quick_replies'] == ['Cho em gợi ý thêm']
@@ -297,3 +346,83 @@ def test_admin_password_reset(auth_client, capsys):
     assert reset_password.main(['reset', 'an@example.com', '123']) == 1
     assert sign_in(auth_client, mode='login', password='bimat123').status_code == 401
     assert sign_in(auth_client, mode='login', password='moi-mat-khau').status_code == 200
+
+
+# ---------------------------------------------------------------- "Trang này không đúng?"
+
+CITED = {'source': 'TOAN8-TAP 1.pdf', 'title': 'Toán 8 – Tập một', 'lesson_title': 'Bài 6. Hiệu hai bình phương', 'page': 34, 'pdf_page': 35}
+
+
+def save_turn(user, session_id='s1', question='Hiệu hai bình phương là gì?', answer_id='a1', **extra):
+    now = db._now()
+    db.save_chat_turn(
+        user, session={'id': session_id, 'title': 'Hằng đẳng thức', 'subject': 'Toán', 'grade': 'Lớp 8'},
+        user_message={'id': f'q-{answer_id}', 'content': question, 'prompt': question, 'has_image': False, 'image_text': None, 'created_at': now},
+        assistant_message={'id': answer_id, 'content': 'Hiệu hai bình phương: $a^2 - b^2 = (a-b)(a+b)$ [1].', 'sources': [CITED],
+                           'quick_replies': [], 'understanding': None, 'model': 'test', 'latency_ms': 1, 'created_at': now},
+        **extra,
+    )
+
+
+def report(client, token, **body):
+    payload = {'message_id': 'a1', 'source': CITED['source'], 'pdf_page': CITED['pdf_page'], 'reason': 'wrong_page', **body}
+    return client.post('/api/source-report', json=payload, headers={'Authorization': f'Bearer {token}'})
+
+
+def test_source_report_records_the_cited_page_with_the_question(auth_client):
+    token = sign_in(auth_client, mode='register', name='An', password='bimat123').json()['token']
+    user = db.find_user_by_email('an@example.com')
+    save_turn(user)
+
+    assert report(auth_client, token).status_code == 200
+    assert report(auth_client, token, reason='unrelated').status_code == 200  # changes the reason, not a second report
+
+    (row,) = db.list_source_reports()
+    assert (row['reason'], row['book_title'], row['page'], row['pdf_page']) == ('unrelated', 'Toán 8 – Tập một', 34, 35)
+    assert row['question'] == 'Hiệu hai bình phương là gì?' and '[1]' in row['answer']
+
+
+@pytest.mark.parametrize('body', [
+    {'pdf_page': 99},                     # a page this answer did not cite
+    {'message_id': 'khong-co'},
+    {'reason': 'boring'},
+])
+def test_source_report_rejects_pages_the_answer_did_not_cite(auth_client, body):
+    token = sign_in(auth_client, mode='register', name='An', password='bimat123').json()['token']
+    save_turn(db.find_user_by_email('an@example.com'))
+    assert report(auth_client, token, **body).status_code in (404, 422)
+    assert db.list_source_reports() == []
+
+
+def test_source_report_on_another_students_answer_is_refused(auth_client):
+    save_turn(db.create_user('binh@example.com', 'Bình', 8, 'bimat123'))
+    token = sign_in(auth_client, mode='register', name='An', password='bimat123').json()['token']
+    assert report(auth_client, token).status_code == 404
+
+
+def test_source_report_survives_retry_but_not_deleting_the_chat(auth_client):
+    token = sign_in(auth_client, mode='register', name='An', password='bimat123').json()['token']
+    user = db.find_user_by_email('an@example.com')
+    save_turn(user)
+    save_turn(user, session_id='s2', answer_id='b1')
+    report(auth_client, token)
+    report(auth_client, token, message_id='b1')
+
+    # "Thử lại" deletes the reported answer; the report is what tells us the page was wrong.
+    save_turn(user, answer_id='a2', replaces_message_id='q-a1')
+    assert len(db.list_source_reports()) == 2
+
+    db.delete_session(user['id'], 's1')
+    assert [row['message_id'] for row in db.list_source_reports()] == ['b1']
+
+
+def test_source_report_summary_puts_the_most_reported_page_first():
+    from backend.source_reports import summarize
+
+    base = {'source': 'X.pdf', 'book_title': 'Toán 8', 'lesson_title': None, 'pdf_page': 3, 'question': 'q'}
+    rows = summarize([
+        {**base, 'page': 1, 'reason': 'unrelated', 'user_id': 'u1'},
+        {**base, 'page': 2, 'pdf_page': 4, 'reason': 'wrong_page', 'user_id': 'u1'},
+        {**base, 'page': 1, 'reason': 'unrelated', 'user_id': 'u2'},
+    ])
+    assert [(row['page'], sum(row['reasons'].values()), len(row['students'])) for row in rows] == [(1, 2, 2), (2, 1, 1)]
