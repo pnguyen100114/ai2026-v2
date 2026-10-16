@@ -202,6 +202,20 @@ def test_sources_deduplicated_and_filtered(client, app_mod, monkeypatch):
     assert [(s['pdf_page'], s['score']) for s in sources] == [(14, 0.9), (20, 0.7)]
 
 
+@pytest.mark.parametrize('message', ['Giảng lại Đơn thức cho em', 'Dạy em đơn thức', 'Hướng dẫn em cộng hai đơn thức đồng dạng'])
+def test_request_to_teach_keeps_book_citations(client, app_mod, monkeypatch, message):
+    page = make_match(score=0.9, text='Đơn thức là biểu thức đại số chỉ gồm một số, hoặc một biến, hoặc có dạng tích của những số và biến.')
+    monkeypatch.setattr(app_mod, 'search_knowledge', lambda *a, **k: [page])
+    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=['Đơn thức là biểu thức đại số chỉ gồm một số, hoặc một biến [1].']))
+
+    assert [s['pdf_page'] for s in stream(client, message=message)[-1]['sources']] == [14]
+
+
+@pytest.mark.parametrize('message', ['Em cảm ơn nhiều ạ', 'Ok em hiểu rồi', 'em không hiểu nổi bố mẹ'])
+def test_thanks_and_feelings_are_not_study_questions(app_mod, message):
+    assert not app_mod._la_cau_hoi_hoc_tap(message)
+
+
 def test_answer_without_citations_gets_no_sources(client, app_mod, monkeypatch):
     monkeypatch.setattr(app_mod, 'search_knowledge', lambda *a, **k: [make_match(score=0.9)])
     monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=['Em mệt à, nghỉ một chút nhé [7]?']))

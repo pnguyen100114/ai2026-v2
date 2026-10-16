@@ -142,13 +142,16 @@ CHAT_SOURCE_MIN_SCORE = float(os.getenv('CHAT_SOURCE_MIN_SCORE', str(max(RAG_SCO
 OTHER_GRADE_MARGIN = float(os.getenv('OTHER_GRADE_MARGIN', '0.05'))
 
 # Dấu hiệu một tin nhắn là câu hỏi học tập chứ không phải chào hỏi, cảm ơn hay tán gẫu.
-# Gồm từ để hỏi và động từ ra đề - "Phân tích x² - 6x + 9" không có dấu hỏi nào nhưng vẫn là
-# một câu hỏi bài.
+# Gồm từ để hỏi, động từ ra đề và lời nhờ dạy - "Phân tích x² - 6x + 9" hay "Giảng lại Đơn
+# thức cho em" không có dấu hỏi nào nhưng vẫn là một câu hỏi bài. Thiếu nhóm lời nhờ dạy thì
+# "Giảng lại Đơn thức" bị coi như lời chào: trang sách vẫn tìm được nhưng không được trích.
+# Không thêm "không hiểu": "em không hiểu nổi bố mẹ" là tâm sự, phải được chỉ tới 111.
 _TU_HOI_BAI = re.compile(
     r'\?|\b('
     r'gì|nào|sao|mấy|bao nhiêu|đâu|ai|'
     r'phân tích|so sánh|tính|giải|chứng minh|nêu|trình bày|phát biểu|định nghĩa|'
-    r'khai triển|rút gọn|tìm|vẽ|kể|viết|đặt câu|cho ví dụ|ví dụ|khác nhau|nghĩa là'
+    r'khai triển|rút gọn|tìm|vẽ|kể|viết|đặt câu|cho ví dụ|ví dụ|khác nhau|nghĩa là|'
+    r'giảng|dạy|hướng dẫn|ôn|nhắc lại|tóm tắt'
     r')\b',
     re.IGNORECASE)
 
