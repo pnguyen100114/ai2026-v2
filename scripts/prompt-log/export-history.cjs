@@ -100,7 +100,36 @@ function copilotSessions() {
   return sessions;
 }
 
-const sessions = [...claudeSessions(), ...copilotSessions()].sort((a, b) => a.turns[0].ts - b.turns[0].ts);
+// ---------- Ban xuat truoc: giu cac phien ma nguon goc da mat ----------
+// Claude Code tu xoa transcript cu hon cleanupPeriodDays (mac dinh 30 ngay), nen doc lai
+// PROMPT_HISTORY.md hien co va giu nhung phien khong con tim thay o tren.
+const outFile = path.join(root, "prompt-log", "PROMPT_HISTORY.md");
+const parseVi = (s) => {
+  const m = s.match(/(\d+):(\d+):(\d+) (\d+)\/(\d+)\/(\d+)/);
+  return m ? Date.UTC(+m[6], m[5] - 1, +m[4], m[1] - 7, +m[2], +m[3]) : NaN;
+};
+function previousSessions() {
+  if (!fs.existsSync(outFile)) return [];
+  const md = fs.readFileSync(outFile, "utf8").replace(/\r\n/g, "\n");
+  const head = /^## (Claude Code|GitHub Copilot) · phien `([0-9a-f]+)`(?: — (.*))?\n\nBat dau: [^\n]*?(?: · Thu muc: `([^`]*)`)?\n/gm;
+  const heads = [...md.matchAll(head)];
+  return heads.map((h, i) => {
+    const body = md.slice(h.index + h[0].length, i + 1 < heads.length ? heads[i + 1].index : md.length).replace(/\n---\n*$/, "");
+    const turnHead = /^### \d+\. (\d+:\d+:\d+ \d+\/\d+\/\d{4})\n\n\*\*Prompt:\*\*\n\n/gm;
+    const ths = [...body.matchAll(turnHead)];
+    const turns = ths.map((t, j) => {
+      const text = body.slice(t.index + t[0].length, j + 1 < ths.length ? ths[j + 1].index : body.length);
+      const [prompt, reply = ""] = text.split(/\n\n\*\*AI tra loi:\*\*\n\n/);
+      return { ts: parseVi(t[1]), prompt: prompt.trim(), reply: reply.trim() };
+    });
+    return { tool: h[1], id: h[2], title: h[3] || "", folder: h[4] || root, turns };
+  }).filter((s) => s.turns.length);
+}
+
+const fresh = [...claudeSessions(), ...copilotSessions()];
+const seen = new Set(fresh.map((s) => `${s.tool}/${s.id}`));
+const kept = previousSessions().filter((s) => !seen.has(`${s.tool}/${s.id}`));
+const sessions = [...fresh, ...kept].sort((a, b) => a.turns[0].ts - b.turns[0].ts);
 
 const fmt = (ts) => new Date(ts).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false });
 const total = sessions.reduce((n, s) => n + s.turns.length, 0);
@@ -124,8 +153,6 @@ for (const s of sessions) {
   md += "---\n\n";
 }
 
-const outDir = path.join(root, "prompt-log");
-fs.mkdirSync(outDir, { recursive: true });
-const out = path.join(outDir, "PROMPT_HISTORY.md");
-fs.writeFileSync(out, md);
-console.log(`Da xuat ${total} prompt (Claude Code: ${byTool("Claude Code")}, Copilot: ${byTool("GitHub Copilot")}) tu ${sessions.length} phien -> ${out}`);
+fs.mkdirSync(path.dirname(outFile), { recursive: true });
+fs.writeFileSync(outFile, md);
+console.log(`Da xuat ${total} prompt (Claude Code: ${byTool("Claude Code")}, Copilot: ${byTool("GitHub Copilot")}) tu ${sessions.length} phien (${kept.length} phien giu tu ban truoc) -> ${outFile}`);

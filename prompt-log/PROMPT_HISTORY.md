@@ -4,9 +4,9 @@ Toan bo prompt da dung voi cong cu AI trong qua trinh phat trien du an, trich tu
 
 | Cong cu | So prompt |
 |---|---|
-| Claude Code | 220 |
+| Claude Code | 247 |
 | GitHub Copilot | 30 |
-| **Tong** | **250** |
+| **Tong** | **277** |
 
 ## GitHub Copilot · phien `7acda034` — Codebase exploration and reporting
 
@@ -2738,5 +2738,198 @@ Bat dau: 08:24:19 19/9/2026
 
 bây giờ hãy explore hệ thống , làm lại báo cáo mới hoàn toàn để đảm bảo không có sai sót  gì, nếu gì không rõ có thể  hỏi em nha
 
+### 251. 09:47:12 19/9/2026
+
+**Prompt:**
+
+theo em báo cáo, test chắc k cần đẩy đâu nhỉ ??
+
+### 252. 09:48:25 19/9/2026
+
+**Prompt:**
+
+vâng
+
 ---
 
+## Claude Code · phien `02e5b0ab`
+
+Bat dau: 09:30:54 19/9/2026
+
+### 253. 09:30:54 19/9/2026
+
+**Prompt:**
+
+toi can tao video miiinh hoa san pham minh có AI nao vừa chạy vừa record không
+
+### 254. 09:34:36 19/9/2026
+
+**Prompt:**
+
+dựng quay video riêng, chỉ chạy khi yêu cầu để tôi biết mẫu và tự ghi lại
+
+### 255. 09:46:27 19/9/2026
+
+**Prompt:**
+
+tiếp tục đi
+
+### 256. 09:59:52 19/9/2026
+
+**Prompt:**
+
+vâng
+
+### 257. 10:04:36 19/9/2026
+
+**Prompt:**
+
+ok gio sao de bat dua quay
+
+### 258. 10:48:50 19/9/2026
+
+**Prompt:**
+
+ok
+
+### 259. 10:54:55 19/9/2026
+
+**Prompt:**
+
+ok
+
+---
+
+## Claude Code · phien `9b2b21cb`
+
+Bat dau: 16:57:33 19/9/2026
+
+### 260. 16:57:33 19/9/2026
+
+**Prompt:**
+
+đưa hết mọi thứ lên github của tôi đi
+
+---
+
+## Claude Code · phien `92dc675f`
+
+Bat dau: 17:01:20 19/9/2026
+
+### 261. 17:01:20 19/9/2026
+
+**Prompt:**
+
+các cái class trong mục 3 á
+cần kêu  các cái class ra luôn
+hãy cho tồi file để lấy
+
+---
+
+## Claude Code · phien `aa2fcc54`
+
+Bat dau: 17:06:01 19/9/2026
+
+### 262. 17:06:01 19/9/2026
+
+**Prompt:**
+
+để báo cáo cần tạo những thư mục tên gì
+
+### 263. 17:08:32 19/9/2026
+
+**Prompt:**
+
+ban gom het tạo thanh thu muc minh chung de toi copy len drive di
+
+---
+
+## Claude Code · phien `d5d1156e`
+
+Bat dau: 14:41:55 2/10/2026
+
+### 264. 14:41:55 2/10/2026
+
+**Prompt:**
+
+hiện tại có bao nhiêu tk đăng ký rồi
+
+### 265. 14:44:21 2/10/2026
+
+**Prompt:**
+
+kiem tra là bao nhieu tk
+
+---
+
+## Claude Code · phien `857ba15e`
+
+Bat dau: 22:34:08 15/10/2026
+
+### 266. 22:34:08 15/10/2026
+
+**Prompt:**
+
+chạy local
+
+---
+
+## Claude Code · phien `0c04fb07`
+
+Bat dau: 22:58:24 15/10/2026
+
+### 267. 22:58:24 15/10/2026
+
+**Prompt:**
+
+Bạn là dev  nhiều kinh nghiệm, hãy giúp tôi Bổ sung dòng nhắc nhở độ tin cậy: "Mimo có thể nhầm lẫn, em nhớ đối chiếu lại với trang sách giáo khoa nhé!" ở khung chat và chân mỗi tin nhắn
+
+### 268. 22:59:36 15/10/2026
+
+**Prompt:**
+
+chạy local thử
+
+### 269. 23:03:50 15/10/2026
+
+**Prompt:**
+
+sao chưa thấy cập nhật cải tiến mới bạn vửa thêm lên trên trang web đang chạy local  http://127.0.0.1:5173/
+
+---
+
+## Claude Code · phien `389eeb79`
+
+Bat dau: 22:58:24 15/10/2026
+
+### 270. 22:58:24 15/10/2026
+
+**Prompt:**
+
+Bạn là dev  nhiều kinh nghiệm, hãy giúp tôi Bổ sung dòng nhắc nhở độ tin cậy: "Mimo có thể nhầm lẫn, em nhớ đối chiếu lại với trang sách giáo khoa nhé!" ở khung chat và chân mỗi tin nhắn
+
+### 271. 22:59:36 15/10/2026
+
+**Prompt:**
+
+chạy local thử
+
+### 272. 23:02:50 15/10/2026
+
+**Prompt:**
+
+[Request interrupted by user]
+
+---
+
+## Claude Code · phien `6d808f9d`
+
+Bat dau: 04:08:47 16/10/2026 · Thu muc: `d:\AI2026\4\Mimo-AI-Gia-Su\Gia su Ai cai tien`
+
+### 273. 04:08:47 16/10/2026
+
+**Prompt:**
+
+so sanh code work space nay va D:\AI2026\4\AI2026-v2 xem co thay doi gi de  dem code sang D:\AI2026\2\AI2026-v2
+
+-
