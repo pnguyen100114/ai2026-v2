@@ -22,23 +22,25 @@ if not exist "node_modules\vite\bin\vite.js" (
   exit /b %errorlevel%
 )
 
-echo Dang kiem tra backend...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:8000/api/health' -TimeoutSec 2; if ($r.StatusCode -eq 200) { exit 0 } } catch { exit 1 }"
+rem Luon khoi dong lai backend: ban dang chay co the la code cu (bat truoc khi sua hoac cap nhat).
+echo Dang tat backend cu (neu co)...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\restart-backend.ps1" -StopOnly
 if errorlevel 1 (
-  echo Dang khoi dong backend...
-  start "Gia Su AI - Backend" /min cmd /k "cd /d ""%~dp0"" && ""%~dp0.venv\Scripts\python.exe"" -m uvicorn backend.app:app --host 127.0.0.1 --port 8000"
-  for /l %%i in (1,1,60) do (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:8000/api/health' -TimeoutSec 1; if ($r.StatusCode -eq 200) { exit 0 } } catch { exit 1 }"
-    if not errorlevel 1 goto :backend_ready
-    timeout /t 1 /nobreak >nul
-  )
-  echo [LOI] Backend chua khoi dong duoc.
-  echo Hay xem cua so Backend de biet loi chi tiet.
+  echo [LOI] Cong 8000 dang bi chuong trinh khac giu, khong tat duoc.
   pause
   exit /b 1
-) else (
-  echo Backend dang chay.
 )
+echo Dang khoi dong backend...
+start "Gia Su AI - Backend" /min powershell -NoProfile -ExecutionPolicy Bypass -NoExit -File "%~dp0scripts\restart-backend.ps1"
+for /l %%i in (1,1,60) do (
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:8000/api/health' -TimeoutSec 1; if ($r.StatusCode -eq 200) { exit 0 } } catch { exit 1 }"
+  if not errorlevel 1 goto :backend_ready
+  timeout /t 1 /nobreak >nul
+)
+echo [LOI] Backend chua khoi dong duoc.
+echo Hay xem cua so Backend de biet loi chi tiet.
+pause
+exit /b 1
 
 :backend_ready
 echo Dang kiem tra giao dien...
