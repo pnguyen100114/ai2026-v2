@@ -202,10 +202,11 @@ def cham(mong_doi: str, mon: str, lop: int, ket: dict, them: dict | None = None)
         # Dò từ khoá thì không chắc chắn: một câu báo diễn đạt kiểu khác sẽ bị chấm nhầm là
         # trượt. Nên ca nào cũng phải người đọc xác nhận lại, xem cột nguoi_cham_kien_thuc.
         loi = (ket.get('noi_dung') or '').lower()
-        dau_hieu = ('không có trong', 'chưa có', 'không nằm trong', 'không thuộc',
-                    'không tìm thấy', 'sách của em', 'chương trình lớp', 'thuộc chương trình',
-                    'mimo có', 'mimo đang có', 'tài liệu', 'sách mimo', 'lớp 9', 'lớp 10',
-                    'lớp 11', 'lớp 12', 'chương trình cũ')
+        # Chỉ nhận câu PHỦ ĐỊNH rõ ràng. Bản cũ có cả "thuộc chương trình", "lớp 9", "tài liệu":
+        # câu "bất phương trình thuộc chương trình Toán lớp 8" (không báo gì, lại sai lớp) vẫn đạt.
+        dau_hieu = ('không có trong', 'chưa có trong', 'chưa có bài', 'không nằm trong',
+                    'không tìm thấy', 'không có bài', 'không có nội dung', 'không có phần',
+                    'không có thông tin')
         if any(d in loi for d in dau_hieu):
             return True, 'có báo sách không có bài này'
         return False, 'dạy như thể sách có bài này, không báo gì'
