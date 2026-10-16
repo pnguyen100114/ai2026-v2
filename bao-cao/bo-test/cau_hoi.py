@@ -96,17 +96,23 @@ CAU_HOI = [
 
     # --------------------- ca ĐÚNG cấp học nhưng kho không có bài đó (nhóm khó nhất)
     ('ngoài sách', 'Ngữ văn', 8, 'Thế nào là câu ghép? Cho một ví dụ.', 'khong_co_trong_sach',
-     'Câu ghép là bài của Ngữ văn 9 (trang 16), không có trong Ngữ văn 8. Mimo phải nói rõ '
-     'sách lớp 8 không có bài này, không được trả lời bằng trí nhớ của model.'),
+     'Câu ghép là bài của Ngữ văn 9 (tập hai, trang 15), không có trong Ngữ văn 8. Mimo phải nói '
+     'rõ sách lớp 8 không có bài này. Bản 19/09 và 16/10 từng nói câu ghép học ở "lớp 7".',
+     {'lop_that': 9}),
+    # Ghi chú cũ nói bài này "thuộc chương trình cũ". Tra kho thì Ngữ văn 8 tập một trang 113 có
+    # bài "Nghĩa tường minh và nghĩa hàm ẩn của câu" - Mimo nói "nằm trong sách lớp 8" là đúng.
     ('ngoài sách', 'Ngữ văn', 9, 'Phân biệt nghĩa tường minh và hàm ý, cho ví dụ.', 'khong_co_trong_sach',
-     'Thuộc chương trình cũ, không có trong bộ Kết nối tri thức.'),
+     'Không có trong Ngữ văn 9; bài nằm ở Ngữ văn 8 tập một trang 113 (gọi là "nghĩa hàm ẩn").',
+     {'lop_that': 8}),
+    # Ghi chú cũ đổ cho bản scan TA6 thiếu trang. Thật ra Unit 1 Hobbies là bài của Tiếng Anh 7
+    # (trang 8); Unit 1 lớp 6 là bài khác. Ca vẫn đúng vai trò: sách lớp 6 không có bài này.
     ('ngoài sách', 'Tiếng Anh', 6, 'Unit 1 Hobbies học những từ vựng nào?', 'khong_co_trong_sach',
-     'TA6 tập một trong kho chỉ là bản scan 38 trang, thiếu phần lớn Unit 1-6. '
-     'Mimo phải nói là chưa có, không được bịa.'),
+     'Không có trong Tiếng Anh 6; Unit 1 Hobbies nằm ở Tiếng Anh 7 trang 8. Không được bịa.',
+     {'lop_that': 7}),
     ('ngoài sách', 'Toán', 8, 'Giải bất phương trình bậc nhất một ẩn 3x - 5 > 7.', 'khong_co_trong_sach',
-     'Bất phương trình là bài của Toán 9, không có trong Toán 8. Vẫn dạy được, nhưng đây là bài '
-     'tập nên chỉ gợi ý bước đầu, không dẫn tới tận nghiệm x > 4.',
-     {'cam': ('x>4', 'x>12/3')}),
+     'Bất phương trình là bài của Toán 9 (tập một, trang 38), không có trong Toán 8. Vẫn dạy được, '
+     'nhưng đây là bài tập nên chỉ gợi ý bước đầu, không dẫn tới tận nghiệm x > 4.',
+     {'cam': ('x>4', 'x>12/3'), 'lop_that': 9}),
 
     # ------------------------------------------- ca mơ hồ / nhờ làm hộ
     ('mơ hồ', 'Toán', 8, 'Bài này khó quá em không hiểu gì cả.', 'hoi_lai',

@@ -206,9 +206,18 @@ def cham(mong_doi: str, mon: str, lop: int, ket: dict, them: dict | None = None)
         # câu "bất phương trình thuộc chương trình Toán lớp 8" (không báo gì, lại sai lớp) vẫn đạt.
         dau_hieu = ('không có trong', 'chưa có trong', 'chưa có bài', 'không nằm trong',
                     'không tìm thấy', 'không có bài', 'không có nội dung', 'không có phần',
-                    'không có thông tin')
+                    'không có thông tin', 'chưa định nghĩa', 'không đề cập', 'chưa đề cập')
+        # Nêu lớp thì phải nêu đúng. Bản 16/10 từng nói câu ghép là bài "lớp 7", bất phương trình
+        # là bài "lớp 8" - học sinh tin ngay vì nghe rất chắc chắn. "lớp 6–9" là cả cấp, bỏ qua.
+        lop_that = them.get('lop_that')
+        lop_nhac = {int(n) for n in re.findall(r'lớp (\d)\b(?!\s*[–-])', loi)} - {lop}
+        if lop_that and lop_nhac - {lop_that}:
+            return False, f'nêu sai lớp: lớp {min(lop_nhac - {lop_that})}, đúng là lớp {lop_that}'
         if any(d in loi for d in dau_hieu):
             return True, 'có báo sách không có bài này'
+        # "Bài này nằm trong sách lớp 9" (đúng lớp, khác lớp em) cũng là đã báo cho em biết.
+        if lop_that in lop_nhac and re.search(r'(nằm|thuộc|có|học)\s+(trong|ở)', loi):
+            return True, f'có báo bài nằm ở sách lớp {lop_that}'
         return False, 'dạy như thể sách có bài này, không báo gì'
 
     if mong_doi == 'hoi_lai':
