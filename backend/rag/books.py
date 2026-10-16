@@ -117,11 +117,11 @@ BOOKS: list[Book] = [
     Book(id='toan8-tap1', subject='Toán', grade=8, volume=1, title='Toán 8 – Tập một',
          files=('TOAN8-Tap1.pdf', 'toan8-tap1.pdf'), page_offset=0),
     Book(id='toan8-tap2', subject='Toán', grade=8, volume=2, title='Toán 8 – Tập hai',
-         files=('TOAN8-Tap2.pdf',), page_offset=-1, last_page=70),
+         files=('TOAN8-Tap2.pdf',), page_offset=-1),
     Book(id='toan9-tap1', subject='Toán', grade=9, volume=1, title='Toán 9 – Tập một',
-         files=('TOAN9-Tap1.pdf',), page_offset=-1, last_page=60),
+         files=('TOAN9-Tap1.pdf',), page_offset=-1),
     Book(id='toan9-tap2', subject='Toán', grade=9, volume=2, title='Toán 9 – Tập hai',
-         files=('Toan9-tap2.pdf', 'TOAN9-Tap2.pdf'), page_offset=-1, last_page=66),
+         files=('Toan9-tap2.pdf', 'TOAN9-Tap2.pdf'), page_offset=-1),
 
     # --- Ngữ văn ---
     # "NV - TAP 1/2.pdf" carries no grade in the name; identified as grade 6 from its contents
@@ -131,7 +131,7 @@ BOOKS: list[Book] = [
     Book(id='nv6-tap2', subject='Ngữ văn', grade=6, volume=2, title='Ngữ văn 6 – Tập hai',
          files=('NV - TAP 2.pdf', 'NV6 - TAP 2.pdf'), page_offset=-1),
     Book(id='nv7-tap1', subject='Ngữ văn', grade=7, volume=1, title='Ngữ văn 7 – Tập một',
-         files=('NV7 - TAP 1.pdf',), page_offset=-1, last_page=70),
+         files=('NV7 - TAP 1.pdf',), page_offset=-1),
     Book(id='nv7-tap2', subject='Ngữ văn', grade=7, volume=2, title='Ngữ văn 7 – Tập hai',
          files=('NV7 - TAP 2.pdf',), page_offset=-1),
     Book(id='nv8-tap1', subject='Ngữ văn', grade=8, volume=1, title='Ngữ văn 8 – Tập một',
@@ -139,17 +139,17 @@ BOOKS: list[Book] = [
     Book(id='nv8-tap2', subject='Ngữ văn', grade=8, volume=2, title='Ngữ văn 8 – Tập hai',
          files=('NV8-Tap2.pdf',), page_offset=-2),
     Book(id='nv9-tap1', subject='Ngữ văn', grade=9, volume=1, title='Ngữ văn 9 – Tập một',
-         files=('NV9-Tap1.pdf',), page_offset=0, last_page=77),
+         files=('NV9-Tap1.pdf',), page_offset=-1),
     Book(id='nv9-tap2', subject='Ngữ văn', grade=9, volume=2, title='Ngữ văn 9 – Tập hai',
          files=('NV9-Tap2.pdf',), page_offset=-1),
 
     # --- Tiếng Anh (Global Success) ---
     Book(id='ta6-tap1', subject='Tiếng Anh', grade=6, volume=1, title='Tiếng Anh 6 – Tập một',
-         files=('TA6 -TAP 1.pdf',), page_offset=-1, last_page=36),
+         files=('TA6 -TAP 1.pdf',), page_offset=-1),
     Book(id='ta6-tap2', subject='Tiếng Anh', grade=6, volume=2, title='Tiếng Anh 6 – Tập hai',
          files=('TA6 -TAP 2.pdf',), page_offset=-2),
     Book(id='ta7', subject='Tiếng Anh', grade=7, volume=0, title='Tiếng Anh 7',
-         files=('TA7.pdf',), page_offset=-1, last_page=70),
+         files=('TA7.pdf',), page_offset=-1),
     Book(id='ta8', subject='Tiếng Anh', grade=8, volume=0, title='Tiếng Anh 8',
          files=('TA8.pdf',), page_offset=-2),
     Book(id='ta9', subject='Tiếng Anh', grade=9, volume=0, title='Tiếng Anh 9',
@@ -591,7 +591,7 @@ COURSES: list[Course] = [
     ]),
     # Global Success has no "Bài": every unit section (Getting Started, A Closer Look 1...) is one
     # lesson, numbered through the course, and its title carries the unit because every unit has an
-    # "A Closer Look 1". Units past the end of a scan only have their first page (from the contents).
+    # "A Closer Look 1". Units past the end of a scan (Tiếng Anh 9) only have their first page.
     Course(subject='Tiếng Anh', grade=6, series='Global Success', numbered_lessons=False, outline=[
         *_gs_units(1, 1, [
             (1, 'My New School', (6, 8, 9, 11, 12, 13, 14, 15)),
@@ -599,7 +599,11 @@ COURSES: list[Course] = [
             (3, 'My Friends', (26, 28, 29, 31, 32, 33, 34, 35)),
         ]),
         (101, 'Review 1', 1, [(25, 'Review 1', 36)]),
-        *_gs_units(1, 26, [(4, 'My Neighbourhood', 38), (5, 'Natural Wonders of Viet Nam', 48), (6, 'Our Tet Holiday', 58)]),
+        *_gs_units(1, 26, [
+            (4, 'My Neighbourhood', (38, 40, 41, 43, 44, 45, 46, 47)),
+            (5, 'Natural Wonders of Viet Nam', (48, 50, 51, 53, 54, 55, 56, 57)),
+            (6, 'Our Tet Holiday', (58, 60, 61, 63, 64, 65, 66, 67)),
+        ]),
         (102, 'Review 2', 1, [(50, 'Review 2', 68)]),
         # Tập hai restarts its page numbers: Unit 7 starts on page 6.
         *_gs_units(2, 51, [
@@ -628,9 +632,17 @@ COURSES: list[Course] = [
             (6, 'A Visit to a School', (60, 62, 63, 64, 66, 67, 68, 69)),
         ]),
         (102, 'Review 2', 0, [(50, 'Review 2', 70)]),
-        *_gs_units(0, 51, [(7, 'Traffic', 72), (8, 'Films', 82), (9, 'Festivals Around the World', 92)]),
+        *_gs_units(0, 51, [
+            (7, 'Traffic', (72, 74, 75, 76, 78, 79, 80, 81)),
+            (8, 'Films', (82, 84, 85, 86, 87, 89, 90, 91)),
+            (9, 'Festivals Around the World', (92, 94, 95, 96, 97, 99, 100, 101)),
+        ]),
         (103, 'Review 3', 0, [(75, 'Review 3', 102)]),
-        *_gs_units(0, 76, [(10, 'Energy Sources', 104), (11, 'Travelling in the Future', 114), (12, 'English-Speaking Countries', 124)]),
+        *_gs_units(0, 76, [
+            (10, 'Energy Sources', (104, 106, 107, 109, 110, 111, 112, 113)),
+            (11, 'Travelling in the Future', (114, 116, 117, 119, 120, 121, 122, 123)),
+            (12, 'English-Speaking Countries', (124, 126, 127, 128, 130, 131, 132, 133)),
+        ]),
         (104, 'Review 4', 0, [(100, 'Review 4', 134)]),
     ]),
     Course(subject='Tiếng Anh', grade=8, series='Global Success', numbered_lessons=False, outline=[
@@ -1091,7 +1103,7 @@ COURSES: list[Course] = [
             (27, 'Viết: Viết bài văn nghị luận về một vấn đề cần giải quyết (trong đời sống của học sinh hiện nay)', 77),
             (28, 'Nói và nghe: Trình bày ý kiến về một vấn đề có tính thời sự trong đời sống của lứa tuổi học sinh hiện nay', 82),
             (29, 'Hồn nước nằm trong tiếng mẹ cha – Củng cố, mở rộng', 83),
-            (30, 'Kiều ở lầu Ngưng Bích', 84),
+            (30, 'Kiều ở lầu Ngưng Bích', 85),
         ]),
         (4, 'Bài 4. Khám phá vẻ đẹp văn chương', 1, [
             (31, 'Khám phá vẻ đẹp văn chương – Tri thức ngữ văn', 87),

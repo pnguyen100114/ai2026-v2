@@ -157,9 +157,9 @@ def test_cited_page_carries_the_lesson_it_belongs_to():
 @pytest.mark.parametrize('subject, grade, topic', [
     ('KHTN', 6, 'Bài 41: Lực là gì?'),       # number does not match
     ('Tiếng Anh', 7, 'Bài 2: A Closer Look 1'),  # old AI-roadmap title: no unit, so no pages
-    ('Toán', 9, 'Bài 11: Tỉ số lượng giác của góc nhọn'),  # past the end of the scan
+    ('Toán', 6, 'Bài 15: Quy tắc dấu ngoặc'),  # past the end of the Tập một scan
     ('Toán', 6, 'Phân số'),                   # not a lesson title
-    ('Toán', 8, 'Bài 33: Hai tam giác đồng dạng'),  # past the end of the Tập hai scan
+    ('Tiếng Anh', 9, 'Unit 7 – Getting Started'),  # past the end of the scan
     ('Ngữ văn', 6, 'Bài 1: Bầu trời tuổi thơ'),
 ])
 def test_lesson_page_filter_none_without_book_pages(subject, grade, topic):
