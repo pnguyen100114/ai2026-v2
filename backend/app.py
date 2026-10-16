@@ -352,6 +352,13 @@ SUGGESTION_MARKER = '<<<MIMO_GOI_Y>>>'
 UNDERSTANDING_LEVELS = ('mất gốc', 'hiểu sơ', 'đã hiểu')
 
 
+def _chip_text(item: Any) -> str:
+    # Chip được vẽ bằng KaTeX như câu trả lời, nên "$3x^2$" giữ nguyên; chỉ khi dấu $ bị lẻ
+    # (công thức hở, KaTeX không vẽ được) mới bỏ hết để em không thấy "$" thô.
+    text = str(item).strip()
+    return text if text.count('$') % 2 == 0 else text.replace('$', '').strip()
+
+
 def _parse_suggestions(raw: str) -> dict[str, Any]:
     """Parse the JSON line Gemini appends after SUGGESTION_MARKER; tolerate missing or malformed output."""
     cleaned = raw.strip().strip('`').strip()
@@ -363,8 +370,7 @@ def _parse_suggestions(raw: str) -> dict[str, Any]:
     replies = payload.get('quick_replies') if isinstance(payload.get('quick_replies'), list) else []
     understanding = payload.get('understanding')
     return {
-        # Chips are plain buttons: LaTeX delimiters would show up as raw "$".
-        'quick_replies': [str(item).replace('$', '').strip() for item in replies if str(item).replace('$', '').strip() and not leaks_answer(str(item))][:3],
+        'quick_replies': [text for text in (_chip_text(item) for item in replies) if text and not leaks_answer(text)][:3],
         'understanding': understanding if understanding in UNDERSTANDING_LEVELS else None,
     }
 
@@ -947,7 +953,7 @@ TRÌNH BÀY
 
 SAU KHI TRẢ LỜI XONG, xuống dòng và viết đúng một dòng dạng:
 {SUGGESTION_MARKER}{marker_example}
-- quick_replies: 2-3 câu ngắn (tối đa 8 từ) mà EM có thể bấm để nói tiếp, viết theo giọng học sinh, phải liên quan trực tiếp đến nội dung vừa trao đổi (ví dụ "Cho em gợi ý thêm", "Cho em xem lời giải", "Vì sao lại đổi dấu ạ?"). TUYỆT ĐỐI không đưa đáp án hay kết quả của câu hỏi Mimo vừa hỏi vào quick_replies – em phải tự trả lời. Viết chữ thường, không dùng LaTeX hay ký hiệu $; nếu cần gọi thì gọi "Mimo".
+- quick_replies: 2-3 câu ngắn (tối đa 8 từ) mà EM có thể bấm để nói tiếp, viết theo giọng học sinh, phải liên quan trực tiếp đến nội dung vừa trao đổi (ví dụ "Cho em gợi ý thêm", "Cho em xem lời giải", "Vì sao lại đổi dấu ạ?"). TUYỆT ĐỐI không đưa đáp án hay kết quả của câu hỏi Mimo vừa hỏi vào quick_replies – em phải tự trả lời. Công thức trong quick_replies viết LaTeX giữa hai dấu $ như phần trả lời (ví dụ "Vì sao $3x^2 - 2y$ không phải đơn thức?"), không viết "x^2" trần; nếu cần gọi thì gọi "Mimo".
 - understanding: một trong "mất gốc", "hiểu sơ", "đã hiểu" – ước lượng mức hiểu của em dựa trên hội thoại; ghi null nếu hội thoại chưa có nội dung bài học để đánh giá (chào hỏi, tâm sự, chuyện ngoài lề).{image_text_rule}
 
 Context SGK:

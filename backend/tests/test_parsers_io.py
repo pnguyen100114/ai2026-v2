@@ -13,6 +13,9 @@ from backend.app import _parse_image_text, _parse_suggestions
     ('{"quick_replies":"A","understanding":"giỏi"}', {'quick_replies': [], 'understanding': None}),
     ('{hỏng json', {'quick_replies': [], 'understanding': None}),
     ('', {'quick_replies': [], 'understanding': None}),
+    # Công thức đủ cặp $ được giữ để chip vẽ bằng KaTeX; dấu $ lẻ thì bỏ.
+    ('{"quick_replies":["Vì sao $3x^2 - 2y$ không phải ạ?","Còn $x + 1 thì sao?"]}',
+     {'quick_replies': ['Vì sao $3x^2 - 2y$ không phải ạ?', 'Còn x + 1 thì sao?'], 'understanding': None}),
 ])
 def test_parse_suggestions(raw, expected):
     assert _parse_suggestions(raw) == expected

@@ -60,7 +60,7 @@ const BRACKET_MATH = /\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)/g
 const BARE_COMMAND = /\\(?:[dt]?frac|sqrt|cdot|times|div|pm|mp|leq?|geq?|neq?|approx|infty|pi|alpha|beta|gamma|delta|Delta|lambda|mu|omega|Omega|varphi|phi|theta|sigma|rho|circ|angle|widehat|hat|overline|vec|triangle|perp|parallel|in|notin|subset|subseteq|cup|cap|emptyset|varnothing|mathbb|mathrm|text|left|right|Rightarrow|Leftrightarrow|rightarrow|to|cdots|ldots|dots|sin|cos|tan|cot|log|sum|lt|gt|%)(?![a-zA-Z])/
 // Từ đứng cạnh lệnh LaTeX cũng thuộc công thức nếu là dấu phép toán, một chữ cái, hay cụm ASCII
 // có số/mũ ("2x", "x^2", "y") — còn "khi", "ta", "của" là chữ thường, công thức dừng ở đó.
-const MATH_WORD = /^(?:[-+=<>*/:×·≤≥≠]|[A-Za-z]|[A-Za-z0-9^_{}()|',.]*[\d^_{}][A-Za-z0-9^_{}()|',.]*)$/
+const MATH_WORD = /^(?:[-+=<>*/:×·≤≥≠]|[A-Za-z]|[-−]?[A-Za-z0-9^_{}()|',.+\-*/=]*[\d^_{}][A-Za-z0-9^_{}()|',.+\-*/=]*)$/
 const TRAILING_PUNCTUATION = /[.,;:!?]+$/
 // Không đụng vào code: `\n` trong một đoạn code phải giữ nguyên.
 const CODE_SEGMENT = /(```[\s\S]*?```|`[^`\n]*`)/
@@ -83,10 +83,12 @@ function splitWords(text: string): string[] {
   return parts
 }
 
-// Bọc từng cụm LaTeX trần trong $...$: mỗi cụm là chuỗi từ liền nhau trên cùng một dòng, có ít
-// nhất một lệnh LaTeX, ví dụ "2x + \frac{1}{2}" trong "Tính 2x + \frac{1}{2}." (dấu chấm câu ở cuối để ngoài).
+// Bọc từng cụm công thức trần trong $...$: mỗi cụm là chuỗi từ liền nhau trên cùng một dòng, có lệnh
+// LaTeX hoặc số mũ, ví dụ "2x + \frac{1}{2}" trong "Tính 2x + \frac{1}{2}." hay "3x^2 - 2y" trong một
+// gợi ý trả lời (dấu chấm câu ở cuối để ngoài).
+const isFormula = (text: string) => BARE_COMMAND.test(text) || /\^\{?[A-Za-z0-9]/.test(text)
 function wrapBareLatex(text: string): string {
-  if (!BARE_COMMAND.test(text)) return readablePowers(text)
+  if (!isFormula(text)) return readablePowers(text)
   const parts = splitWords(text)
   const isMath = (index: number) => BARE_COMMAND.test(parts[index]) || MATH_WORD.test(parts[index])
   let result = ''
@@ -96,7 +98,7 @@ function wrapBareLatex(text: string): string {
     let last = index
     while (last + 2 < parts.length && !parts[last + 1].includes('\n') && isMath(last + 2)) last += 2
     const run = parts.slice(index, last + 1).join('')
-    if (!BARE_COMMAND.test(run)) result += readablePowers(run)
+    if (!isFormula(run)) result += readablePowers(run)
     else {
       const punctuation = run.match(TRAILING_PUNCTUATION)?.[0] ?? ''
       result += `$${run.slice(0, run.length - punctuation.length)}$${punctuation}`
@@ -117,6 +119,40 @@ export function normalizeMath(content: string): string {
       .split(MATH_SEGMENT)
       .map((segment, segmentIndex) => (segmentIndex % 2 === 1 ? segment : wrapBareLatex(segment)))
       .join(''))
+    .join('')
+}
+
+// Bản chữ thường của công thức, cho chỗ không vẽ được KaTeX (tiêu đề cuộc trò chuyện, nội dung
+// sao chép): "Vì sao $3x^2 - 2y$ ạ?" → "Vì sao 3x² - 2y ạ?", "$\frac{1}{2}$" → "1/2".
+// Tử/mẫu chỉ là một số hay một đơn thức thì không cần ngoặc: "1/2", "5/x^2y", "(x + 1)/2".
+const group = (text: string) => (/^[\w^.,]+$/.test(text) ? text : `(${text})`)
+const PLAIN_LATEX: [RegExp, string | ((...groups: string[]) => string)][] = [
+  [/\\[dt]?frac\{([^{}]*)\}\{([^{}]*)\}/g, (_match, top, bottom) => `${group(top)}/${group(bottom)}`],
+  [/\\sqrt\{([^{}]*)\}/g, (_match, inside) => `√${group(inside)}`],
+  [/\\(?:cdot|times)(?![a-zA-Z])/g, '·'],
+  [/\\div(?![a-zA-Z])/g, ':'],
+  [/\\pm(?![a-zA-Z])/g, '±'],
+  [/\\(?:leq?)(?![a-zA-Z])/g, '≤'],
+  [/\\(?:geq?)(?![a-zA-Z])/g, '≥'],
+  [/\\(?:neq?)(?![a-zA-Z])/g, '≠'],
+  [/\\approx(?![a-zA-Z])/g, '≈'],
+  [/\\pi(?![a-zA-Z])/g, 'π'],
+  [/\^\{?\\circ\}?/g, '°'],
+  [/\\%/g, '%'],
+]
+
+export function plainMath(content: string): string {
+  return normalizeMath(content)
+    .split(MATH_SEGMENT)
+    .map((segment, index) => {
+      if (index % 2 === 0) return segment
+      let text = segment.replace(/^\$+|\$+$/g, '')
+      // Lặp vài lượt để phân số lồng nhau mở từ trong ra ngoài.
+      for (let round = 0; round < 3; round += 1) {
+        for (const [pattern, replacement] of PLAIN_LATEX) text = text.replace(pattern, replacement as string)
+      }
+      return readablePowers(text).replace(/\\[a-zA-Z]+/g, '').replace(/[{}]/g, '')
+    })
     .join('')
 }
 

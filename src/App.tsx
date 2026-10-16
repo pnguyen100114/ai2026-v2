@@ -39,7 +39,7 @@ import {
 import PomodoroState from './components/PomodoroState'
 import ProfilePage from './components/ProfilePage'
 import { usePomodoro } from './contexts/PomodoroContext'
-import ChatMessageContent, { MathText, citedSourceNumbers } from './components/ChatMessageContent'
+import ChatMessageContent, { MathText, citedSourceNumbers, plainMath } from './components/ChatMessageContent'
 import { useAuth } from './contexts/AuthContext'
 import { apiFetch, apiJson, apiUrl } from './lib/api'
 import { RecordingTooShortError, startRecording, vietnameseBrowserVoice, voiceInputSupported, type Recorder } from './lib/audio'
@@ -501,7 +501,7 @@ function App() {
       // Opening a chat or refreshing its greeting is not activity; only a new or edited last message moves it to the top.
       const changed = session.messages.length !== chat.length || session.messages.at(-1)?.content !== chat.at(-1)?.content
       const firstQuestion = chat.find((item) => item.role === 'user')
-      return { ...session, messages: chat, updatedAt: changed ? Date.now() : session.updatedAt, title: session.title === DEFAULT_SESSION_TITLE && firstQuestion ? firstQuestion.content.slice(0, 42) : session.title }
+      return { ...session, messages: chat, updatedAt: changed ? Date.now() : session.updatedAt, title: session.title === DEFAULT_SESSION_TITLE && firstQuestion ? plainMath(firstQuestion.content).slice(0, 42) : session.title }
     }))
   }, [chat, currentSessionId])
 
@@ -618,7 +618,7 @@ function App() {
         body: JSON.stringify({
           session: currentSession && {
             id: currentSession.id,
-            title: currentSession.title === DEFAULT_SESSION_TITLE || currentSession.title === 'Cuộc trò chuyện hiện tại' ? (baseChat.find((item) => item.role === 'user')?.content ?? userContent).slice(0, 42) : currentSession.title,
+            title: currentSession.title === DEFAULT_SESSION_TITLE || currentSession.title === 'Cuộc trò chuyện hiện tại' ? plainMath(baseChat.find((item) => item.role === 'user')?.content ?? userContent).slice(0, 42) : currentSession.title,
             subject: currentSession.subject,
             grade: currentSession.grade,
             lesson,
@@ -857,7 +857,7 @@ function App() {
 
   const renderSessionItem = (session: ChatSession) => (
     <div key={session.id} className={`chat-history-item ${session.id === currentSessionId ? 'active' : ''}`}>
-      {isEditingSessionId === session.id ? <input className="chat-history-edit" autoFocus value={editingSessionTitle} title={editingSessionTitle} onChange={(event) => setEditingSessionTitle(event.target.value)} onClick={(event) => event.stopPropagation()} onBlur={() => finishRenameChat(session.id, true)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); finishRenameChat(session.id, true) } if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); finishRenameChat(session.id, false) } }} /> : <button type="button" className="chat-history-select" onClick={() => { selectChat(session); setShowAllChats(false) }} title={`${session.title} · ${session.subject} · ${session.grade}`}><MessageSquare size={14} /><span><strong>{session.title}</strong><small>{session.lesson && session.lesson !== session.title ? `${session.lesson} · ` : ''}{new Date(session.updatedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })} ({SUBJECTS.find((item) => item.value === session.subject)?.label ?? session.subject} - {session.grade})</small></span></button>}
+      {isEditingSessionId === session.id ? <input className="chat-history-edit" autoFocus value={editingSessionTitle} title={editingSessionTitle} onChange={(event) => setEditingSessionTitle(event.target.value)} onClick={(event) => event.stopPropagation()} onBlur={() => finishRenameChat(session.id, true)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); finishRenameChat(session.id, true) } if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); finishRenameChat(session.id, false) } }} /> : <button type="button" className="chat-history-select" onClick={() => { selectChat(session); setShowAllChats(false) }} title={`${plainMath(session.title)} · ${session.subject} · ${session.grade}`}><MessageSquare size={14} /><span><strong>{plainMath(session.title)}</strong><small>{session.lesson && session.lesson !== session.title ? `${session.lesson} · ` : ''}{new Date(session.updatedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })} ({SUBJECTS.find((item) => item.value === session.subject)?.label ?? session.subject} - {session.grade})</small></span></button>}
       <details className="chat-history-menu"><summary aria-label="Tùy chọn cuộc trò chuyện"><MoreHorizontal size={14} /></summary><div className="chat-history-actions"><button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); startRenameChat(event, session) }}><Pencil size={12} /> Đổi tên</button><button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); void deleteChat(session.id) }}><Trash2 size={12} /> Xóa</button></div></details>
     </div>
   )
@@ -1232,7 +1232,7 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
         setInputNotice('Mimo chưa đọc được lúc này, em kiểm tra mạng rồi thử lại nhé.')
         return
       }
-      const utterance = new SpeechSynthesisUtterance(entry.content.replace(/\[\d+(?:\s*[,;]\s*\d+)*\]/g, '').replace(/[*_#`$\\{}^]/g, ' ').replace(/\s+/g, ' ').trim())
+      const utterance = new SpeechSynthesisUtterance(plainMath(entry.content).replace(/\[\d+(?:\s*[,;]\s*\d+)*\]/g, '').replace(/[*_#`$\\{}^]/g, ' ').replace(/\s+/g, ' ').trim())
       utterance.voice = voice
       utterance.lang = voice.lang
       utterance.onend = () => { if (request === speakRequest.current) setSpeakingIndex(null) }
@@ -1359,11 +1359,11 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
                 <ChatMessageContent content={entry.content} sources={entry.sources} onCite={setPreviewSource} />
               </div>}
               {entry.failed && <button type="button" className="retry-btn" disabled={loading} onClick={() => onRetry(index)}><RefreshCcw size={15} /> Thử lại</button>}
-              {isLast && !loading && entry.role === 'assistant' && entry.quickReplies && entry.quickReplies.length > 0 && <div className="reply-chips">{entry.quickReplies.slice(0, 3).map((reply) => <button key={reply} type="button" onClick={() => onSend(reply)}>{reply}</button>)}</div>}
+              {isLast && !loading && entry.role === 'assistant' && entry.quickReplies && entry.quickReplies.length > 0 && <div className="reply-chips">{entry.quickReplies.slice(0, 3).map((reply) => <button key={reply} type="button" onClick={() => onSend(reply)}><MathText content={reply} /></button>)}</div>}
               {entry.role === 'assistant' && <SourcePageThumbs content={entry.content} sources={entry.sources} onOpen={setPreviewSource} />}
               {entry.role === 'assistant' && entry.content && !entry.failed && index > 0 && !(loading && isLast) && <div className="message-action-bar">
                 <button type="button" title={speakingIndex === index ? (speechLoading ? 'Mimo đang chuẩn bị giọng đọc…' : 'Dừng đọc') : 'Nghe giảng'} onClick={() => void handleSpeak(entry, index)}>{speakingIndex === index ? (speechLoading ? <LoaderCircle size={14} className="spin" /> : <VolumeX size={14} />) : <Volume2 size={14} />}</button>
-                <button type="button" title="Sao chép" onClick={() => void navigator.clipboard?.writeText(entry.content.replace(/[*_#`$]/g, '').replace(/\\[a-zA-Z]+/g, ' '))}><Copy size={14} /></button>
+                <button type="button" title="Sao chép" onClick={() => void navigator.clipboard?.writeText(plainMath(entry.content).replace(/[*_#`]/g, ''))}><Copy size={14} /></button>
                 <button type="button" title="Thích" onClick={() => onFeedback(index, 'up')}><ThumbsUp size={14} /></button>
                 <button type="button" title="Không thích" onClick={() => { onFeedback(index, 'down'); setCommentIndex(index); setCommentDraft('') }}><ThumbsDown size={14} /></button>
                 <button type="button" title="Trả lời lại câu này" disabled={loading} onClick={() => onRetry(index)}><RefreshCcw size={14} /></button>
