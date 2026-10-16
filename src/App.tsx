@@ -1451,6 +1451,8 @@ function SourcePageThumbs({ content, sources, onOpen }: { content: string; sourc
           <span>{sources.indexOf(source) + 1} · Trang {source.page ?? '-'}</span>
         </button>
       ))}
+      {/* A wrong explanation next to a real page looks trustworthy, so the reminder sits beside the page itself. */}
+      <p className="source-check-note">Mimo có thể nhầm, em bấm vào trang sách để đối chiếu nhé.</p>
     </div>
   )
 }
