@@ -135,7 +135,7 @@ def test_quiz_answer_grades_and_updates_mastery(client, app_mod, answer, hints_u
 
     assert body['is_correct'] is correct
     assert body['mastery'] == mastery
-    assert body['next_action'] == ('practice' if correct else 'remedial')
+    assert body['next_action'] == (('independent_practice' if hints_used else 'practice') if correct else 'remedial')
     assert body['recommendation']['kind'] == ('quiz' if correct else 'lesson')
     assert list(body['profile']['concepts']) == [CONCEPT_ID]
     state = body['profile']['concepts'][CONCEPT_ID]

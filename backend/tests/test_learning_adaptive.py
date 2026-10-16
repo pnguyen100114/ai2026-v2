@@ -46,6 +46,28 @@ def test_correct_after_hints_is_recognized_with_lower_independence_signal():
     assert with_hints['mastery'] > 0.35
 
 
+def test_correct_streak_after_hint_does_not_raise_difficulty():
+    profile = {'concepts': {CONCEPT: {'mastery': 0.72, 'attempts': 5, 'streak': 2}}}
+    result = grade_answer(question(difficulty=3), 'A', profile, hints_used=1)
+    assert result['next_action'] == 'independent_practice'
+    assert result['next_difficulty'] <= 3
+    unaided = grade_answer(question(difficulty=3), 'A', profile)
+    assert unaided['next_action'] == 'progression'
+    assert unaided['next_difficulty'] == 4
+
+
+def test_quiz_prompt_reports_how_often_hints_were_needed():
+    from backend.learning import build_quiz_prompt
+    profile = {}
+    for hints in (1, 1, 0):
+        grade(profile, hints_used=hints)
+    state = concept_state(profile, CONCEPT)
+    prompt = build_quiz_prompt(subject='Toán', grade=8, lesson='', topic='Biến đổi đại số', difficulty=2,
+                               state=state, goal='', context_text='', recent_questions=[])
+    assert 'phải xem gợi ý ở 2/3 câu gần nhất' in prompt
+    assert 'bước trung gian' in prompt
+
+
 def test_one_wrong_answer_does_not_crash_mastery_and_does_not_invent_error_tag():
     result = grade({}, answer='B')
     assert result['mastery'] > 0.20

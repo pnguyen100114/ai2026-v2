@@ -166,6 +166,13 @@ def build_quiz_prompt(
         if state.get('attempts') else 'chưa làm câu nào về bài này'
     )
     recent_text = '\n'.join(f'- {item}' for item in recent_questions) or '- (chưa có)'
+    recent_evidence = [item for item in (state.get('evidence') or [])[-5:] if isinstance(item, dict)]
+    hinted = sum(1 for item in recent_evidence if item.get('hints_used'))
+    hint_text = (
+        f'phải xem gợi ý ở {hinted}/{len(recent_evidence)} câu gần nhất'
+        + ('; soạn câu cùng mức nhưng có bước trung gian rõ để em tự làm được không cần gợi ý' if hinted * 2 > len(recent_evidence) else '')
+        if recent_evidence else 'chưa có dữ liệu'
+    )
     subject = canonical_subject(subject)
     taxonomy = ERROR_TAGS.get(subject, {})
     focus_tags = [tag for tag in (error_tags or state.get('priority_error_tags') or []) if tag in taxonomy]
@@ -176,6 +183,7 @@ HỌC SINH
 - Môn {subject}, lớp {grade}.
 - Bài đang học trong lộ trình: {lesson or topic}. Chủ đề: {topic}.
 - Năng lực hiện tại với bài này: {round(state['mastery'] * 100)}% ({history}).
+- Mức tự lực: {hint_text}.
 - Lỗi hay mắc gần đây: {'; '.join(errors) if errors else 'chưa ghi nhận'}.
 - Dạng lỗi đã được ghi nhận lặp lại: {focus_text}. Nếu có tag, ưu tiên câu hỏi luyện đúng kỹ năng này; chỉ gắn tag khi phương án sai có bằng chứng phù hợp.
 - Bộ tag lỗi hợp lệ của môn {subject}: {', '.join(f'{tag} ({description})' for tag, description in taxonomy.items()) or 'không có'}.
@@ -428,6 +436,14 @@ def grade_answer(
         reason = 'Mình củng cố kiến thức nền bằng một câu vừa sức trước nhé.'
         title = f'Ôn lại {question["concept"]}'
         action_type = 'lesson'
+    elif correct and hints:
+        # Right only after the hint: the hint did part of the work, so the next question stays
+        # at this level instead of climbing on a streak the student did not earn alone.
+        next_difficulty = max(1, min(next_difficulty, difficulty))
+        next_action = 'independent_practice'
+        reason = 'Em làm đúng sau khi xem gợi ý. Câu tiếp theo cùng mức, em thử tự làm trước rồi mới mở gợi ý nhé.'
+        title = 'Tự làm một câu cùng mức'
+        action_type = 'quiz'
     elif correct and state['streak'] >= 2 and state['mastery'] >= 0.55:
         next_difficulty = min(5, max(next_difficulty, difficulty + 1))
         next_action = 'progression'
