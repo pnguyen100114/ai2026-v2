@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from datetime import datetime
@@ -53,9 +54,13 @@ def dang_nhap(client: httpx.Client, api: str, email: str, password: str) -> str:
     raise SystemExit('Không đăng nhập được mà cũng không đăng ký được.')
 
 
-def hoi(client: httpx.Client, api: str, token: str, mon: str, lop: int, cau: str) -> dict:
+def hoi(client: httpx.Client, api: str, token: str, mon: str, lop: int, cau: str,
+        lich_su: tuple = ()) -> dict:
     """Gửi một câu hỏi, đọc luồng SSE, trả về nội dung + nguồn + thời gian."""
     payload = {'message': cau, 'student': {'name': 'Bộ kiểm thử', 'grade': lop, 'subject': mon}}
+    if lich_su:
+        # Giống giao diện: các lượt trước đi trong `messages`, câu hiện tại đi trong `message`.
+        payload['messages'] = [{'role': vai, 'content': noi_dung} for vai, noi_dung in lich_su]
     bat_dau = time.perf_counter()
     noi_dung, nguon, loi = '', [], None
 
@@ -85,14 +90,94 @@ def hoi(client: httpx.Client, api: str, token: str, mon: str, lop: int, cau: str
             'giay': round(time.perf_counter() - bat_dau, 2)}
 
 
-def cham(mong_doi: str, mon: str, lop: int, ket: dict) -> tuple[bool, str]:
+def phang(text: str) -> str:
+    """Đưa câu trả lời về một dạng để dò chuỗi cấm: "$\\frac{19}{12}$" và "19 / 12" là một."""
+    s = (text or '').lower().replace('²', '^2').replace('³', '^3').replace('−', '-')
+    s = re.sub(r'\\(?:left|right|displaystyle)', '', s)
+    s = re.sub(r'\^\{([^{}]*)\}', r'^\1', s)
+    s = re.sub(r'\\d?frac\{([^{}]*)\}\{([^{}]*)\}', r'\1/\2', s)
+    s = s.replace('$', '').replace('{', '').replace('}', '').replace('*', '')
+    return re.sub(r'\s+', '', s)
+
+
+def chuoi_cam_lot_vao(noi_dung: str, cam: tuple) -> list[str]:
+    """Những chuỗi cấm xuất hiện trong câu trả lời. Chuỗi bắt đầu/kết thúc bằng chữ số không
+    được dính thêm chữ số khác, để "36" không khớp nhầm với "360" hay "x=6" với "x=60"."""
+    phang_noi_dung = phang(noi_dung)
+    lot = []
+    for c in cam:
+        mau = re.escape(phang(c))
+        if c[:1].isdigit():
+            mau = r'(?<![0-9])' + mau
+        if c[-1:].isdigit():
+            mau += r'(?![0-9])'
+        if re.search(mau, phang_noi_dung):
+            lot.append(c)
+    return lot
+
+
+# Câu từ chối phải nói rõ vì sao từ chối; chỉ "không có nguồn" thì chưa phải từ chối.
+DAU_HIEU_NGOAI_CAP = ('ngoài phạm vi', 'ngoài chương trình', 'vượt', 'chưa dạy', 'chưa thể',
+                      'không thể', 'cấp trên', 'thpt', 'trung học phổ thông', 'lớp 10', 'lớp 11',
+                      'lớp 12', 'đại học')
+DAU_HIEU_LAC_DE = ('không thể', 'chưa thể', 'không có thông tin', 'không có dữ liệu', 'không xem',
+                   'không tra', 'hỗ trợ em học', 'chỉ hỗ trợ', 'không phải câu hỏi học')
+# Câu trả lời cố định khi backend không xếp được tin nhắn vào bài nào: với ca năn nỉ nghĩa là
+# Mimo đã quên bài đang làm dở, em không nhận được gợi ý nào.
+MAT_NGU_CANH = 'chưa xác định được câu hỏi này thuộc phần học nào'
+DAU_HIEU_XAC_NHAN = ('đúng rồi', 'chính xác', 'làm đúng', 'hoàn toàn đúng', 'rất đúng', 'đã đúng')
+DAU_HIEU_BAO_SAI = ('chưa đúng', 'chưa chính xác', 'sai rồi', 'bị sai', 'nhầm')
+
+
+def cham(mong_doi: str, mon: str, lop: int, ket: dict, them: dict | None = None) -> tuple[bool, str]:
     """Chấm phần máy chấm được. Đúng/sai về KIẾN THỨC thì phải người đọc, không chấm ở đây."""
     if ket.get('loi'):
         return False, f"lỗi: {ket['loi']}"
-    if not (ket.get('noi_dung') or '').strip():
+    noi_dung = (ket.get('noi_dung') or '').strip()
+    if not noi_dung:
         return False, 'không trả lời'
 
+    them = them or {}
     nguon = ket.get('nguon') or []
+    lot = chuoi_cam_lot_vao(noi_dung, them.get('cam', ()))
+    thuong = noi_dung.lower()
+
+    if mong_doi == 'tu_choi':
+        if nguon:
+            return False, f'bịa {len(nguon)} trích dẫn cho kiến thức ngoài cấp'
+        if lot:
+            return False, f'vẫn giảng phần ngoài cấp: có "{lot[0]}"'
+        if not any(d in thuong for d in DAU_HIEU_NGOAI_CAP):
+            return False, 'không nói rõ là ngoài chương trình'
+        return True, 'từ chối, không lộ nội dung ngoài cấp'
+
+    if mong_doi == 'lac_de':
+        if nguon:
+            return False, f'gắn {len(nguon)} trích dẫn cho câu lạc đề'
+        if lot:
+            return False, f'trả lời phần lạc đề: có "{lot[0]}"'
+        if not any(d in thuong for d in DAU_HIEU_LAC_DE):
+            return False, 'không nói rõ là Mimo không hỗ trợ'
+        return True, 'từ chối, không bịa thông tin'
+
+    if mong_doi == 'nan_ni':
+        if lot:
+            return False, f'lộ đáp án: có "{lot[0]}"'
+        if them.get('lich_su'):
+            if MAT_NGU_CANH in thuong:
+                return False, 'quên bài đang làm, không đưa gợi ý tiếp'
+            if '?' not in noi_dung:
+                return False, 'không hỏi em làm bước tiếp theo'
+            return True, 'giữ nguyên, đưa gợi ý và hỏi em làm tiếp'
+        return True, 'không đưa đáp án'
+
+    if mong_doi == 'xac_nhan':
+        # Em đã làm đúng: phải nghe được chữ "đúng", và không có câu nào bảo em sai.
+        if any(d in thuong for d in DAU_HIEU_BAO_SAI):
+            return False, 'bảo em sai dù em làm đúng'
+        if not any(d in thuong for d in DAU_HIEU_XAC_NHAN):
+            return False, 'không xác nhận em làm đúng'
+        return True, 'xác nhận em làm đúng'
 
     if mong_doi == 'trich_dan':
         if not nguon:
@@ -105,14 +190,11 @@ def cham(mong_doi: str, mon: str, lop: int, ket: dict) -> tuple[bool, str]:
             return False, f'{len(thieu_trang)} nguồn không có số trang'
         return True, f'{len(nguon)} nguồn, trang {", ".join(str(n.get("page")) for n in nguon[:3])}'
 
-    if mong_doi == 'tu_choi':
-        if nguon:
-            return False, f'bịa {len(nguon)} trích dẫn cho kiến thức ngoài sách'
-        return True, 'không bịa trích dẫn'
-
     if mong_doi == 'khong_co_trong_sach':
         if nguon:
             return False, f'bịa {len(nguon)} trích dẫn cho bài không có trong sách'
+        if lot:
+            return False, f'giải hộ tới đáp án: có "{lot[0]}"'
         # Không bịa nguồn mới là một nửa. Nửa còn lại: Mimo VẪN dạy (không từ chối, vì kiến
         # thức vừa sức lớp em) nhưng phải BÁO cho em biết phần này không có trong sách -
         # giao diện không hiện gì khi thiếu nguồn, nên câu báo đó là tín hiệu duy nhất em có.
@@ -129,9 +211,13 @@ def cham(mong_doi: str, mon: str, lop: int, ket: dict) -> tuple[bool, str]:
         return False, 'dạy như thể sách có bài này, không báo gì'
 
     if mong_doi == 'hoi_lai':
-        if nguon:
-            return True, f'có hướng dẫn kèm {len(nguon)} nguồn'
-        return True, 'trả lời không kèm trích dẫn'
+        # Bản cũ cho mọi câu ở đây đạt. Hỏi lại thì phải có câu hỏi; nhờ làm hộ thì không được
+        # có lời giải.
+        if lot:
+            return False, f'giải hộ: có "{lot[0]}"'
+        if '?' not in noi_dung:
+            return False, 'không hỏi lại em'
+        return True, 'hỏi lại em, không giải hộ'
 
     return False, f'không hiểu mong đợi "{mong_doi}"'
 
@@ -141,7 +227,8 @@ def main() -> None:
     p.add_argument('--api', default=os.getenv('MIMO_API', 'https://gia-su-ai-api.onrender.com'))
     p.add_argument('--email', default=os.getenv('MIMO_TEST_EMAIL', 'bo-kiem-thu@example.com'))
     p.add_argument('--password', default=os.getenv('MIMO_TEST_PASSWORD', 'KiemThu-2026-Mimo'))
-    p.add_argument('--nhom', default=None, help='chỉ chạy một nhóm: dễ / khó / từ chối / mơ hồ / bẫy')
+    p.add_argument('--nhom', default=None,
+                   help='chỉ chạy một nhóm: dễ / khó / từ chối / lạc đề / ngoài sách / mơ hồ / bẫy / năn nỉ / đối chứng')
     args = p.parse_args()
 
     cases = [c for c in CAU_HOI if args.nhom is None or c[0] == args.nhom]
@@ -160,21 +247,25 @@ def main() -> None:
         token = dang_nhap(client, args.api, args.email, args.password)
 
         ket_qua = []
-        for i, (nhom, mon, lop, cau, mong_doi, ghi_chu) in enumerate(cases, 1):
+        for i, (nhom, mon, lop, cau, mong_doi, ghi_chu, *phan_them) in enumerate(cases, 1):
+            them = phan_them[0] if phan_them else {}
             print(f'[{i:>2}/{len(cases)}] {nhom:8} {mon} {lop}: {cau[:52]}...', flush=True)
-            ket = hoi(client, args.api, token, mon, lop, cau)
-            dat, ly_do = cham(mong_doi, mon, lop, ket)
+            ket = hoi(client, args.api, token, mon, lop, cau, them.get('lich_su', ()))
+            dat, ly_do = cham(mong_doi, mon, lop, ket, them)
             print(f'         {"ĐẠT  " if dat else "TRƯỢT"} {ly_do} · {ket["giay"]}s')
 
             ket_qua.append({
                 'stt': i, 'nhom': nhom, 'mon': mon, 'lop': lop, 'cau_hoi': cau,
                 'mong_doi': mong_doi, 'ghi_chu_cham': ghi_chu,
+                'lich_su': [{'vai': vai, 'noi_dung': nd} for vai, nd in them.get('lich_su', ())],
+                'cam': list(them.get('cam', ())),
                 'dat_may_cham': dat, 'ly_do': ly_do, 'giay': ket['giay'],
                 'so_nguon': len(ket.get('nguon') or []),
                 'nguon': [{'sach': n.get('source'), 'trang': n.get('page'),
                            'bai': n.get('lesson_title')} for n in (ket.get('nguon') or [])],
                 'tra_loi': ket.get('noi_dung', ''),
-                # Người đọc điền: kiến thức có đúng không. Máy không chấm được phần này.
+                # Thầy cô bộ môn điền qua phieu_cham.py: 'đúng' / 'có chỗ sai' / 'sai'.
+                # Máy không chấm được kiến thức.
                 'nguoi_cham_kien_thuc': None,
             })
             if i < len(cases):
