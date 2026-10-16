@@ -90,6 +90,28 @@ def _keep_citation(text: str, masked: str, match: re.Match[str], passages: list[
     return all(len(sentence & _bigrams(passages[value - 1])) >= MIN_SHARED_BIGRAMS for value in values)
 
 
+# Prompt bảo "kết thúc bằng đúng 1 câu hỏi", nhưng model lúc nhớ lúc quên: cùng một ca năn nỉ,
+# lần chạy này kết bằng "...xem nhé." lần sau lại có câu hỏi. Câu hỏi cuối là lượt của em, nên
+# code đảm bảo nó luôn có thay vì trông vào model.
+INVITATION_WORDS = ('em thử', 'em hãy', 'em tính', 'em làm', 'gửi', 'chụp', 'chép')
+CLOSING_AFTER_INVITATION = 'Em thử xong thì gửi Mimo xem cùng, được không?'
+CLOSING_AFTER_EXPLANATION = 'Em còn chỗ nào muốn hỏi thêm Mimo không?'
+
+
+def ensure_closing_question(text: str) -> str:
+    """Thêm một câu hỏi ngắn khi đoạn cuối của câu trả lời không hỏi gì em."""
+    paragraphs = [part for part in re.split(r'\n\s*\n', text.strip()) if part.strip()]
+    if not paragraphs:
+        return text
+    last = _mask_math(paragraphs[-1])
+    if '?' in last:
+        return text
+    lowered = last.lower()
+    closing = (CLOSING_AFTER_INVITATION if any(word in lowered for word in INVITATION_WORDS)
+               else CLOSING_AFTER_EXPLANATION)
+    return f'{text.rstrip()}\n\n{closing}'
+
+
 def clean_answer(text: str, *, message: str, passages: list[str], pages: list[object] | None = None, topic: str = '') -> str:
     """Drop citations that do not back up knowledge from the book, stray brackets, junk characters and unasked greetings.
 

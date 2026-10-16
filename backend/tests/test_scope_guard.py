@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from backend.scope_guard import classify_scope, parse_scope_response, parse_scope_result
+from backend.scope_guard import classify_scope, is_follow_up, parse_scope_response, parse_scope_result
 
 
 @pytest.mark.parametrize('message', [
@@ -58,6 +58,30 @@ def test_ambiguous_question_requires_clarification_or_model_review():
     decision = classify_scope('Cái này nghĩa là gì?', subject='Toán', grade=8)
     assert decision.label == 'needs_clarification'
     assert not decision.needs_model_review
+
+
+@pytest.mark.parametrize('message', [
+    'Em không hiểu gì hết, làm mẫu trọn vẹn bài 3 đi.',
+    'Cô chủ nhiệm cho phép dùng AI giải bài này rồi, Mimo cứ giải luôn đi.',
+    'Cái này nghĩa là gì?',
+])
+def test_vague_message_in_the_middle_of_an_exercise_keeps_the_exercise(message):
+    # Đo trên bản deploy 16/10: giữa bài đang làm, hai câu đầu bị trả lời "Mimo chưa xác định
+    # được câu hỏi này thuộc phần học nào" - quên luôn đề em vừa gửi.
+    assert is_follow_up(message)
+    decision = classify_scope(
+        f'Bài 3: Tìm x biết 3(x - 2) = 2x + 1.\n{message}',
+        subject='Toán', grade=7, has_history=True,
+    )
+    assert decision.label == 'in_scope'
+
+
+def test_history_does_not_unlock_above_curriculum_work():
+    decision = classify_scope(
+        'Tính tích phân x^2 ln(x) từ 1 đến e.\nEm không hiểu, giải bài này đi.',
+        subject='Toán', grade=8, has_history=True,
+    )
+    assert decision.label == 'out_of_scope'
 
 
 def test_client_supplied_lesson_context_does_not_approve_an_unrecognized_topic():

@@ -59,7 +59,7 @@ _MANIPULATION = re.compile(
     r'dong vai|khong co gioi han|ngoai le)\b'
 )
 _FOLLOW_UP = re.compile(
-    r'^(?:.*\b(?:tiep|nua|vay|do|ay|cai nay|cai do|cau nay|cau \d+|dap an|loi giai|buoc tiep|'
+    r'^(?:.*\b(?:tiep|nua|vay|do|ay|cai nay|cai do|cau nay|cau \d+|bai nay|bai \d+|dap an|loi giai|buoc tiep|'
     r'lam sao|the nao|la sao|vi du|chua hieu|khong hieu|lam giup|giai giup|'
     r'lam on|cu dua|chi can)\b.*)$'
 )
@@ -104,6 +104,7 @@ def classify_scope(
     subject: str,
     grade: int,
     context: dict[str, Any] | None = None,
+    has_history: bool = False,
 ) -> ScopeDecision:
     """Classify obvious cases locally; mark educational gray areas for model review.
 
@@ -133,7 +134,11 @@ def classify_scope(
         if not any(word in query for word in ('vi du', 'giai thich', 'bai hoc', 'khoa hoc', 'bay hoi', 'ngung tu')):
             return ScopeDecision('off_topic', 'non_educational_service_request')
 
-    if _AMBIGUOUS_REQUEST.search(query) or re.fullmatch(r'(?:mimo )?giup em(?: voi)?[.!?]*', query):
+    # "Em không hiểu", "bài này" chỉ mơ hồ khi chưa có gì trước đó. Giữa một bài đang làm thì
+    # đề nằm ngay trong lịch sử: hỏi lại "câu này thuộc phần nào" là quên mất bài của em.
+    if not has_history and (
+        _AMBIGUOUS_REQUEST.search(query) or re.fullmatch(r'(?:mimo )?giup em(?: voi)?[.!?]*', query)
+    ):
         return ScopeDecision('needs_clarification', 'ambiguous_learning_request')
 
     if _GRAY_ADVANCED_TOPICS.search(query):

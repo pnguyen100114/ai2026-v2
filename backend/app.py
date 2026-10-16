@@ -23,7 +23,7 @@ from pydantic import BaseModel, Field, field_validator
 
 try:
     from backend.accounts import router as accounts_router
-    from backend.answer_cleanup import clean_answer, cited_numbers
+    from backend.answer_cleanup import clean_answer, cited_numbers, ensure_closing_question
     from backend.ai_roadmap import build_roadmap_prompt, parse_generated_roadmap
     from backend.db import (
         check_chat_rate, check_rate, current_user, get_ai_roadmap, get_generated_question, has_quiz_attempt, init_db, lesson_history,
@@ -41,7 +41,7 @@ try:
     )
 except ImportError:  # pragma: no cover
     from accounts import router as accounts_router
-    from answer_cleanup import clean_answer, cited_numbers
+    from answer_cleanup import clean_answer, cited_numbers, ensure_closing_question
     from ai_roadmap import build_roadmap_prompt, parse_generated_roadmap
     from db import (
         check_chat_rate, check_rate, current_user, get_ai_roadmap, get_generated_question, has_quiz_attempt, init_db, lesson_history,
@@ -766,7 +766,8 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     scope_query = message
     if is_follow_up(message) and user_history:
         scope_query = f'{user_history[-1]}\n{message}'
-    scope = classify_scope(scope_query, subject=subject, grade=int(grade), context=context)
+    scope = classify_scope(scope_query, subject=subject, grade=int(grade), context=context,
+                           has_history=bool(user_history))
     scope_model_called = False
     if not risk:
         # Images need semantic review before retrieval because they may contain an out-of-scope
@@ -1016,6 +1017,7 @@ Tin nhắn hiện tại của học sinh: {message}'''
                 message=message, passages=[item.get('text') or '' for item in cited_matches],
                 pages=[item.get('page') for item in cited_matches], topic=f'{lesson} {topic}',
             ).strip()
+            answer_text = ensure_closing_question(answer_text)
             # An answer that cites nothing (small talk, feelings) gets no sources, even if retrieval found pages.
             sources = [] if not cited_numbers(answer_text, len(cited_matches)) else [{
                 'source': item.get('source') or 'Nguồn tài liệu',

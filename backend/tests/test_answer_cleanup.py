@@ -66,3 +66,30 @@ def test_unasked_greeting_is_removed(message, expected):
 
 def test_cited_numbers_ignores_math_and_invalid_numbers():
     assert cited_numbers('A [2] B [1][2] $[3]$ C [9]', source_count=3) == [2, 1]
+
+
+@pytest.mark.parametrize('answer, expected_tail', [
+    # Đo trên bản deploy 16/10: từ chối làm hộ rồi kết bằng "nhé." - em không biết phải đáp gì.
+    ('Mimo không làm hộ cả trang được.\n\nEm chép lại đề bài đầu tiên gửi Mimo nhé.',
+     'Em chép lại đề bài đầu tiên gửi Mimo nhé.\n\n' + 'Em thử xong thì gửi Mimo xem cùng, được không?'),
+    ('Định luật Ôm: $I = \frac{U}{R}$.\n\nCường độ dòng điện tỉ lệ thuận với hiệu điện thế.',
+     'tỉ lệ thuận với hiệu điện thế.\n\nEm còn chỗ nào muốn hỏi thêm Mimo không?'),
+])
+def test_answer_without_a_closing_question_gets_one(answer, expected_tail):
+    from backend.answer_cleanup import ensure_closing_question
+    assert ensure_closing_question(answer).endswith(expected_tail)
+
+
+@pytest.mark.parametrize('answer', [
+    'Em thử chuyển 5 sang vế phải xem được bao nhiêu?',
+    'Ý chính là vậy.\n\nEm tính thử $2^3$ bằng bao nhiêu nhé?',
+    '',
+])
+def test_answer_that_already_asks_is_left_alone(answer):
+    from backend.answer_cleanup import ensure_closing_question
+    assert ensure_closing_question(answer) == answer
+
+
+def test_question_mark_inside_a_formula_does_not_count_as_asking():
+    from backend.answer_cleanup import ensure_closing_question
+    assert ensure_closing_question('Ta có $x = ?$ ở đây.').endswith('Em còn chỗ nào muốn hỏi thêm Mimo không?')

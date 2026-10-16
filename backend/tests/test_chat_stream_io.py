@@ -170,12 +170,12 @@ def test_marker_is_hidden_and_suggestions_parsed(client, app_mod, monkeypatch):
 
 
 def test_answer_without_marker_is_emitted_fully(client, app_mod, monkeypatch):
-    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=['Xin chào ', 'em nhé!']))
+    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=['Xin chào ', 'em khỏe không?']))
 
     events = stream(client, message='xin chào')
 
-    assert joined_text(events) == 'Xin chào em nhé!'
-    assert events[-1] == {'type': 'done', 'content': 'Xin chào em nhé!', 'sources': [], 'quick_replies': [], 'understanding': None}
+    assert joined_text(events) == 'Xin chào em khỏe không?'
+    assert events[-1] == {'type': 'done', 'content': 'Xin chào em khỏe không?', 'sources': [], 'quick_replies': [], 'understanding': None}
 
 
 def test_invalid_suggestion_payload_is_ignored(client, app_mod, monkeypatch):
@@ -204,11 +204,11 @@ def test_sources_deduplicated_and_filtered(client, app_mod, monkeypatch):
 
 def test_answer_without_citations_gets_no_sources(client, app_mod, monkeypatch):
     monkeypatch.setattr(app_mod, 'search_knowledge', lambda *a, **k: [make_match(score=0.9)])
-    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=['Em nghỉ ngơi một chút nhé [7].']))
+    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=['Em mệt à, nghỉ một chút nhé [7]?']))
 
     done = stream(client, message='Khai triển (x+2)^2')[-1]
 
-    assert done['sources'] == [] and done['content'] == 'Em nghỉ ngơi một chút nhé.'
+    assert done['sources'] == [] and done['content'] == 'Em mệt à, nghỉ một chút nhé?'
 
 
 def test_off_topic_citation_is_removed_from_answer_and_sources(client, app_mod, monkeypatch):
@@ -291,7 +291,7 @@ def test_prompt_adds_lesson_pages_earlier_lesson_chats_and_quiz_progress(client,
 
 
 def test_turn_is_persisted_when_message_ids_given(client, app_mod, monkeypatch):
-    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=[f'Đáp án gợi ý.  {MARKER}{{"quick_replies":["Tiếp"],"understanding":"đã hiểu"}}']))
+    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=[f'Đáp án gợi ý?  {MARKER}{{"quick_replies":["Tiếp"],"understanding":"đã hiểu"}}']))
 
     stream(client, session={'id': 's1'}, user_message_id='u1', assistant_message_id='a1', replaces_message_id='old')
 
@@ -302,7 +302,7 @@ def test_turn_is_persisted_when_message_ids_given(client, app_mod, monkeypatch):
     assert kwargs['user_message']['id'] == 'u1'
     assert kwargs['user_message']['content'] == 'Giải thích (a+b)^2'
     assistant = kwargs['assistant_message']
-    assert (assistant['id'], assistant['content'], assistant['understanding'], assistant['model']) == ('a1', 'Đáp án gợi ý.', 'đã hiểu', 'gemini-test')
+    assert (assistant['id'], assistant['content'], assistant['understanding'], assistant['model']) == ('a1', 'Đáp án gợi ý?', 'đã hiểu', 'gemini-test')
     assert assistant['quick_replies'] == ['Tiếp']
 
 
