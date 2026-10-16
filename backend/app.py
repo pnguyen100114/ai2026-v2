@@ -121,6 +121,18 @@ QUOTA_COOLDOWN_SECONDS = 300
 # hạ về 0.65 được, vừa giữ trích dẫn cho câu thật vừa không bịa nguồn cho lời chào.
 CHAT_SOURCE_MIN_SCORE = float(os.getenv('CHAT_SOURCE_MIN_SCORE', str(max(RAG_SCORE_THRESHOLD, 0.65))))
 
+# Sách lớp khác khớp câu hỏi hơn sách lớp em ít nhất chừng này điểm thì kết luận luôn là sách
+# lớp em không có bài đó, không chờ mô hình tự nhận ra. Prompt đã dặn mô hình phải báo, nhưng
+# nó vẫn có lúc bỏ qua: câu ghép hỏi ở Ngữ văn 8 (bài lớp 9) được giảng "trong chương trình
+# Ngữ văn 8" dù trang Ngữ văn 9 nằm sẵn trong prompt.
+#
+# Đo trên 43 ca của bộ thử ngày 16/10 (độ chênh = điểm tốt nhất sách lớp khác − sách lớp em):
+#     0.056 – 0.092   4 ca bài nằm ở lớp khác hoặc sách thiếu (câu ghép, hàm ý, Hobbies, bất phương trình)
+#     0.000 – 0.043   mọi ca còn lại; cao nhất là câu năn nỉ "chỉ cần ghi A, B, C hay D thôi"
+# Chênh lệch tương đối giữa hai lần tìm, không phải điểm tuyệt đối - điểm tuyệt đối thì chồng
+# lên nhau, xem ghi chú ở chỗ thieu_sach trong chat_stream.
+OTHER_GRADE_MARGIN = float(os.getenv('OTHER_GRADE_MARGIN', '0.05'))
+
 # Dấu hiệu một tin nhắn là câu hỏi học tập chứ không phải chào hỏi, cảm ơn hay tán gẫu.
 # Gồm từ để hỏi và động từ ra đề - "Phân tích x² - 6x + 9" không có dấu hỏi nào nhưng vẫn là
 # một câu hỏi bài.
@@ -868,9 +880,35 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     seen_pages = {_page_key(item) for item in relevant_matches[:3]}
     lesson_pages = [item for item in lesson_pages_task.result() if _page_key(item) not in seen_pages][:LESSON_CONTEXT_PAGES] if lesson_pages_task is not None and not retrieval_error else []
     context_matches = sorted(relevant_matches[:3] + lesson_pages, key=lambda item: float(item.get('score', 0.0)), reverse=True)
+
+    # Đoạn sách lớp khác chỉ đưa vào khi nó khớp câu hỏi HƠN sách lớp em. Điểm tuyệt đối không
+    # tách được "có" với "không có" (xem thieu_sach bên dưới), nhưng bài nằm hẳn ở lớp khác thì
+    # đoạn của lớp đó khớp hơn hẳn; ngược lại bài có trong sách lớp em thì sách lớp em thắng.
+    try:
+        other_grades = other_grades_task.result() if other_grades_task is not None else []
+    except Exception:
+        logger.warning('Tìm sách các lớp khác thất bại, bỏ qua', exc_info=True)
+        other_grades = []
+    own_best = max((float(item.get('score', 0.0)) for item in matches), default=0.0)
+    other_grade_matches = [
+        item for item in other_grades
+        if item.get('grade') and int(item['grade']) != int(grade) and item.get('text')
+        and float(item.get('score', 0.0)) > own_best
+    ][:2]
+    # Hơn hẳn (OTHER_GRADE_MARGIN) thì chính Mimo báo cho em trước khi mô hình viết chữ nào, và
+    # không đoạn sách lớp em nào được trích: những trang đó không dạy điều em hỏi.
+    ngoai_sach = bool(other_grade_matches) and float(other_grade_matches[0]['score']) - own_best >= OTHER_GRADE_MARGIN
+    # Chỉ nêu lớp khi hai đoạn khớp nhất cùng một lớp. "Unit 1 Hobbies" khớp Tiếng Anh 8 rồi
+    # Tiếng Anh 7: nêu "lớp 8" là đoán, nên chỉ nói sách lớp em không có.
+    lop_khac = {int(item['grade']) for item in other_grade_matches}
+    bao_ngoai_sach = (
+        f'Mimo không tìm thấy phần này trong sách {subject} lớp {grade} của em'
+        + (f'; phần này nằm ở sách {subject} lớp {min(lop_khac)}.' if len(other_grade_matches) == 2 and len(lop_khac) == 1 else '.')
+    ) if ngoai_sach else ''
+
     unique_matches: dict[tuple[Any, Any], dict[str, Any]] = {}
     # Lời chào và lời cảm ơn không được gắn trang sách, dù điểm tương đồng có cao tới đâu.
-    if _la_cau_hoi_hoc_tap(message):
+    if _la_cau_hoi_hoc_tap(message) and not ngoai_sach:
         for item in context_matches:
             if float(item.get('score', 0.0)) >= CHAT_SOURCE_MIN_SCORE:
                 unique_matches.setdefault(_page_key(item), item)
@@ -901,20 +939,6 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     #
     # Không áp cho BÀI TẬP: một bài luyện tập hiếm khi có nguyên văn trong sách, nhưng vẫn giải
     # được bằng khái niệm trong sách, nên vẫn giúp bình thường.
-    # Đoạn sách lớp khác chỉ đưa vào khi nó khớp câu hỏi HƠN sách lớp em. Điểm tuyệt đối không
-    # tách được "có" với "không có" (xem trên), nhưng bài nằm hẳn ở lớp khác thì đoạn của lớp đó
-    # khớp hơn hẳn; ngược lại bài có trong sách lớp em thì sách lớp em thắng.
-    try:
-        other_grades = other_grades_task.result() if other_grades_task is not None else []
-    except Exception:
-        logger.warning('Tìm sách các lớp khác thất bại, bỏ qua', exc_info=True)
-        other_grades = []
-    own_best = max((float(item.get('score', 0.0)) for item in matches), default=0.0)
-    other_grade_matches = [
-        item for item in other_grades
-        if item.get('grade') and int(item['grade']) != int(grade) and item.get('text')
-        and float(item.get('score', 0.0)) > own_best
-    ][:2]
     other_grade_text = '\n'.join(
         f"(SÁCH {subject.upper()} LỚP {item['grade']}"
         f"{', ' + item['lesson_title'] if item.get('lesson_title') else ''}, không trích dẫn) "
@@ -937,6 +961,9 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         'không nhắc tới lớp nào khác.\n'
         '- Nếu phần em hỏi thuộc THPT hoặc đại học: KHÔNG giải thích, KHÔNG gợi ý, làm đúng quy tắc '
         'NGOÀI CẤP HỌC trong chỉ dẫn hệ thống.'
+        + (f'\n- LẦN NÀY: Mimo ĐÃ hiện cho em câu «{bao_ngoai_sach}». KHÔNG viết lại câu đó, KHÔNG nói '
+           f'phần này thuộc chương trình hay sách lớp {grade}; vào thẳng phần giải thích (hoặc gợi ý, nếu '
+           'là bài tập).' if bao_ngoai_sach else '')
         + (f'\n\nSÁCH LỚP KHÁC (chỉ để biết bài nằm ở lớp nào):\n{other_grade_text}' if other_grade_text else '')
     ) if _la_cau_hoi_hoc_tap(message) and not risk else ''
 
@@ -1032,6 +1059,10 @@ Tin nhắn hiện tại của học sinh: {message}'''
             return
         full_text = ''
         marker_at = -1
+        # Đã quyết trước khi gọi mô hình, nên em thấy câu báo ngay chữ đầu tiên.
+        opening = f'{bao_ngoai_sach}\n\n' if bao_ngoai_sach else ''
+        if opening:
+            yield _stream_event({'type': 'chunk', 'text': opening})
         try:
             emitted = 0
             for text in _stream_gemini_text(_gemini_contents(prompt, request)):
@@ -1059,7 +1090,10 @@ Tin nhắn hiện tại của học sinh: {message}'''
                 message=message, passages=[item.get('text') or '' for item in cited_matches],
                 pages=[item.get('page') for item in cited_matches], topic=f'{lesson} {topic}',
             ).strip()
-            answer_text = ensure_closing_question(answer_text)
+            if bao_ngoai_sach:
+                # Prompt dặn không viết lại câu báo, mà mô hình vẫn có lúc chép nguyên văn.
+                answer_text = answer_text.replace(bao_ngoai_sach, '', 1).strip()
+            answer_text = opening + ensure_closing_question(answer_text)
             # An answer that cites nothing (small talk, feelings) gets no sources, even if retrieval found pages.
             sources = [] if not cited_numbers(answer_text, len(cited_matches)) else [{
                 'source': item.get('source') or 'Nguồn tài liệu',
@@ -1084,7 +1118,7 @@ Tin nhắn hiện tại của học sinh: {message}'''
                 fallback_text = _quota_fallback(message, subject, grade)
                 done_payload = {'type': 'done', 'sources': [], 'quick_replies': ['Em thử viết bước đầu nhé', 'Cho em một ví dụ khác']}
                 yield _stream_event({'type': 'chunk', 'text': fallback_text})
-                persist(fallback_text, done_payload)
+                persist(opening + fallback_text, done_payload)
                 yield _stream_event(done_payload)
             else:
                 logger.exception('Gemini stream failed')

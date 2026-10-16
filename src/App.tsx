@@ -1380,7 +1380,7 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
               </div>}
               {entry.failed && <button type="button" className="retry-btn" disabled={loading} onClick={() => onRetry(index)}><RefreshCcw size={15} /> Thử lại</button>}
               {isLast && !loading && entry.role === 'assistant' && entry.quickReplies && entry.quickReplies.length > 0 && <div className="reply-chips">{entry.quickReplies.slice(0, 3).map((reply) => <button key={reply} type="button" onClick={() => onSend(reply)}><MathText content={reply} /></button>)}</div>}
-              {entry.role === 'assistant' && <SourcePageThumbs content={entry.content} sources={entry.sources} onOpen={setPreviewSource} />}
+              {entry.role === 'assistant' && index > 0 && !entry.failed && !(loading && isLast) && <SourcePageThumbs content={entry.content} sources={entry.sources} onOpen={setPreviewSource} />}
               {entry.role === 'assistant' && entry.content && !entry.failed && index > 0 && !(loading && isLast) && <div className="message-action-bar">
                 <button type="button" title={speakingIndex === index ? (speechLoading ? 'Mimo đang chuẩn bị giọng đọc…' : 'Dừng đọc') : 'Nghe giảng'} onClick={() => void handleSpeak(entry, index)}>{speakingIndex === index ? (speechLoading ? <LoaderCircle size={14} className="spin" /> : <VolumeX size={14} />) : <Volume2 size={14} />}</button>
                 <button type="button" title="Sao chép" onClick={() => void navigator.clipboard?.writeText(plainMath(entry.content).replace(/[*_#`]/g, ''))}><Copy size={14} /></button>
@@ -1447,18 +1447,30 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
   )
 }
 
+// Only pages the answer actually cites: a greeting or a talk about feelings should not show random textbook pages.
+function citedPages(content: string, sources?: SourceRef[]) {
+  if (!sources?.length) return []
+  return citedSourceNumbers(content, sources.length).map((number) => sources[number - 1]).filter((source) => source?.preview_url)
+}
+
+// Below this length an answer is a greeting or a one-line refusal: nothing in it to check against the book.
+const UNCITED_NOTE_MIN_LENGTH = 150
+
 // Small images of the cited textbook pages, so figures (geometry, science diagrams) are visible right under the answer.
 function SourcePageThumbs({ content, sources, onOpen }: { content: string; sources?: SourceRef[]; onOpen: (source: SourceRef) => void }) {
-  if (!sources?.length) return null
-  // Only pages the answer actually cites: a greeting or a talk about feelings should not show random textbook pages.
-  const pages = citedSourceNumbers(content, sources.length).map((number) => sources[number - 1]).filter((source) => source?.preview_url)
-  if (pages.length === 0) return null
+  const pages = citedPages(content, sources)
+  if (pages.length === 0) {
+    // An answer with no page is the one most likely to be wrong, and the one the student has nothing to check it with.
+    return content.trim().length >= UNCITED_NOTE_MIN_LENGTH
+      ? <p className="source-check-note uncited">Câu này Mimo chưa có trang sách làm chứng nên có thể nhầm, em đối chiếu với sách giáo khoa hoặc hỏi thầy cô nhé.</p>
+      : null
+  }
   return (
     <div className="source-thumbs" aria-label="Trang sách được trích dẫn">
       {pages.map((source) => (
         <button key={source.preview_url} type="button" className="source-thumb" onClick={() => onOpen(source)} title={`Phóng to trang ${source.page ?? ''} · ${source.title ?? source.source ?? 'SGK'}`}>
           <img src={apiUrl(`${source.preview_url}&thumb=true`)} alt={`Trang ${source.page ?? ''} trong ${source.source ?? 'sách giáo khoa'}`} loading="lazy" />
-          <span>{sources.indexOf(source) + 1} · Trang {source.page ?? '-'}</span>
+          <span>{(sources ?? []).indexOf(source) + 1} · Trang {source.page ?? '-'}</span>
         </button>
       ))}
       {/* A wrong explanation next to a real page looks trustworthy, so the reminder sits beside the page itself. */}

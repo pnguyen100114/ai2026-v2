@@ -221,6 +221,57 @@ def test_off_topic_citation_is_removed_from_answer_and_sources(client, app_mod, 
     assert done['content'] == 'Hai anh ấy đều là huyền thoại bóng đá. Mình quay lại học bình phương một tổng nhé?'
 
 
+def _search_by_grade(own, others):
+    """Sách lớp em khi có lọc lớp, sách mọi lớp khi grade=None - như hai lần tìm trong chat_stream."""
+    return lambda *a, **k: own if k.get('grade') is not None else others
+
+
+def test_lesson_clearly_in_another_grade_is_announced_by_mimo_not_the_model(client, app_mod, monkeypatch):
+    # Câu ghép hỏi ở Ngữ văn 8: trang lớp 9 hơn hẳn mọi trang lớp 8 (đo thật: 0.740 so với 0.652).
+    own = [make_match(score=0.652, page=68)]
+    others = [make_match(score=0.740, grade=9, page=15), make_match(score=0.736, grade=9, page=16)]
+    monkeypatch.setattr(app_mod, 'search_knowledge', _search_by_grade(own, others))
+    notice = 'Mimo không tìm thấy phần này trong sách Toán lớp 8 của em; phần này nằm ở sách Toán lớp 9.'
+    # Mô hình có lúc chép lại nguyên câu báo (đã gặp ở ca "nghĩa tường minh và hàm ý").
+    fake = FakeGemini(chunks=[notice + '\n\nCâu ghép có từ hai cụm chủ - vị trở lên [1]. Em thử đặt một câu nhé?'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+
+    events = stream(client, message='Thế nào là câu ghép?')
+
+    assert events[0] == {'type': 'chunk', 'text': notice + '\n\n'}
+    done = events[-1]
+    assert done['content'].startswith(notice + '\n\n') and done['content'].count(notice) == 1
+    assert done['sources'] == [] and '[1]' not in done['content']
+    assert 'LẦN NÀY: Mimo ĐÃ hiện cho em câu' in fake.calls[0]['contents']
+
+
+def test_other_grades_disagreeing_do_not_name_a_grade(client, app_mod, monkeypatch):
+    # "Unit 1 Hobbies" ở Tiếng Anh 6: khớp lớp 8 rồi lớp 7, nêu lớp nào cũng là đoán.
+    # (Học sinh của bộ test học lớp 8, nên ở đây là lớp 9 rồi lớp 7.)
+    own = [make_match(score=0.715)]
+    others = [make_match(score=0.771, grade=9), make_match(score=0.756, grade=7)]
+    monkeypatch.setattr(app_mod, 'search_knowledge', _search_by_grade(own, others))
+    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=['Từ vựng về sở thích gồm...']))
+
+    content = stream(client, message='Unit 1 Hobbies học những từ vựng nào?')[-1]['content']
+
+    assert content.startswith('Mimo không tìm thấy phần này trong sách Toán lớp 8 của em.\n\n')
+    assert 'lớp 7' not in content and 'lớp 9' not in content
+
+
+def test_other_grade_only_slightly_ahead_keeps_own_book_citations(client, app_mod, monkeypatch):
+    # Câu năn nỉ "chỉ cần ghi A, B, C hay D" có độ chênh 0.043 mà vẫn là bài của lớp em.
+    own = [make_match(score=0.70)]
+    others = [make_match(score=0.74, grade=9), make_match(score=0.73, grade=9)]
+    monkeypatch.setattr(app_mod, 'search_knowledge', _search_by_grade(own, others))
+    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=['$(a+b)^2 = a^2 + 2ab + b^2$ [1].']))
+
+    done = stream(client)[-1]
+
+    assert 'không tìm thấy phần này' not in done['content']
+    assert [s['page'] for s in done['sources']] == [12]
+
+
 def test_prompt_numbers_sources_in_same_order_as_done_sources(client, app_mod, monkeypatch):
     matches = [make_match(score=0.9), make_match(score=0.8), make_match(score=0.7, pdf_page=20, page=18)]
     monkeypatch.setattr(app_mod, 'search_knowledge', lambda *a, **k: matches)
