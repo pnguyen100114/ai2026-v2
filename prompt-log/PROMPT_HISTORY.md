@@ -4,9 +4,9 @@ Toan bo prompt da dung voi cong cu AI trong qua trinh phat trien du an, trich tu
 
 | Cong cu | So prompt |
 |---|---|
-| Claude Code | 247 |
+| Claude Code | 289 |
 | GitHub Copilot | 30 |
-| **Tong** | **277** |
+| **Tong** | **319** |
 
 ## GitHub Copilot · phien `7acda034` — Codebase exploration and reporting
 
@@ -2933,3 +2933,392 @@ Bat dau: 04:08:47 16/10/2026 · Thu muc: `d:\AI2026\4\Mimo-AI-Gia-Su\Gia su Ai c
 so sanh code work space nay va D:\AI2026\4\AI2026-v2 xem co thay doi gi de  dem code sang D:\AI2026\2\AI2026-v2
 
 -
+
+---
+
+## Claude Code · phien `f1e8c875`
+
+Bat dau: 04:30:48 16/10/2026
+
+### 274. 04:30:48 16/10/2026
+
+**Prompt:**
+
+sao k thấy prompt history cập nhật
+
+### 275. 04:33:23 16/10/2026
+
+**Prompt:**
+
+them di, ma cái history cũ trc 19/9 vẫn bình thường đúng k
+
+---
+
+## Claude Code · phien `6ff6dc5f`
+
+Bat dau: 04:40:55 16/10/2026
+
+### 276. 04:40:55 16/10/2026
+
+**Prompt:**
+
+Bách có thay đổi vừa được thêm mới vào folder này gồm các file sau :
+backend/scope_guard.py
+backend/tests/test_scope_guard.py, test_learning_adaptive.py
+backend/learning.py
+backend/app.py
+backend/db.py
+src/App.tsx
+README.md và 4 file test
+hãy kiểm tra đủ file chưa
+
+### 277. 04:43:51 16/10/2026
+
+**Prompt:**
+
+ủ file như bạn liệt kê, nhưng còn thiếu src/styles.css trong danh sách của bạn., style là do tôi thay đổi phiên làm việc khác hay tôi liệt kê thiếu ?
+
+### 278. 04:45:02 16/10/2026
+
+**Prompt:**
+
+commit của Bách trước đã
+
+### 279. 04:46:30 16/10/2026
+
+**Prompt:**
+
+phai push len chu
+
+### 280. 04:47:04 16/10/2026
+
+**Prompt:**
+
+[Request interrupted by user for tool use]
+
+### 281. 04:47:19 16/10/2026
+
+**Prompt:**
+
+chỉ push lên của ttps://github.com/pnguyen100114/ai2026-v2.
+
+### 282. 04:49:50 16/10/2026
+
+**Prompt:**
+
+giờ commit thêm styles.css đi
+
+### 283. 04:51:07 16/10/2026
+
+**Prompt:**
+
+fle app.py sao thay doi nheu vay do bách hay do tôi
+
+### 284. 04:52:38 16/10/2026
+
+**Prompt:**
+
+vậy la của bách sao k commit
+
+### 285. 04:56:21 16/10/2026
+
+**Prompt:**
+
+ok vay ban tu test lai xem các case còn đúng như lúc test trước 19/9, hay có cải tiến thụt lùi nào
+
+### 286. 05:39:50 16/10/2026
+
+**Prompt:**
+
+co phai do chep code thieu k chay thu test ben D:\AI2026\4\Mimo-AI-Gia-Su\Gia su Ai cai tien
+
+### 287. 05:42:38 16/10/2026
+
+**Prompt:**
+
+revert đi rồi sửa luôn
+
+### 288. 05:57:11 16/10/2026
+
+**Prompt:**
+
+chạy test local
+
+### 289. 06:12:53 16/10/2026
+
+**Prompt:**
+
+Sửa System Prompt: chặn giải câu ngoài cấp học (câu 17, 18, 19), từ chối câu lạc đề (câu 20); kiên quyết không giải tắt khi học sinh năn nỉ.
+
+### 290. 07:33:33 16/10/2026
+
+**Prompt:**
+
+ok commit di
+
+### 291. 07:34:23 16/10/2026
+
+**Prompt:**
+
+tất cả để để web chạy đúng như local
+
+### 292. 08:02:11 16/10/2026
+
+**Prompt:**
+
+bạn chạy test thử trang tôi đã mở đi https://ai2026-v2.vercel.app/
+
+### 293. 08:19:18 16/10/2026
+
+**Prompt:**
+
+vâng
+
+### 294. 08:31:36 16/10/2026
+
+**Prompt:**
+
+ok
+
+---
+
+## Claude Code · phien `91846ade`
+
+Bat dau: 07:40:28 16/10/2026
+
+### 295. 07:40:28 16/10/2026
+
+**Prompt:**
+
+Trên 
+https://ai2026-v2.vercel.app/
+vẫn còn hiện không đúng 
+\frac{5}{x²y
+hãy fix và tìm các lỗi tương tự
+
+### 296. 08:00:49 16/10/2026
+
+**Prompt:**
+
+vâng ạ
+
+### 297. 08:08:48 16/10/2026
+
+**Prompt:**
+
+còn câu hỏi gợi ý vẫn hiện k đúng "Vì sao 3x^2 - 2y lại không phải ạ?" phải hiện đẹp latex chứ
+
+### 298. 08:17:53 16/10/2026
+
+**Prompt:**
+
+chỉ đẩy của pnguyen đừng đẩy code lên của Bách nữa
+
+---
+
+## Claude Code · phien `1902774b`
+
+Bat dau: 11:54:54 16/10/2026
+
+### 299. 11:54:54 16/10/2026
+
+**Prompt:**
+
+dự án này đang được đem đi thi và được nhận đánh giá như sau:
+"
+
+<pasted_content id="4e0b">
+Điểm mạnh
+
+- Các bạn xuất phát từ chính thói quen của mình: hỏi AI thì bị giải hết bài, thuật ngữ lại khác sách. Nhóm còn khảo sát 87 bạn để chứng minh vấn đề có thật.
+ - Mimo trả lời dựa trên đúng trang sách giáo khoa và gắn số trích dẫn để học sinh bấm xem ngay trang sách, nhờ vậy giảm chuyện AI bịa và giúp các bạn quen tra lại sách.
+ - Mimo được thiết kế như một người thầy: gợi ý rồi hỏi em làm tiếp, không đưa đáp án khi em nói đang kiểm tra, và luôn nhắc tìm người lớn, gọi Tổng đài 111 khi bạn nhỏ kể chuyện bị bắt nạt.
+ - Nhóm kiểm thử trên bản đã đưa lên mạng với 28 câu hỏi, báo cáo trung thực cả câu bị trượt, và giảm thời gian chờ từ 6, xuống 3,4 giây.
+
+Yêu cầu cải tiến
+- Cách tự chấm bộ 28 câu còn dễ dãi: vài câu ngoài chương trình (tích phân, đạo hàm, thuyết tương đối) Mimo vẫn hướng dẫn mà lại được tính là "từ chối đạt", câu hỏi thời tiết còn được trả lời không có căn cứ. Hãy sửa cách chấm và kiểm tra lại những câu này.
+ - AI không thể đúng 100%: Mimo có thể giảng sai một ý dù có trang sách đi kèm (nguy hiểm hơn vì học sinh khó tự phát hiện), hoặc lỡ giải hộ khi học sinh năn nỉ. Hãy nhờ thầy cô bộ môn đánh dấu 28 câu trả lời "đúng / có chỗ sai / sai", thêm dòng nhắc "Mimo có thể nhầm, em đối chiếu với trang sách nhé", và thêm khoảng 10 câu năn nỉ vào bộ thử.
+ - Mời 10-15 bạn cùng lớp dùng Mimo khoảng 15-20 phút cho một bài đang học, rồi hỏi bằng Google Form: Mimo có giải hộ không, bạn có tự làm tiếp được không.
+ - Phần luyện tập thích ứng nên tính thêm độ khó của câu, số lần dùng gợi ý và dạng lỗi hay gặp, để gợi ý bài luyện sát với từng bạn hơn.
+ - Về lâu dài, thử 2-4 tuần với 1-2 lớp, làm bài kiểm tra ngắn trước và sau, so sánh nhóm dùng Mimo với nhóm không dùng.
+</pasted_content id="4e0b">
+
+---
+
+## Claude Code · phien `65c01705`
+
+Bat dau: 11:55:56 16/10/2026
+
+### 300. 11:55:56 16/10/2026
+
+**Prompt:**
+
+dự án này đang được đem đi thi và được nhận đánh giá như sau:
+"
+
+<pasted_content id="4e0b">
+Điểm mạnh
+
+- Các bạn xuất phát từ chính thói quen của mình: hỏi AI thì bị giải hết bài, thuật ngữ lại khác sách. Nhóm còn khảo sát 87 bạn để chứng minh vấn đề có thật.
+ - Mimo trả lời dựa trên đúng trang sách giáo khoa và gắn số trích dẫn để học sinh bấm xem ngay trang sách, nhờ vậy giảm chuyện AI bịa và giúp các bạn quen tra lại sách.
+ - Mimo được thiết kế như một người thầy: gợi ý rồi hỏi em làm tiếp, không đưa đáp án khi em nói đang kiểm tra, và luôn nhắc tìm người lớn, gọi Tổng đài 111 khi bạn nhỏ kể chuyện bị bắt nạt.
+ - Nhóm kiểm thử trên bản đã đưa lên mạng với 28 câu hỏi, báo cáo trung thực cả câu bị trượt, và giảm thời gian chờ từ 6, xuống 3,4 giây.
+
+Yêu cầu cải tiến
+- Cách tự chấm bộ 28 câu còn dễ dãi: vài câu ngoài chương trình (tích phân, đạo hàm, thuyết tương đối) Mimo vẫn hướng dẫn mà lại được tính là "từ chối đạt", câu hỏi thời tiết còn được trả lời không có căn cứ. Hãy sửa cách chấm và kiểm tra lại những câu này.
+ - AI không thể đúng 100%: Mimo có thể giảng sai một ý dù có trang sách đi kèm (nguy hiểm hơn vì học sinh khó tự phát hiện), hoặc lỡ giải hộ khi học sinh năn nỉ. Hãy nhờ thầy cô bộ môn đánh dấu 28 câu trả lời "đúng / có chỗ sai / sai", thêm dòng nhắc "Mimo có thể nhầm, em đối chiếu với trang sách nhé", và thêm khoảng 10 câu năn nỉ vào bộ thử.
+ - Mời 10-15 bạn cùng lớp dùng Mimo khoảng 15-20 phút cho một bài đang học, rồi hỏi bằng Google Form: Mimo có giải hộ không, bạn có tự làm tiếp được không.
+ - Phần luyện tập thích ứng nên tính thêm độ khó của câu, số lần dùng gợi ý và dạng lỗi hay gặp, để gợi ý bài luyện sát với từng bạn hơn.
+ - Về lâu dài, thử 2-4 tuần với 1-2 lớp, làm bài kiểm tra ngắn trước và sau, so sánh nhóm dùng Mimo với nhóm không dùng."
+bạn thấy những đánh giá của BGK như thế nào và hãy Phân Tích nó nhé
+
+### 301. 12:03:57 16/10/2026
+
+**Prompt:**
+
+Ok vậy mình sẽ làm #1 trước, 
+nhưng mà bạn Q!uân có cho tôi vài câu năn nỉ như sau, đánh giá có đúng hay không rồi hãy làm phần 1
+
+### 302. 12:26:06 16/10/2026
+
+**Prompt:**
+
+bên phiên đó tạm dừng rồi đó
+
+### 303. 12:34:33 16/10/2026
+
+**Prompt:**
+
+Bạn cần làm: vào ai.studio/spend để nâng trần chi tiêu, hoặc thay sang key thuộc một project khác. Mình không làm được việc này thay bạn. Xong rồi bạn báo, mình gọi probe kiểm tra lại rồi chạy lại cả 43 ca (khoảng 10 phút).
+sao mau hết tiền thế
+
+### 304. 12:37:33 16/10/2026
+
+**Prompt:**
+
+ok tôi nâng trần như vậy những gì ta sửa chạy kiểm tra nên xài locall và key khác ?
+
+### 305. 12:44:23 16/10/2026
+
+**Prompt:**
+
+ok tôi cập nhật key mới rồi đó
+
+### 306. 12:50:49 16/10/2026
+
+**Prompt:**
+
+#2- key dùng được chưa tôi ta cung cấp key mới nếu được thì fix #1
+
+### 307. 13:00:07 16/10/2026
+
+**Prompt:**
+
+Ca duy nhất còn trượt là #26: Mimo từ chối làm hộ và mời em gửi đề, nhưng kết thúc bằng "nhé." chứ không phải câu hỏi. Lỗi kiểu này lúc có lúc không: lần trên Render, #36 và #38 trượt vì đúng lỗi này, lần chạy local thì hai ca đó lại đạt. Đây là chuyện câu chữ của model, không phải lỗi logic. Khi viết vào hồ sơ, mình sẽ ghi rõ là kết quả thay đổi giữa các lần chạy.
+fix luôn mình đổi tại code thay vì dựa vào model
+
+### 308. 13:06:59 16/10/2026
+
+**Prompt:**
+
+Các file phiên kia , để phiên kia làm chỉ commit phiên này thôi
+
+### 309. 13:20:43 16/10/2026
+
+**Prompt:**
+
+sửa tiếp
+
+### 310. 16:38:40 16/10/2026
+
+**Prompt:**
+
+Ca còn trượt: #21 (câu ghép, em lớp 8). Mimo mở đầu bằng "Trong chương trình Ngữ văn 8, câu ghép là...", tức là ngầm nói sách lớp 8 có bài này. Thực tế bài nằm ở Ngữ văn 9. Ca này lúc đạt lúc trượt: chạy ở local một tiếng trước thì Mimo nói đúng "sách chưa định nghĩa". Nguyên nhân có thể là sách Ngữ văn 8 có vài đoạn nhắc tới câu hoặc vế câu, khớp câu hỏi ngang với bài câu ghép của lớp 9, nên đoạn sách lớp 9 không được đưa vào prompt. Bộ chấm mới đã bắt đúng lỗi này. Muốn sửa tận gốc thì phải có mục lục bài học cho mọi bộ sách, nhưng hiện chỉ có 3 bộ.
+
+đúng rồi chỉ check lớp 7,8,9 nên chỉ 3 bộ thôi vậy có cách khắc phục nào ổn hơn k
+
+---
+
+## Claude Code · phien `cef92d0d`
+
+Bat dau: 12:55:33 16/10/2026
+
+### 311. 12:55:33 16/10/2026
+
+**Prompt:**
+
+Backend cũ ở cổng 8000 vẫn chạy code trước khi sửa. làm sao để tắt back end cũ
+
+### 312. 12:57:13 16/10/2026
+
+**Prompt:**
+
+nhưng mà AI  ccủa chat khác tự làm vậy cần bổ sung step đâu đó
+
+### 313. 13:05:30 16/10/2026
+
+**Prompt:**
+
+sửa luôn và commit luôn
+
+### 314. 13:12:16 16/10/2026
+
+**Prompt:**
+
+ok vậy các file liên quan phiên này đã commit xong?
+
+### 315. 13:14:06 16/10/2026
+
+**Prompt:**
+
+Những file khác đang sửa dở (backend/, src/, bao-cao/) là việc của các phiên khác,của phiên nào nên check và commit hết file lên
+
+### 316. 13:16:22 16/10/2026
+
+**Prompt:**
+
+ok
+
+---
+
+## Claude Code · phien `9d20fd08`
+
+Bat dau: 13:22:03 16/10/2026
+
+### 317. 13:22:03 16/10/2026
+
+**Prompt:**
+
+đây là kết quả sau khi nhờ thầy cô , dựa trên kết quả test ngày 19/9
+
+### 318. 16:35:22 16/10/2026
+
+**Prompt:**
+
+sửa và làm hết mọi thứ đi để tôi kết thúc phiên bao gồm chạy cả phiếu chấm
+
+---
+
+## Claude Code · phien `d6c53e97`
+
+Bat dau: 16:37:18 16/10/2026
+
+### 319. 16:37:18 16/10/2026
+
+**Prompt:**
+
+hiện tôi đang làm khảo sát có mấy bạn kêu lệch trang  không đúng bài tk đăng nhập như sau:
+
+<pasted_content id="7509">
+Tuankiet
+Nhã uyên
+Trần đức thịnh
+quangphuocnguyen197@gmail.com
+ngocnguyenok52@gmail.com
+nguyenthao0223@gmail.com
+</pasted_content id="7509">
+
+nếu mình k check được thì chắc bổ sung cách log lại để dể kiểm tra và cải thiện sản phẩm
+
+---
+
