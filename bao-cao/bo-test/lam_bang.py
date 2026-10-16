@@ -5,12 +5,15 @@ Tách khỏi chay_test.py để sửa lại bảng không phải chạy lại c�
 """
 from __future__ import annotations
 
+import csv
 import json
 from collections import Counter
 from pathlib import Path
 
 THU_MUC = Path(__file__).resolve().parent
 NGUON = THU_MUC / 'ket_qua.json'
+# Thầy cô chấm lần chạy 19/09 (ket_qua_1909.json) trên bản rút gọn, trước khi có phieu_cham.py.
+CHAM_1909 = THU_MUC / 'cham_giao_vien_1909.csv'
 
 if not NGUON.exists():
     raise SystemExit('Chưa có ket_qua.json. Chạy chay_test.py trước.')
@@ -52,6 +55,36 @@ def phan_giao_vien() -> str:
         dong += ['', f'**{len(sai_co_nguon)} câu có chỗ sai dù có trang sách đi kèm** '
                  f'(ca {", ".join(str(k["stt"]) for k in sai_co_nguon)}) — loại lỗi máy chấm không phát hiện được.']
     return '\n'.join(dong)
+
+
+def phan_giao_vien_1909() -> str:
+    """Phiếu thầy cô chấm lần chạy 19/09. Câu trả lời đó khác lần chạy hiện tại, nên để riêng."""
+    if not CHAM_1909.exists():
+        return ''
+    with CHAM_1909.open(encoding='utf-8-sig', newline='') as f:
+        dong = list(csv.DictReader(f))
+    dem = Counter((d['Đánh giá của thầy cô'] or '').strip().lower() or 'chưa chấm' for d in dong)
+    can_xem = [d for d in dong if d['Ghi chú của nhóm khi đối chiếu câu trả lời thật']]
+    md = [f'### Lần chạy 19/09 ({len(dong)} ca, bản trước các bản sửa)', '',
+          f'Thầy cô bộ môn chấm **{len(dong) - dem["chưa chấm"]}/{len(dong)}** câu: '
+          f'**{dem["đúng"]}** đúng · **{dem["có chỗ sai"]}** có chỗ sai · **{dem["sai"]}** sai'
+          + (f' · **{dem["chưa chấm"]}** để trống' if dem['chưa chấm'] else '') + '.', '',
+          'Cách chấm lần này còn ba giới hạn:', '',
+          '- Thầy cô đọc **bản rút gọn** câu trả lời, không phải nguyên văn. Nguyên văn nằm trong '
+          '`ket_qua_1909.json`.',
+          '- Phiếu không kèm số trang Mimo trích, nên chưa kiểm được loại lỗi "giảng sai mà vẫn có trang sách".',
+          '- Phiếu chưa ghi tên thầy cô chấm.', '',
+          'Khi đối chiếu lại với câu trả lời thật, nhóm ghi chú những câu sau:', '',
+          '| # | Môn · lớp | Câu hỏi | Thầy cô | Ghi chú của nhóm |', '|---|---|---|---|---|']
+    for d in can_xem:
+        md.append(f'| {d["STT"]} | {d["Môn"]} {d["Lớp"]} | {d["Câu hỏi"].replace("|", "/")} | '
+                  f'{d["Đánh giá của thầy cô"] or "(trống)"} | '
+                  f'{d["Ghi chú của nhóm khi đối chiếu câu trả lời thật"].replace("|", "/")} |')
+    md += ['', 'Ở các câu 17, 18 và 19, thầy cô chấm đúng vì kiến thức không sai. Tuy vậy Mimo vẫn giảng '
+           'phần ngoài cấp, nên nếu chấm theo cách chấm từ 16/10 thì các câu trả lời này là trượt (xem mục 2). '
+           'Ở lần chạy hiện tại, Mimo đã từ chối và đạt cả ba câu.', '',
+           'Toàn bộ nhận xét của thầy cô: `cham_giao_vien_1909.csv`.']
+    return '\n'.join(md)
 
 
 def bang_tong_hop() -> str:
@@ -138,7 +171,11 @@ Máy **không** chấm kiến thức đúng hay sai — xem mục 3.
 
 ## 3. Thầy cô bộ môn chấm kiến thức
 
+### Lần chạy này
+
 {phan_giao_vien()}
+
+{phan_giao_vien_1909()}
 
 ## 4. Ca trượt và chỗ cần sửa
 

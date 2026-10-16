@@ -18,6 +18,13 @@ vẫn gắn đúng trang sách thì máy cho đạt, trong khi học sinh lại 
 Báo cáo đếm riêng những câu **có chỗ sai dù có trang sách đi kèm**, vì đây là loại lỗi nguy
 hiểm nhất.
 
+**Đã làm (16/10):** thầy cô đã chấm 28 câu của lần chạy 19/09 trên bản rút gọn: 27 câu đúng,
+1 câu để trống (`bo-test/cham_giao_vien_1909.csv`). Đối chiếu với nguyên văn thì bản rút gọn
+lệch ở các câu 21–24, và câu 20 (bịa thời tiết) bị chấm đúng nhầm. Phiếu nguyên văn của lần chạy
+16/10 đã xuất sẵn ở `bo-test/phieu_cham_giao_vien.csv`, **chờ gửi thầy cô**. Nhắc thầy cô điền
+cột "Thầy cô chấm" (tên, môn, trường). Lưu ý: chạy lại `chay_test.py` thì phiếu này không nhập
+được nữa, nên chấm xong mới chạy lại.
+
 ---
 
 ## Việc 2 — 10–15 bạn cùng lớp dùng thử 15–20 phút (1 buổi)
