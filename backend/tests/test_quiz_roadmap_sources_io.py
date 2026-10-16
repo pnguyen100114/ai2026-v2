@@ -142,7 +142,7 @@ def test_quiz_answer_grades_and_updates_mastery(client, app_mod, answer, hints_u
     assert state['attempts'] == 1
     assert state.get('common_errors', []) == ([error] if error else [])
 
-    (args, _), = app_mod.save_quiz_attempt.calls
+    (args, _), = app_mod.saved_quiz_attempts.calls
     assert args[1] == {'question_id': question_id, 'answer': answer, 'is_correct': correct,
                        'hints_used': hints_used, 'difficulty': 2,
                        'time_spent_seconds': None, 'expected_time_seconds': None,
@@ -179,7 +179,7 @@ def test_quiz_answer_records_timing_and_personalizes_future_question(client, app
 
     assert body['assessment']['confidence'] == 'medium'
     assert body['profile']['concepts'][CONCEPT_ID]['evidence'][-1]['time_spent_seconds'] == 42
-    (args, _), = app_mod.save_quiz_attempt.calls
+    (args, _), = app_mod.saved_quiz_attempts.calls
     assert args[1]['time_spent_seconds'] == 42
     assert args[1]['expected_time_seconds'] == 30
     assert args[1]['difficulty'] == 3
@@ -200,7 +200,7 @@ def test_quiz_answer_cannot_be_submitted_twice(client, app_mod):
     assert client.post('/api/quiz/answer', json={'question_id': question_id, 'answer': '1 ∈ A'}).status_code == 200
     again = client.post('/api/quiz/answer', json={'question_id': question_id, 'answer': '1 ∈ A'})
     assert again.status_code == 409
-    assert len(app_mod.save_quiz_attempt.calls) == 1
+    assert len(app_mod.saved_quiz_attempts.calls) == 1
 
 
 def test_quiz_answer_rejects_other_users_question(client, app_mod):

@@ -5,6 +5,7 @@ checks one input -> output pair deterministically, without network or quota.
 """
 from __future__ import annotations
 
+import copy
 import json
 import os
 import sys
@@ -91,8 +92,17 @@ def app_mod(monkeypatch):
     monkeypatch.setattr(app_module, 'lesson_history', lambda *a, **k: [])
     monkeypatch.setattr(app_module, 'search_knowledge', lambda *a, **k: [])
     monkeypatch.setattr(app_module, 'save_chat_turn', Recorder())
-    monkeypatch.setattr(app_module, 'save_quiz_attempt', Recorder())
-    monkeypatch.setattr(app_module, 'has_quiz_attempt', lambda user_id, qid: any(args[1]['question_id'] == qid and args[0]['id'] == user_id for args, _ in app_module.save_quiz_attempt.calls))
+    saved_attempts = Recorder()
+
+    def record_quiz_attempt(user, question_id, grade):
+        if any(args[0]['id'] == user['id'] and args[1]['question_id'] == question_id for args, _ in saved_attempts.calls):
+            return None
+        result, attempt = grade(copy.deepcopy(user.get('learningProfile') or {}))
+        saved_attempts(user, {'question_id': question_id, **attempt})
+        return result
+
+    monkeypatch.setattr(app_module, 'record_quiz_attempt', record_quiz_attempt)
+    app_module.saved_quiz_attempts = saved_attempts
     question_store: dict[str, dict[str, Any]] = {}
 
     def save_generated_question(user: dict[str, Any], question: dict[str, Any]) -> str:

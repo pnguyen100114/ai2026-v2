@@ -27,8 +27,8 @@ try:
     from backend.answer_cleanup import clean_answer, cited_numbers, ensure_closing_question
     from backend.ai_roadmap import build_roadmap_prompt, parse_generated_roadmap
     from backend.db import (
-        check_chat_rate, check_rate, current_user, get_ai_roadmap, get_generated_question, has_quiz_attempt, init_db, lesson_history,
-        recent_question_texts, save_ai_roadmap, save_chat_turn, save_generated_question, save_quiz_attempt, signed_source_url,
+        check_chat_rate, check_rate, current_user, get_ai_roadmap, get_generated_question, init_db, lesson_history,
+        recent_question_texts, record_quiz_attempt, save_ai_roadmap, save_chat_turn, save_generated_question, signed_source_url,
         utc_now, verify_source_signature,
     )
     from backend.learning import (
@@ -45,8 +45,8 @@ except ImportError:  # pragma: no cover
     from answer_cleanup import clean_answer, cited_numbers, ensure_closing_question
     from ai_roadmap import build_roadmap_prompt, parse_generated_roadmap
     from db import (
-        check_chat_rate, check_rate, current_user, get_ai_roadmap, get_generated_question, has_quiz_attempt, init_db, lesson_history,
-        recent_question_texts, save_ai_roadmap, save_chat_turn, save_generated_question, save_quiz_attempt, signed_source_url,
+        check_chat_rate, check_rate, current_user, get_ai_roadmap, get_generated_question, init_db, lesson_history,
+        recent_question_texts, record_quiz_attempt, save_ai_roadmap, save_chat_turn, save_generated_question, signed_source_url,
         utc_now, verify_source_signature,
     )
     from learning import (
@@ -740,25 +740,34 @@ def answer_quiz(request: QuizAnswerRequest, user: dict[str, Any] = Depends(curre
     question = get_generated_question(user['id'], request.question_id)
     if question is None:
         raise HTTPException(status_code=404, detail='Không tìm thấy câu hỏi.')
-    if has_quiz_attempt(user['id'], request.question_id):
-        raise HTTPException(status_code=409, detail='Em đã trả lời câu này rồi, bấm "Câu khác" để luyện tiếp nhé.')
     expected_time = question.get('expected_time_seconds')
-    result = grade_answer(
-        question, request.answer, user.get('learningProfile') or {}, request.hints_used,
-        time_spent_seconds=request.time_spent_seconds,
-        expected_time_seconds=expected_time,
-    )
-    save_quiz_attempt(user, {
-        'question_id': request.question_id,
-        'answer': request.answer,
-        'is_correct': bool(result.get('is_correct')),
-        'hints_used': request.hints_used,
-        'difficulty': question.get('difficulty'),
-        'time_spent_seconds': result.get('time_spent_seconds'),
-        'expected_time_seconds': expected_time,
-        'error_tags': result.get('error_tags') or [],
-        'mastery': result.get('mastery'),
-    }, result.get('profile'))
+
+    def grade(profile: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+        result = grade_answer(
+            question, request.answer, profile, request.hints_used,
+            time_spent_seconds=request.time_spent_seconds,
+            expected_time_seconds=expected_time,
+        )
+        return result, {
+            'answer': request.answer,
+            'is_correct': bool(result.get('is_correct')),
+            'hints_used': request.hints_used,
+            'difficulty': question.get('difficulty'),
+            'time_spent_seconds': result.get('time_spent_seconds'),
+            'expected_time_seconds': expected_time,
+            'error_tags': result.get('error_tags') or [],
+            'mastery': result.get('mastery'),
+        }
+
+    # Chấm và ghi cùng một giao dịch (xem record_quiz_attempt). Ghi hỏng thì chưa có gì được lưu,
+    # nên báo em bấm lại thay vì hiện kết quả như đã ghi nhận.
+    try:
+        result = record_quiz_attempt(user, request.question_id, grade)
+    except Exception:
+        logger.exception('Failed to persist quiz attempt')
+        raise HTTPException(status_code=503, detail='Mimo chưa lưu được câu trả lời, em bấm kiểm tra lại nhé.')
+    if result is None:
+        raise HTTPException(status_code=409, detail='Em đã trả lời câu này rồi, bấm "Câu khác" để luyện tiếp nhé.')
     return {'success': True, **result}
 
 

@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import unicodedata
 
 import pytest
-from sqlalchemy import create_engine, update
+from sqlalchemy import create_engine, func, update
 
 from backend import accounts, db, safety
 from backend.tests.conftest import FakeGemini, make_match, parse_sse
@@ -44,17 +44,22 @@ def test_quiz_evidence_and_attempt_metadata_are_persisted(auth_client):
         'mastery': 0.62,
         'evidence': [{'difficulty': 3, 'time_spent_seconds': 42, 'error_tags': ['sign_error']}],
     }}}
-    db.save_quiz_attempt(user, {
-        'question_id': 'quiz-evidence-1',
-        'answer': 'x',
-        'is_correct': False,
-        'hints_used': 2,
-        'difficulty': 3,
-        'time_spent_seconds': 42,
-        'expected_time_seconds': 30,
-        'error_tags': ['sign_error'],
-        'mastery': 0.62,
-    }, learning_profile)
+    seen_profiles = []
+
+    def grade(profile):
+        seen_profiles.append(profile)
+        return {'is_correct': False, 'profile': learning_profile}, {
+            'answer': 'x',
+            'is_correct': False,
+            'hints_used': 2,
+            'difficulty': 3,
+            'time_spent_seconds': 42,
+            'expected_time_seconds': 30,
+            'error_tags': ['sign_error'],
+            'mastery': 0.62,
+        }
+
+    assert db.record_quiz_attempt(user, 'quiz-evidence-1', grade)['is_correct'] is False
 
     with db.engine.connect() as connection:
         attempt = connection.execute(
@@ -66,6 +71,16 @@ def test_quiz_evidence_and_attempt_metadata_are_persisted(auth_client):
     assert attempt['expected_time_seconds'] == 30
     assert attempt['error_tags'] == ['sign_error']
     assert db.get_user(user['id'])['learningProfile'] == learning_profile
+
+    # Lần nộp thứ hai cùng câu: không chấm, không ghi thêm dòng nào.
+    assert db.record_quiz_attempt(user, 'quiz-evidence-1', grade) is None
+    assert len(seen_profiles) == 1
+    # Câu khác chấm trên hồ sơ vừa ghi trong DB, không phải bản cũ nằm trong `user`.
+    stale_user = {**user, 'learningProfile': {}}
+    db.record_quiz_attempt(stale_user, 'quiz-evidence-2', grade)
+    assert seen_profiles[-1] == learning_profile
+    with db.engine.connect() as connection:
+        assert connection.execute(db.select(func.count()).select_from(db.quiz_attempts)).scalar() == 2
 
 
 def test_legacy_quiz_attempt_table_is_migrated_for_adaptive_evidence(monkeypatch, tmp_path):

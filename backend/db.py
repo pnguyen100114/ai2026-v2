@@ -20,7 +20,7 @@ import uuid
 from collections import deque
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import quote
 
 import jwt
@@ -686,11 +686,6 @@ def get_generated_question(user_id: str, question_id: str) -> dict[str, Any] | N
     return payload
 
 
-def has_quiz_attempt(user_id: str, question_id: str) -> bool:
-    with engine.connect() as conn:
-        return conn.execute(select(quiz_attempts.c.id).where(quiz_attempts.c.user_id == user_id, quiz_attempts.c.question_id == question_id)).first() is not None
-
-
 def recent_question_texts(user_id: str, concept_id: str, limit: int = 5) -> list[str]:
     """Recent questions on this concept, so Gemini does not repeat itself."""
     try:
@@ -721,13 +716,34 @@ def save_ai_roadmap(subject: str, grade: int, roadmap: dict[str, Any]) -> dict[s
     return roadmap
 
 
-def save_quiz_attempt(user: dict[str, Any], attempt: dict[str, Any], learning_profile: dict[str, Any] | None) -> None:
-    try:
-        with engine.begin() as conn:
-            conn.execute(insert(quiz_attempts).values(**attempt, user_id=user['id']))
-            if learning_profile is not None:
-                conn.execute(update(users).where(users.c.id == user['id']).values(learning_profile=learning_profile))
-        # Mức nắm bài vừa đổi: tin nhắn tiếp theo phải dạy theo số mới, không theo số cũ.
-        forget_user(user['id'])
-    except Exception:
-        logger.exception('Failed to persist quiz attempt')
+def record_quiz_attempt(
+    user: dict[str, Any],
+    question_id: str,
+    grade: Callable[[dict[str, Any]], tuple[dict[str, Any], dict[str, Any]]],
+) -> dict[str, Any] | None:
+    """Chấm và lưu một lượt trả lời trong cùng một giao dịch. None nếu câu này đã được trả lời.
+
+    Trước đây là ba bước rời: kiểm tra đã trả lời chưa, chấm, rồi ghi. Giữa bước đầu và bước
+    cuối có vài vòng tới DB (mỗi vòng ~1,3s), nên hai lần nộp sát nhau (bấm hai lần lúc mạng
+    chậm, hai tab) cùng lọt qua bước kiểm tra: một câu thành hai dòng quiz_attempts. Hai câu
+    khác nhau nộp cùng lúc thì cùng chấm trên một hồ sơ cũ, lần ghi sau xóa mất lượt của lần trước.
+
+    Giờ hàng users của em bị khóa (FOR UPDATE) suốt giao dịch: lần nộp sau phải chờ lần trước
+    xong, rồi mới kiểm tra và chấm trên hồ sơ vừa ghi. Khóa trên hàng users chứ không thêm chỉ
+    mục unique, vì init_db chạy cả khi backend trên máy khởi động - mà backend/.env trỏ thẳng vào
+    DB production. SQLite bỏ qua FOR UPDATE; nó chỉ dùng khi chạy thử trên máy.
+
+    grade(profile) nhận hồ sơ học tập đọc trong lúc khóa, trả (kết quả chấm, các cột của lượt).
+    """
+    with engine.begin() as conn:
+        profile = conn.execute(select(users.c.learning_profile).where(users.c.id == user['id']).with_for_update()).scalar()
+        answered = conn.execute(select(quiz_attempts.c.id).where(quiz_attempts.c.user_id == user['id'], quiz_attempts.c.question_id == question_id)).first()
+        if answered is not None:
+            return None
+        result, attempt = grade(profile or {})
+        conn.execute(insert(quiz_attempts).values(**attempt, question_id=question_id, user_id=user['id']))
+        if result.get('profile') is not None:
+            conn.execute(update(users).where(users.c.id == user['id']).values(learning_profile=result['profile']))
+    # Mức nắm bài vừa đổi: tin nhắn tiếp theo phải dạy theo số mới, không theo số cũ.
+    forget_user(user['id'])
+    return result
