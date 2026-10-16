@@ -10,10 +10,11 @@ hay không. Tài liệu này gồm ba việc, xếp theo thứ tự làm đượ
 Máy chỉ chấm được Mimo có trích dẫn, có từ chối, có lộ đáp án không. Một câu giảng sai mà
 vẫn gắn đúng trang sách thì máy cho đạt, trong khi học sinh lại tin vì thấy có trang sách.
 
-1. `python bao-cao/bo-test/phieu_cham.py xuat` → `phieu_cham_giao_vien.csv`.
-2. Gửi mỗi thầy cô các câu đúng môn mình dạy (Toán, KHTN, Ngữ văn, Tiếng Anh, LSĐL).
+1. `python bao-cao/bo-test/phieu_cham.py xuat` → `phieu_cham_giao_vien.csv`, kèm mỗi môn một
+   phiếu riêng trong `bo-test/phieu_theo_mon/` (Toán 24 câu, KHTN 9, Ngữ văn 5, Tiếng Anh 3, LSĐL 2).
+2. Gửi mỗi thầy cô phiếu đúng môn mình dạy.
 3. Thầy cô điền cột **Đánh giá**: `đúng` / `có chỗ sai` / `sai`. Nếu không phải `đúng` thì ghi rõ chỗ sai.
-4. `python bao-cao/bo-test/phieu_cham.py nhap <file>` rồi `python bao-cao/bo-test/lam_bang.py`.
+4. `python bao-cao/bo-test/phieu_cham.py nhap <file>` (mỗi phiếu môn nhập một lần) rồi `python bao-cao/bo-test/lam_bang.py`.
 
 Báo cáo đếm riêng những câu **có chỗ sai dù có trang sách đi kèm**, vì đây là loại lỗi nguy
 hiểm nhất.
@@ -34,7 +35,12 @@ cột "Thầy cô chấm" (tên, môn, trường). Lưu ý: chạy lại `chay_t
 - Mỗi bạn một tài khoản; xin phép giáo viên chủ nhiệm và báo phụ huynh.
 - Nhóm **không** hướng dẫn cách hỏi, chỉ giao: *"Em dùng Mimo để làm 2–3 bài tập trong SGK trang …"*.
 
-**Trong buổi** — một thành viên ghi lại (không nhắc bài):
+**Công cụ đã chuẩn bị** (`bao-cao/thu-nghiem/`)
+- `tao_google_form.gs`: dán vào script.google.com rồi bấm Chạy là có sẵn Google Form 9 câu dưới đây.
+- `phieu_quan_sat.csv`: phiếu cho người quan sát, mỗi dòng một bạn.
+- `tong_hop.py khao-sat <csv tải từ Form>` → `KET_QUA_KHAO_SAT.md` với các con số ở mục Báo cáo lại.
+
+**Trong buổi** — một thành viên ghi lại vào `phieu_quan_sat.csv` (không nhắc bài):
 - bạn có xin đáp án không, xin mấy lần;
 - Mimo có lỡ đưa đáp án không (chụp màn hình lại);
 - bạn có bấm vào trang sách không.
@@ -68,7 +74,9 @@ chụp Mimo lỡ đưa đáp án. Những ca lỡ đưa đáp án thì đưa và
 - **Bài kiểm tra trước**: 15 phút, 10 câu về chương sắp học. Giáo viên bộ môn ra đề, không phải nhóm.
 - **Bài kiểm tra sau**: cùng dạng, cùng độ khó, khác số liệu, làm sau 2–4 tuần.
 
-**So sánh**
+**So sánh** — nhập điểm theo mẫu `thu-nghiem/diem_truoc_sau_mau.csv` rồi chạy
+`python bao-cao/thu-nghiem/tong_hop.py truoc-sau <file>` → `KET_QUA_TRUOC_SAU.md` (mức tăng từng
+nhóm và khoảng tin cậy 95% của chênh lệch; khoảng chứa 0 thì không được kết luận Mimo giúp tăng điểm).
 - Mức tăng điểm (sau − trước) của nhóm A so với nhóm B, không so điểm sau một cách đơn lẻ.
 - Với nhóm A, lấy thêm số liệu Mimo đã ghi: số lượt hỏi, số câu luyện tập, số lần xem gợi ý.
 

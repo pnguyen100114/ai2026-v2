@@ -6,9 +6,10 @@ hiện. Nên mỗi câu trả lời cần một thầy cô đúng môn đánh d�
 
 Cách dùng:
     python bao-cao/bo-test/phieu_cham.py xuat
-        → phieu_cham_giao_vien.csv (mở bằng Google Sheets hoặc Excel, Data → From Text/CSV)
+        → phieu_cham_giao_vien.csv (mở bằng Google Sheets hoặc Excel, Data → From Text/CSV),
+          kèm phieu_theo_mon/phieu_<môn>.csv để gửi riêng từng thầy cô bộ môn
     python bao-cao/bo-test/phieu_cham.py nhap phieu_cham_giao_vien.csv
-        → ghi đánh giá vào ket_qua.json; chạy lại lam_bang.py để cập nhật KET_QUA_TEST.md
+        (hoặc từng phiếu môn, mỗi môn một lần nhap) → ghi đánh giá vào ket_qua.json; chạy lại lam_bang.py để cập nhật KET_QUA_TEST.md
 
 Phiếu gắn với đúng lần chạy trong ket_qua.json (cột "Lần chạy"): chạy lại chay_test.py là có
 câu trả lời mới, phiếu cũ không nhập vào được nữa.
@@ -19,11 +20,13 @@ import csv
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 THU_MUC = Path(__file__).resolve().parent
 KET_QUA = THU_MUC / 'ket_qua.json'
 PHIEU = THU_MUC / 'phieu_cham_giao_vien.csv'
+THEO_MON = THU_MUC / 'phieu_theo_mon'
 
 DANH_GIA = ('đúng', 'có chỗ sai', 'sai')
 COT = ['STT', 'Lần chạy', 'Nhóm', 'Môn', 'Lớp', 'Hội thoại trước', 'Câu hỏi của em',
@@ -85,23 +88,43 @@ def _doc() -> dict:
     return json.loads(KET_QUA.read_text(encoding='utf-8'))
 
 
-def xuat() -> None:
-    data = _doc()
+def _ghi_phieu(duong_dan: Path, dong: list[list]) -> None:
     # utf-8-sig: Excel cần BOM mới đọc đúng chữ có dấu.
-    with PHIEU.open('w', encoding='utf-8-sig', newline='') as f:
+    with duong_dan.open('w', encoding='utf-8-sig', newline='') as f:
         w = csv.writer(f)
         w.writerow(COT)
-        for k in data['ket_qua']:
-            lich_su = '\n'.join(f"{'Em' if l['vai'] == 'user' else 'Mimo'}: {chu_thuong(l['noi_dung'])}"
-                                for l in k.get('lich_su') or [])
-            trang = '; '.join(f"{n.get('sach') or 'SGK'} tr.{n.get('trang')}" for n in k.get('nguon') or [])
-            w.writerow([k['stt'], data['chay_luc'], k['nhom'], k['mon'], k['lop'], lich_su,
-                        chu_thuong(k['cau_hoi']), chu_thuong(k['tra_loi']), trang or '(không trích)',
-                        chu_thuong(k['ghi_chu_cham']),
-                        k.get('nguoi_cham_kien_thuc') or '', k.get('nguoi_cham_ghi_chu') or '',
-                        k.get('nguoi_cham_ten') or ''])
+        w.writerows(dong)
+
+
+def xuat() -> None:
+    data = _doc()
+    theo_mon: dict[str, list[list]] = {}
+    for k in data['ket_qua']:
+        lich_su = '\n'.join(f"{'Em' if l['vai'] == 'user' else 'Mimo'}: {chu_thuong(l['noi_dung'])}"
+                            for l in k.get('lich_su') or [])
+        trang = '; '.join(f"{n.get('sach') or 'SGK'} tr.{n.get('trang')}" for n in k.get('nguon') or [])
+        theo_mon.setdefault(k['mon'], []).append([
+            k['stt'], data['chay_luc'], k['nhom'], k['mon'], k['lop'], lich_su,
+            chu_thuong(k['cau_hoi']), chu_thuong(k['tra_loi']), trang or '(không trích)',
+            chu_thuong(k['ghi_chu_cham']),
+            k.get('nguoi_cham_kien_thuc') or '', k.get('nguoi_cham_ghi_chu') or '',
+            k.get('nguoi_cham_ten') or ''])
+    _ghi_phieu(PHIEU, sorted((d for ds in theo_mon.values() for d in ds), key=lambda d: d[0]))
     print(f'Đã ghi {PHIEU} ({len(data["ket_qua"])} câu).')
+    # Mỗi thầy cô chỉ nhận đúng các câu của môn mình; nhap đọc được từng phiếu môn riêng lẻ.
+    THEO_MON.mkdir(exist_ok=True)
+    for cu in THEO_MON.glob('phieu_*.csv'):
+        cu.unlink()
+    for mon, dong in theo_mon.items():
+        ten = THEO_MON / f"phieu_{re.sub(r'[^0-9A-Za-z]+', '_', _khong_dau(mon)).strip('_')}.csv"
+        _ghi_phieu(ten, dong)
+        print(f'   {mon:10} {len(dong):>2} câu → {ten.relative_to(THU_MUC)}')
     print('Gửi thầy cô đúng môn; cột Đánh giá chỉ nhận: ' + ' / '.join(DANH_GIA))
+
+
+def _khong_dau(text: str) -> str:
+    text = text.replace('đ', 'd').replace('Đ', 'D')
+    return unicodedata.normalize('NFD', text).encode('ascii', 'ignore').decode()
 
 
 def nhap(duong_dan: Path) -> None:

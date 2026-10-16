@@ -239,6 +239,10 @@ def main() -> None:
     p.add_argument('--password', default=os.getenv('MIMO_TEST_PASSWORD', 'KiemThu-2026-Mimo'))
     p.add_argument('--nhom', default=None,
                    help='chỉ chạy một nhóm: dễ / khó / từ chối / lạc đề / ngoài sách / mơ hồ / bẫy / năn nỉ / đối chứng')
+    # Phiếu đang chờ thầy cô chấm chỉ nhập lại được khi ket_qua.json còn nguyên, nên lần chạy
+    # thử (một nhóm, backend ở máy) ghi ra file khác.
+    p.add_argument('--ra', type=Path, default=THU_MUC / 'ket_qua.json',
+                   help='file ghi kết quả (mặc định ket_qua.json, file lam_bang.py và phieu_cham.py đọc)')
     args = p.parse_args()
 
     cases = [c for c in CAU_HOI if args.nhom is None or c[0] == args.nhom]
@@ -281,7 +285,7 @@ def main() -> None:
             if i < len(cases):
                 time.sleep(GIAN_CACH)
 
-    (THU_MUC / 'ket_qua.json').write_text(
+    args.ra.write_text(
         json.dumps({'chay_luc': datetime.now().isoformat(timespec='seconds'),
                     'api': args.api, 'kho_vector': suc_khoe.get('rag', {}),
                     'ket_qua': ket_qua}, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -293,7 +297,7 @@ def main() -> None:
         print(f'   {nhom:8} {sum(1 for k in trong if k["dat_may_cham"])}/{len(trong)}')
     giay = sorted(k['giay'] for k in ket_qua)
     print(f'Thời gian trả lời: trung vị {giay[len(giay)//2]:.1f}s, chậm nhất {giay[-1]:.1f}s')
-    print(f'\nĐã ghi {THU_MUC / "ket_qua.json"}')
+    print(f'\nĐã ghi {args.ra}')
     print('Chạy tiep: python bao-cao/bo-test/lam_bang.py  → KET_QUA_TEST.md')
 
 
