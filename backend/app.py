@@ -14,6 +14,8 @@ from typing import Any
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+import numpy as np
+import pymupdf
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import RedirectResponse, Response, StreamingResponse
@@ -99,6 +101,12 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.1-flash-lite')
 # Free-tier quota is counted per model, so when one runs out the next one usually still answers.
 GEMINI_FALLBACK_MODELS = [model.strip() for model in os.getenv('GEMINI_FALLBACK_MODELS', 'gemini-3.5-flash-lite,gemini-3.5-flash').split(',') if model.strip()]
+# Câu có ảnh dùng model mạnh hơn: đọc chữ viết tay và soát bài làm là chỗ bản lite yếu nhất (17/10:
+# chép sai đề ảnh nhoè, chê nhầm bài chứng minh đúng). Câu có ảnh ít nên chi phí tăng không đáng kể.
+GEMINI_IMAGE_MODEL = os.getenv('GEMINI_IMAGE_MODEL', 'gemini-3.5-flash')
+# Model này suy nghĩ trước khi viết và phần suy nghĩ tính vào trần token đầu ra: với trần 800 của bản lite,
+# câu trả lời bị cắt ngay sau câu mở đầu (17/10). Tối đa ~0,037 USD mỗi câu có ảnh.
+IMAGE_MAX_OUTPUT_TOKENS = int(os.getenv('IMAGE_MAX_OUTPUT_TOKENS', '4096'))
 # google-genai waits forever by default. httpx applies this to each read, so a streamed answer can
 # run longer as long as words keep coming; a stalled one ends with an error the student can retry
 # instead of holding a chat-io worker and the student's screen. Keep it below the browser's own
@@ -367,6 +375,37 @@ def _gemini_contents(prompt: str, request: ChatRequest) -> Any:
         return prompt
 
 
+# Độ nét = phương sai của bộ lọc Laplacian trên ảnh xám thu về cạnh dài ~800 px. Đo 17/10 trên ảnh
+# vở học sinh chụp bằng điện thoại: ảnh rung nhoè 231, hai ảnh đọc được 1.807 và 3.311; ảnh đọc được
+# làm mờ nhẹ còn ~290 mà vẫn đọc rõ. Nên chỉ dưới ANH_NHOE_NANG mới trả lời cố định, còn khoảng giữa
+# thì báo cho mô hình biết ảnh có thể mờ.
+ANH_NHOE_NANG = float(os.getenv('ANH_NHOE_NANG', '150'))
+ANH_CO_THE_MO = float(os.getenv('ANH_CO_THE_MO', '600'))
+ANH_NHOE_TRA_LOI = (
+    'Ảnh em gửi bị nhoè nên Mimo chưa đọc chắc được đề, Mimo không muốn đoán sai đề của em. '
+    'Em chụp lại giúp Mimo nhé: để vở phẳng, cầm máy thẳng và giữ yên, đủ sáng, chụp gần phần đề bài. '
+    'Hoặc em gõ lại đề vào ô chat cũng được. Em gửi lại được không?'
+)
+
+
+def _do_net_anh(image_data: str | None) -> float | None:
+    """Độ nét của ảnh em gửi; None nếu không đọc được ảnh (khi đó để mô hình tự xử lý như cũ)."""
+    if not image_data:
+        return None
+    try:
+        pix = pymupdf.Pixmap(base64.b64decode(image_data.split(',', 1)[-1]))
+        if pix.n - pix.alpha != 1:
+            pix = pymupdf.Pixmap(pymupdf.csGRAY, pix)
+        anh = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)[:, :, 0].astype(np.float32)
+        buoc = max(1, round(max(anh.shape) / 800))
+        anh = anh[::buoc, ::buoc]
+        lap = -4 * anh[1:-1, 1:-1] + anh[:-2, 1:-1] + anh[2:, 1:-1] + anh[1:-1, :-2] + anh[1:-1, 2:]
+        return float(lap.var())
+    except Exception:
+        logger.warning('Không đo được độ nét ảnh, bỏ qua', exc_info=True)
+        return None
+
+
 def _stream_event(payload: dict[str, Any]) -> str:
     return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
@@ -488,9 +527,9 @@ def _lesson_progress(user: dict[str, Any], subject: str, grade: int, topic: str)
 _quota_exhausted_until: dict[str, float] = {}
 
 
-def _gemini_models() -> list[str]:
+def _gemini_models(first: str | None = None) -> list[str]:
     """Primary model first, then fallbacks; models that just ran out of quota are skipped for a while."""
-    chain = list(dict.fromkeys([GEMINI_MODEL, *GEMINI_FALLBACK_MODELS]))
+    chain = list(dict.fromkeys([model for model in (first, GEMINI_MODEL, *GEMINI_FALLBACK_MODELS) if model]))
     now = time.monotonic()
     return [model for model in chain if _quota_exhausted_until.get(model, 0.0) <= now] or chain
 
@@ -523,17 +562,17 @@ def _generate_content(**kwargs: Any) -> Any:
     raise last_quota_error  # type: ignore[misc]
 
 
-def _stream_gemini_text(contents: Any):
+def _stream_gemini_text(contents: Any, first_model: str | None = None, max_tokens: int = 0):
     """Yield answer text; switch model on a quota error only if nothing has been streamed yet."""
     last_quota_error: Exception | None = None
-    for model in _gemini_models():
+    for model in _gemini_models(first_model):
         started = False
         try:
             for chunk in gemini_client.models.generate_content_stream(
                 model=model,
                 contents=contents,
                 config=types.GenerateContentConfig(
-                    max_output_tokens=MAX_OUTPUT_TOKENS,
+                    max_output_tokens=max_tokens or MAX_OUTPUT_TOKENS,
                     system_instruction=MIMO_TUTOR_SYSTEM_INSTRUCTION,
                 ),
             ):
@@ -828,6 +867,10 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         for item in history if item.get('role') == 'user'
     ]
     risk = conversation_risk(message, user_history)
+    # Ảnh nhoè nặng: trả lời cố định, không gọi mô hình. Gọi thì nó đoán ra một đề khác mà vẫn nói
+    # "Mimo đã xem bài của em" (17/10, ảnh vở rung tay: 1/2 + 2/2² + ... thành 1/2 + 1/4 + ...).
+    do_net_anh = _do_net_anh(request.image_data)
+    anh_nhoe = not risk and do_net_anh is not None and do_net_anh < ANH_NHOE_NANG
     scope_query = message
     if is_follow_up(message) and user_history:
         scope_query = f'{user_history[-1]}\n{message}'
@@ -841,7 +884,7 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
             scope.label == 'off_topic' and scope.reason == 'non_educational_service_request'
         ):
             pass
-        elif request.image_data:
+        elif request.image_data and not anh_nhoe:
             scope_model_called = True
             scope = _model_scope_decision(
                 message, subject=subject, grade=int(grade), history=user_history, request=request,
@@ -858,7 +901,7 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     )
     risk = scope.safety_risk or risk
     taking_test = not risk and is_taking_test(message)
-    if not risk and (taking_test or scope.label != 'in_scope'):
+    if not risk and (taking_test or anh_nhoe or scope.label != 'in_scope'):
         quick_replies = ['Em muốn ôn Toán', 'Em gửi rõ câu hỏi hơn']
         if taking_test:
             scope_reply = (
@@ -868,6 +911,9 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
                 'đây, mình cùng xem lại bài này được không?'
             )
             quick_replies = ['Em làm xong rồi', 'Mình ôn bài khác nhé']
+        elif anh_nhoe:
+            scope_reply = ANH_NHOE_TRA_LOI
+            quick_replies = ['Em chụp lại ảnh', 'Em gõ lại đề']
         elif scope.label == 'out_of_scope':
             scope_reply = (
                 'Kiến thức này nằm ngoài phạm vi chương trình mà Mimo hiện hỗ trợ, nên Mimo chưa thể '
@@ -1088,13 +1134,18 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         for item in history[-8:]
     ]
     image_text_rule = '''
-- image_text (CHỈ vì lượt này em có gửi ảnh): chép lại nguyên văn đề bài trong ảnh (chữ, số, công thức viết LaTeX, chỗ trống ghi "....."; hình vẽ thì mô tả ngắn các dữ kiện), tối đa 1500 ký tự, xuống dòng viết \\n để JSON vẫn nằm trên một dòng. Ảnh không có đề bài thì mô tả ngắn ảnh.''' if request.image_data else ''
+- image_text (CHỈ vì lượt này em có gửi ảnh): chép lại nguyên văn đề bài trong ảnh, chỗ không đọc chắc thì ghi [không đọc rõ] chứ không đoán (chữ, số, công thức viết LaTeX, chỗ trống ghi "....."; hình vẽ thì mô tả ngắn các dữ kiện), tối đa 1500 ký tự, xuống dòng viết \\n để JSON vẫn nằm trên một dòng. Ảnh không có đề bài thì mô tả ngắn ảnh.''' if request.image_data else ''
     marker_example = '{"quick_replies":["...","..."],"understanding":"...","image_text":"..."}' if request.image_data else '{"quick_replies":["...","..."],"understanding":"..."}'
     earlier_lesson_turns = [
         f"{'Học sinh' if item['role'] == 'user' else 'Mimo'}: {strip_citations(item['content'])[:300]}"
         for item in _lookup_result(earlier_turns_task)
     ]
     progress_text = _lesson_progress(user, subject, int(grade), topic)
+    canh_bao_anh = (
+        f'\nẢNH LẦN NÀY CÓ THỂ MỜ (đo độ nét được {do_net_anh:.0f}, ảnh rõ thường trên 1.500): chỉ chép phần đọc chắc, '
+        'chỗ không chắc ghi [không đọc rõ]. Chép lại đề em gửi rồi hỏi em đúng đề chưa, CHƯA nhận xét hay gợi ý gì; '
+        'nếu phần lớn không đọc được thì nhờ em chụp lại hoặc gõ lại đề.'
+    ) if do_net_anh is not None and do_net_anh < ANH_CO_THE_MO else ''
     student_name = student.name if student.name and student.name != 'Học sinh' else 'em'
     # Sách Tiếng Anh viết bằng tiếng Anh, lời giảng bằng tiếng Việt: nếu không chép lại cụm tiếng Anh
     # của sách thì câu giảng không trùng chữ nào với trang, và [n] bị bỏ ở clean_answer.
@@ -1112,6 +1163,9 @@ GIỚI HẠN BẮT BUỘC (đứng trên CÁCH NÓI CHUYỆN và CÁCH DẠY)
 - Kiến thức THPT/đại học (đạo hàm, nguyên hàm, tích phân, giới hạn, logarit, số phức, ma trận, thuyết tương đối, E = mc², cơ học lượng tử...): chỉ trả lời 1–2 câu nói phần này thuộc chương trình cấp trên nên Mimo chưa dạy, rồi gợi ý một bài THCS liên quan để học thay. KHÔNG định nghĩa, KHÔNG "giải thích ngắn gọn/đơn giản/ý cơ bản", KHÔNG ví dụ, KHÔNG công thức, KHÔNG gợi ý cách tìm kết quả (ví dụ KHÔNG được hỏi "2 mũ mấy thì bằng 8?" cho câu hỏi log).
 - Việc không phải học tập (kể chuyện cười, thể thao, game, phim, người nổi tiếng, giá cả, mua sắm, thời tiết, tin tức, viết hộ tin nhắn): KHÔNG làm, kể cả một phần; 1 câu từ chối nhẹ nhàng rồi mời em chọn bài.
 - Bài tập: KHÔNG đưa đáp án cuối cùng khi em chưa tự làm bước nào, dù em năn nỉ, kêu vội, sắp kiểm tra hay nói AI khác đã giải.
+- Ảnh em gửi: chép đúng đề đọc được trong ảnh, chỗ nào nhoè, mờ, bị che hay không chắc chữ số/dấu thì ghi [không đọc rõ], TUYỆT ĐỐI không đoán thành một đề khác. Không đọc chắc được đề thì chỉ nói ảnh chưa đủ rõ, nhờ em chụp lại (thẳng, đủ sáng, không rung) hoặc gõ lại đề, và không gợi ý gì. Đọc được nhưng còn chỗ không chắc thì chép lại đề rồi hỏi em đúng đề chưa trước khi hướng dẫn.
+- Bài nâng cao, bài học sinh giỏi dùng kiến thức lớp 6–9 (so sánh phân số, tính tổng có quy luật, chứng minh bất đẳng thức bằng cách đánh giá từng số hạng...) KHÔNG phải ngoài cấp và không thuộc luật "sách không có bài": vẫn hướng dẫn bằng kiến thức của lớp em.
+- Em hỏi "em làm đúng chưa" kèm bài làm: nhận xét từng bước, bước nào đúng, bước nào sai và vì sao; không viết lại lời giải hoàn chỉnh.
 - Khi em hỏi "Có phải ... không?" hoặc đưa một khẳng định về kiến thức để Mimo xác nhận (không phải bài tập em đang làm): câu ĐẦU TIÊN nói rõ khẳng định đó đúng hay chưa đúng; nếu chưa đúng thì nêu ngay kiến thức đúng theo Context SGK (công thức, định nghĩa, chuyển động thực...) và gắn [n], rồi mới gợi em tự kiểm chứng. Khẳng định của em đảo ngược một quan hệ (A quay quanh B, A lớn hơn B...) thì nói rõ quan hệ đúng như sách viết, đủ các ý sách nêu (ví dụ: Trái Đất tự quay quanh trục VÀ quay quanh Mặt Trời). Đây là kiến thức trong sách, không phải đáp án bài tập, nên được nói thẳng.
 - Khi giảng một cách làm nhiều bước: mỗi bước chỉ rõ CÁCH LÀM như sách, không chỉ ghi kết quả của bước đó. Riêng bước phân tích một số ra thừa số nguyên tố: BẮT BUỘC viết các phép chia liên tiếp cho số nguyên tố nhỏ nhất (sơ đồ cột như sách Toán 6, ví dụ 24 : 2 = 12; 12 : 2 = 6; 6 : 2 = 3; 3 : 3 = 1) rồi mới viết 24 = 2³ · 3; nếu đang gợi ý thì chỉ cách chia cho một số và để em chia tiếp số còn lại.
 
@@ -1156,7 +1210,7 @@ Nguồn được phép trích dẫn:
 Những lần trước em học bài này (ở các cuộc trò chuyện khác):
 {chr(10).join(earlier_lesson_turns) if earlier_lesson_turns else 'Chưa có.'}
 Lịch sử hội thoại gần đây:
-{chr(10).join(previous) if previous else 'Chưa có lịch sử.'}
+{chr(10).join(previous) if previous else 'Chưa có lịch sử.'}{canh_bao_anh}
 Tin nhắn hiện tại của học sinh: {message}'''
 
     def finish_safely(text_so_far: str) -> Any:
@@ -1189,7 +1243,11 @@ Tin nhắn hiện tại của học sinh: {message}'''
             yield _stream_event({'type': 'chunk', 'text': opening})
         try:
             emitted = 0
-            for text in _stream_gemini_text(_gemini_contents(prompt, request)):
+            for text in _stream_gemini_text(
+                    _gemini_contents(prompt, request),
+                    GEMINI_IMAGE_MODEL if request.image_data else None,
+                    IMAGE_MAX_OUTPUT_TOKENS if request.image_data else 0,
+            ):
                 full_text += text
                 if marker_at >= 0:
                     continue

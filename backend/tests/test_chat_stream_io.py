@@ -688,3 +688,38 @@ def test_english_section_question_only_cites_pages_of_that_unit(client, app_mod,
 
     prompt = fake.calls[-1]['contents']
     assert 'community service' in prompt and 'reading about films' not in prompt
+
+
+def _anh_jpeg(sharp: bool) -> str:
+    """Ảnh JPEG dạng data URL: ô bàn cờ (nét) hoặc nền xám phẳng (nhoè hoàn toàn)."""
+    import base64
+
+    import numpy as np
+    import pymupdf
+    anh = (np.indices((400, 300)).sum(axis=0) // 8 % 2 * 255) if sharp else np.full((400, 300), 128)
+    pix = pymupdf.Pixmap(pymupdf.csGRAY, 300, 400, anh.astype(np.uint8).tobytes(), False)
+    return 'data:image/jpeg;base64,' + base64.b64encode(pix.tobytes('jpeg')).decode()
+
+
+def test_blurry_photo_gets_a_fixed_retake_reply_and_no_model_call(client, app_mod, monkeypatch):
+    # 17/10: ảnh vở rung tay, mô hình đoán ra một đề khác mà vẫn nói đã xem bài của em.
+    fake = FakeGemini(chunks=['Đề bài là 1/2 + 1/4 + ...'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+    monkeypatch.setattr(app_mod, 'search_knowledge', lambda *a, **k: [make_match()])
+
+    done = stream(client, message='Em làm bài này đúng chưa ạ?', image_data=_anh_jpeg(sharp=False),
+                  image_mime_type='image/jpeg')[-1]
+
+    assert done['content'] == app_mod.ANH_NHOE_TRA_LOI
+    assert fake.calls == []
+
+
+def test_sharp_photo_is_answered_by_the_image_model(client, app_mod, monkeypatch):
+    fake = FakeGemini(text='{"classification":"in_scope","safety_risk":"none"}', chunks=['Đề bài: tính 1/2 + 1/3. Em thử quy đồng nhé?'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+    monkeypatch.setattr(app_mod, 'search_knowledge', lambda *a, **k: [make_match()])
+
+    stream(client, message='Em làm bài này đúng chưa ạ?', image_data=_anh_jpeg(sharp=True), image_mime_type='image/jpeg')
+
+    assert app_mod._do_net_anh(_anh_jpeg(sharp=True)) > app_mod.ANH_CO_THE_MO
+    assert fake.calls[-1]['model'] == app_mod.GEMINI_IMAGE_MODEL
