@@ -3,8 +3,11 @@
 Nguồn duy nhất là KICH_BAN_THI.md cùng thư mục. Sửa chữ thì sửa ở đó rồi chạy lại:
     python bao-cao/kich-ban-thi/make_kich_ban_thi.py
 Đừng sửa thẳng trong Word, lần chạy sau sẽ ghi đè.
+
+Dựng file markdown khác cùng kiểu trình bày: make_kich_ban_thi.py <nguon.md> <ra.docx>
 """
 import re
+import sys
 from pathlib import Path
 
 from docx import Document
@@ -15,8 +18,8 @@ from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
 HERE = Path(__file__).resolve().parent
-SRC = HERE / 'KICH_BAN_THI.md'
-DOCX = HERE / 'Kich_ban_thi.docx'
+SRC = Path(sys.argv[1]).resolve() if len(sys.argv) > 2 else HERE / 'KICH_BAN_THI.md'
+DOCX = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else HERE / 'Kich_ban_thi.docx'
 
 CORAL, NAVY, GREY = 'F2704F', '1B2A4A', '6B7280'
 ITEM = re.compile(r'^( *)(- \[[ xX]\] |- |\d+\. )')
@@ -182,7 +185,7 @@ for kind, payload in parse(SRC.read_text(encoding='utf-8')):
         table(payload)
     elif kind == 'image':
         alt, path = payload
-        doc.add_picture(str(HERE / path), width=WIDTH)
+        doc.add_picture(str(SRC.parent / path), width=WIDTH)
         doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
         doc.paragraphs[-1].paragraph_format.keep_with_next = True
     elif kind == 'list':
@@ -222,4 +225,4 @@ for kind, payload in parse(SRC.read_text(encoding='utf-8')):
              align=WD_ALIGN_PARAGRAPH.CENTER if first else None)
 
 doc.save(DOCX)
-print('ok', DOCX.relative_to(HERE.parent.parent))
+print('ok', DOCX)
