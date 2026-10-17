@@ -1618,6 +1618,26 @@ def lessons_named(subject: Any, text: Any) -> list[tuple[Course, list[Lesson]]]:
     return found
 
 
+GS_SECTION_NAME = re.compile(r'\b(?:getting started|a closer look [12]|communication|skills [12]|looking back|project)\b')
+
+
+def unit_cua_cau_hoi(subject: Any, grade: Any, message: Any, topic: Any) -> int | None:
+    """Tiếng Anh: Unit mà câu hỏi nhắc tới bằng tên mục ("Skills 1", "A Closer Look 2"), hoặc None.
+
+    Unit nào của Global Success cũng có đủ tám mục cùng tên, nên tìm theo "Giảng lại Unit 3 – Skills 1"
+    thì trang "Unit 8 – Skills 1" khớp ngang trang đúng; đo 17/10 trên bản deploy, Mimo trích Unit 8 và
+    Unit 11 cho câu hỏi về Unit 3. Unit lấy từ số em ghi trong câu, không có thì là Unit của bài đang mở.
+    """
+    folded = _fold(message)
+    if canonical_subject(subject) != 'Tiếng Anh' or not GS_SECTION_NAME.search(folded):
+        return None
+    named = re.search(r'\bunit\s*(\d+)\b', folded)
+    if named:
+        return int(named.group(1))
+    found = find_lesson(subject, grade, topic)
+    return found[1].chapter if found else None
+
+
 def lessons_page_filter(course: Course, lessons: list[Lesson]) -> dict[str, Any] | None:
     """Bộ lọc tìm kiếm trong đúng các trang của những bài này (cùng một tập sách)."""
     ranges = [_page_range(course, lesson) for lesson in lessons]

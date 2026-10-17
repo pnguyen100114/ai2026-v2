@@ -144,3 +144,31 @@ TRANG_HINH_CAU = ('Giải phương trình để tìm bán kính, sau đó tính 
 def test_book_pointer_is_not_added(text, passages, titles):
     from backend.answer_cleanup import add_book_pointer
     assert add_book_pointer(text, passages, titles) == text
+
+
+# Trang Tiếng Anh 7, Unit 1 – Getting Started (bản OCR): sách viết tiếng Anh, Mimo giảng tiếng Việt.
+TA7_TRANG_8 = ('GETTING STARTED My favourite hobby Listen and read. Ann: Your house is very nice, Trang. '
+               'Trang: Thanks! Let us go upstairs. I will show you my room. Ann: I love your dollhouse. It is amazing. '
+               'Did you make it yourself? Trang: Yes. I like building dollhouses very much. Ann: Really? Is it hard '
+               'to build one? Trang: Not really. All you need is glue, cardboard and some creativity.')
+TA7_TOPIC = 'Unit 1 – Getting Started Unit 1 – Getting Started'
+
+
+@pytest.mark.parametrize('answer, kept', [
+    # Câu giảng chép lại từ của trang: giữ [1].
+    ('Trong hội thoại, Trang kể sở thích "building dollhouses" và chỉ cần "glue", "cardboard" để làm [1].', True),
+    # Chỉ nhắc tên bài thì không phải dựa vào trang.
+    ('Bài Getting Started của Unit 1 giúp em làm quen với chủ đề sở thích [1].', False),
+    # Chỉ một từ trùng thì chưa đủ.
+    ('Từ "dollhouse" nghĩa là ngôi nhà búp bê [1].', False),
+])
+def test_english_page_citation_is_kept_when_the_sentence_quotes_the_book(answer, kept):
+    text = clean(answer, message='Giảng lại Unit 1 – Getting Started cho em', passages=[TA7_TRANG_8], topic=TA7_TOPIC)
+    assert (cited_numbers(text, 1) == [1]) is kept
+
+
+def test_vietnamese_page_gets_no_help_from_unaccented_words():
+    # Trang tiếng Việt: chữ không dấu ("trong", "theo", "thanh") trùng nhau không phải bằng chứng.
+    trang = 'Trong tam giác, tổng ba góc bằng 180 độ. Theo định lí, góc ngoài bằng tổng hai góc trong không kề với nó.'
+    text = clean('Theo em, trong bài toán thanh long thì mình xếp trong hộp [1].', passages=[trang])
+    assert cited_numbers(text, 1) == []

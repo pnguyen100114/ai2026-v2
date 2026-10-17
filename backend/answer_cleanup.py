@@ -43,6 +43,26 @@ def _bigrams(text: str) -> set[tuple[str, str]]:
     return {pair for pair in zip(words, words[1:]) if not (pair[0] in STOPWORDS and pair[1] in STOPWORDS)}
 
 
+# Sách Tiếng Anh viết bằng tiếng Anh còn Mimo giảng bằng tiếng Việt, nên câu giảng không bao giờ trùng
+# đủ cặp từ với trang sách. Với trang tiếng Anh, câu chép lại từ của sách ("building dollhouses",
+# "collecting coins") là bằng chứng câu đó dựa vào trang.
+EN_STOPWORDS = frozenset(
+    'about after again also because been before being both could does doing down each from have having here into '
+    'just made make many more most much must only other over same should some such than that their them then there '
+    'these they this those through very want were what when where which while will with would your yours'.split()
+)
+
+
+def _english_words(text: str) -> set[str]:
+    words = re.findall(r'[^\W\d_]+', unicodedata.normalize('NFC', text.lower()))
+    return {word for word in words if word.isascii() and len(word) >= 4 and word not in EN_STOPWORDS}
+
+
+def _is_english(text: str) -> bool:
+    words = re.findall(r'[^\W\d_]+', unicodedata.normalize('NFC', text.lower()))
+    return len(words) >= 15 and sum(word.isascii() for word in words) >= 0.8 * len(words)
+
+
 def _sentence_bounds(masked: str, start: int, end: int) -> tuple[int, int]:
     left = max(masked.rfind(char, 0, start) for char in SENTENCE_END) + 1
     ends = [index for index in (masked.find(char, end) for char in SENTENCE_END) if index >= 0]
@@ -81,7 +101,8 @@ def strip_citations(text: str) -> str:
     return ''.join(pieces)
 
 
-def _keep_citation(text: str, masked: str, match: re.Match[str], passages: list[str], pages: list[object], topic_bigrams: set[tuple[str, str]]) -> bool:
+def _keep_citation(text: str, masked: str, match: re.Match[str], passages: list[str], pages: list[object],
+                   topic_bigrams: set[tuple[str, str]], topic_words: set[str] = frozenset()) -> bool:
     values = [int(value) for value in re.split(r'[,;]', match.group(1))]
     if not all(1 <= value <= len(passages) for value in values):
         return False
@@ -103,8 +124,16 @@ def _keep_citation(text: str, masked: str, match: re.Match[str], passages: list[
     if MATH_MASK in masked[left:right]:
         return True
     # A plain-text sentence must actually restate the cited page, beyond just naming the lesson.
-    sentence = _bigrams(CITATION.sub(' ', sentence_text)) - topic_bigrams
-    return all(len(sentence & _bigrams(passages[value - 1])) >= MIN_SHARED_BIGRAMS for value in values)
+    plain = CITATION.sub(' ', sentence_text)
+    sentence = _bigrams(plain) - topic_bigrams
+    english = _english_words(plain) - topic_words
+
+    def backed_by(passage: str) -> bool:
+        if len(sentence & _bigrams(passage)) >= MIN_SHARED_BIGRAMS:
+            return True
+        return _is_english(passage) and len(english & _english_words(passage)) >= MIN_SHARED_BIGRAMS
+
+    return all(backed_by(passages[value - 1]) for value in values)
 
 
 # Trang sách phải trùng ít nhất chừng này cặp từ với câu trả lời thì mới coi là câu trả lời dựa vào
@@ -183,10 +212,11 @@ def clean_answer(text: str, *, message: str, passages: list[str], pages: list[ob
     text = MATH_SEGMENT.sub(lambda match: CITATION_AT_MATH_END.sub(r'\3\1', match.group()), text)
     masked = _mask_math(text)
     topic_bigrams = _bigrams(topic)
+    topic_words = _english_words(topic)
     pieces: list[str] = []
     last = 0
     for match in CITATION.finditer(masked):
-        if not _keep_citation(text, masked, match, passages, pages or [], topic_bigrams):
+        if not _keep_citation(text, masked, match, passages, pages or [], topic_bigrams, topic_words):
             pieces.append(text[last:match.start()])
             last = match.end()
     pieces.append(text[last:])

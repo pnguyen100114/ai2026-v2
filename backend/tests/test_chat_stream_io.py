@@ -601,3 +601,55 @@ def test_student_taking_a_test_gets_no_hint_and_the_model_is_not_asked(client, a
     assert done['content'].startswith('Mimo biết em đang làm bài kiểm tra')
     assert 'a^2' not in done['content'] and done['content'].endswith('?')
     assert fake.calls == []
+
+
+def test_lesson_page_inside_the_catalog_range_is_citable_even_with_a_low_score(client, app_mod, monkeypatch):
+    # Tiếng Anh 7, Unit 1 – Getting Started: tên bài khớp trang hội thoại tiếng Anh chỉ 0.58, dưới cả
+    # RAG_SCORE_THRESHOLD lẫn CHAT_SOURCE_MIN_SCORE. Trang vẫn nằm trong phạm vi trang của bài theo
+    # danh mục, nên Mimo được trích nó.
+    trang = make_match(score=0.58, source='TA7.pdf', pdf_page=9, page=8,
+                       text='Trang: Yes. I like building dollhouses very much. All you need is glue, cardboard and creativity.')
+
+    def fake_search(query, **kwargs):
+        return [trang] if kwargs.get('extra_filter') else []
+
+    monkeypatch.setattr(app_mod, 'search_knowledge', fake_search)
+    fake = FakeGemini(chunks=['Trang thích "building dollhouses", chỉ cần "glue" và "cardboard" [1].'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+
+    events = stream(client, message='Giảng lại Unit 1 – Getting Started cho em', student={'grade': 7, 'subject': 'Tiếng Anh'},
+                    context={'currentLesson': 'Unit 1 – Getting Started', 'currentTopic': 'Unit 1 – Getting Started'})
+
+    assert '[1] Trang: Yes. I like building dollhouses' in fake.calls[-1]['contents']
+    assert [s['page'] for s in events[-1]['sources']] == [8]
+    assert 'chép nguyên cụm tiếng Anh của sách' in fake.calls[-1]['contents']
+
+
+def test_off_catalog_lesson_pages_still_need_a_score(client, app_mod, monkeypatch):
+    # Không tra được bài trong danh mục thì tìm cả sách, nên điểm vẫn là thứ duy nhất làm chứng.
+    trang = make_match(score=0.58, text='Một trang bất kỳ của cuốn sách.')
+    monkeypatch.setattr(app_mod, 'search_knowledge', lambda query, **kwargs: [trang] if query == 'Bài không có trong danh mục' else [])
+    fake = FakeGemini(chunks=['Mimo giảng nhé.'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+
+    events = stream(client, message='Cho em ví dụ khác', student={'grade': 8, 'subject': 'Toán'},
+                    context={'currentLesson': 'Bài không có trong danh mục', 'currentTopic': 'Bài không có trong danh mục'})
+
+    assert 'Một trang bất kỳ' not in fake.calls[-1]['contents']
+    assert events[-1]['sources'] == []
+    assert 'chép nguyên cụm tiếng Anh' not in fake.calls[-1]['contents']
+
+
+def test_english_section_question_only_cites_pages_of_that_unit(client, app_mod, monkeypatch):
+    # Đo 17/10: "Giảng lại Unit 3 – Skills 1" trích trang "Unit 8 – Skills 1" vì mục cùng tên khớp ngang.
+    unit_8 = make_match(score=0.9, source='TA7.pdf', pdf_page=88, page=87, chapter=8, text='Unit 8 Skills 1 reading about films.')
+    unit_3 = make_match(score=0.7, source='TA7.pdf', pdf_page=36, page=35, chapter=3, text='Unit 3 Skills 1 reading about community service.')
+    monkeypatch.setattr(app_mod, 'search_knowledge', lambda query, **kwargs: [] if kwargs.get('extra_filter') else [unit_8, unit_3])
+    fake = FakeGemini(chunks=['Mimo giảng nhé.'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+
+    stream(client, message='Giảng lại Unit 3 – Skills 1 cho em', student={'grade': 7, 'subject': 'Tiếng Anh'},
+           context={'currentLesson': 'Unit 3 – Skills 1', 'currentTopic': 'Unit 3 – Skills 1'})
+
+    prompt = fake.calls[-1]['contents']
+    assert 'community service' in prompt and 'reading about films' not in prompt

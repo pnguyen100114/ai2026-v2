@@ -66,12 +66,12 @@ except ImportError:  # pragma: no cover
 
 try:
     from backend.rag import page_store
-    from backend.rag.books import build_catalog_roadmap, canonical_subject, lesson_page_filter, lessons_named, lessons_page_filter, resolve_book_file
+    from backend.rag.books import build_catalog_roadmap, canonical_subject, lesson_page_filter, lessons_named, lessons_page_filter, resolve_book_file, unit_cua_cau_hoi
     from backend.rag.curriculum import build_roadmap, get_curriculum
     from backend.rag.retriever import RAG_SCORE_THRESHOLD, search_knowledge
 except ImportError:  # pragma: no cover
     from rag import page_store
-    from rag.books import build_catalog_roadmap, canonical_subject, lesson_page_filter, lessons_named, lessons_page_filter, resolve_book_file
+    from rag.books import build_catalog_roadmap, canonical_subject, lesson_page_filter, lessons_named, lessons_page_filter, resolve_book_file, unit_cua_cau_hoi
     from rag.curriculum import build_roadmap, get_curriculum
     from rag.retriever import RAG_SCORE_THRESHOLD, search_knowledge
 
@@ -449,15 +449,23 @@ def _lesson_pages(subject: str, grade: int, topic: str) -> list[dict[str, Any]]:
     """Textbook pages for a lesson topic, cached per process: one embedding per lesson instead of one per message."""
     key = (subject, grade, topic)
     if key not in _lesson_pages_cache:
+        page_filter = lesson_page_filter(subject, grade, topic)
         try:
             # Catalog books: only the lesson's own pages, not look-alike pages from other lessons.
-            pages = search_knowledge(topic, subject=subject, grade=grade, top_k=4, extra_filter=lesson_page_filter(subject, grade, topic))
+            pages = search_knowledge(topic, subject=subject, grade=grade, top_k=4, extra_filter=page_filter)
         except Exception:
             logger.exception('RAG retrieval failed for lesson pages')
             return []
         if len(_lesson_pages_cache) >= LESSON_PAGES_CACHE_SIZE:
             _lesson_pages_cache.pop(next(iter(_lesson_pages_cache)))
-        _lesson_pages_cache[key] = [item for item in pages if float(item.get('score', 0.0)) >= RAG_SCORE_THRESHOLD]
+        # Trang nằm trong phạm vi trang của bài theo danh mục thì đã chắc là trang của bài, không cần
+        # điểm làm chứng. Điểm ở đây là điểm của tên bài với trang: "Getting Started" với trang hội
+        # thoại tiếng Anh (bản OCR) chỉ được 0.58-0.61, nên trước 17/10 trang Tiếng Anh không bao giờ
+        # được trích (buổi thử 16/10: 1/107 câu Tiếng Anh có trang).
+        _lesson_pages_cache[key] = (
+            [{**item, 'in_lesson': True} for item in pages] if page_filter
+            else [item for item in pages if float(item.get('score', 0.0)) >= RAG_SCORE_THRESHOLD]
+        )
     return _lesson_pages_cache[key]
 
 
@@ -935,6 +943,11 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     seen_pages = {_page_key(item) for item in relevant_matches[:3]}
     lesson_pages = [item for item in _lookup_result(lesson_pages_task) if _page_key(item) not in seen_pages][:LESSON_CONTEXT_PAGES] if not retrieval_error else []
     context_matches = sorted(relevant_matches[:3] + lesson_pages, key=lambda item: float(item.get('score', 0.0)), reverse=True)
+    # Tiếng Anh: câu hỏi gọi tên mục ("Skills 1") thì chỉ trang của đúng Unit đó được đưa vào, vì mục
+    # cùng tên ở Unit khác khớp ngang (xem unit_cua_cau_hoi).
+    unit_hoi = unit_cua_cau_hoi(subject, grade, message, topic or lesson)
+    if unit_hoi is not None:
+        context_matches = [item for item in context_matches if item.get('in_lesson') or item.get('chapter') == unit_hoi]
 
     # Đoạn sách lớp khác chỉ đưa vào khi nó khớp câu hỏi HƠN sách lớp em. Điểm tuyệt đối không
     # tách được "có" với "không có" (xem thieu_sach bên dưới), nhưng bài nằm hẳn ở lớp khác thì
@@ -979,7 +992,7 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     # Lời chào và lời cảm ơn không được gắn trang sách, dù điểm tương đồng có cao tới đâu.
     if _la_cau_hoi_hoc_tap(message) and (biet_lop or not ngoai_sach):
         for item in context_matches:
-            if float(item.get('score', 0.0)) >= CHAT_SOURCE_MIN_SCORE:
+            if item.get('in_lesson') or float(item.get('score', 0.0)) >= CHAT_SOURCE_MIN_SCORE:
                 unique_matches.setdefault(_page_key(item), item)
     # Every citable passage gets a number, in the same order as the `sources` sent to the client,
     # so "[n]" in the answer points at sources[n-1] and at the passage labelled [n] in the prompt.
@@ -1067,6 +1080,13 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     ]
     progress_text = _lesson_progress(user, subject, int(grade), topic)
     student_name = student.name if student.name and student.name != 'Học sinh' else 'em'
+    # Sách Tiếng Anh viết bằng tiếng Anh, lời giảng bằng tiếng Việt: nếu không chép lại cụm tiếng Anh
+    # của sách thì câu giảng không trùng chữ nào với trang, và [n] bị bỏ ở clean_answer.
+    tieng_anh_rule = (
+        '\n- Môn Tiếng Anh: Context SGK là hội thoại, từ vựng và bài tập bằng tiếng Anh. Khi giảng từ vựng, mẫu câu, '
+        'cấu trúc hay nội dung bài đọc có trong đoạn sách, chép nguyên cụm tiếng Anh của sách (ví dụ "building '
+        'dollhouses", "I like ...") vào câu giảng và gắn [n] ngay sau câu đó.'
+    ) if canonical_subject(subject) == 'Tiếng Anh' else ''
     prompt = f'''Bạn là Mimo – trợ lý học tập AI thân thiện, như một người anh/chị lớn giỏi giang, kiên nhẫn, luôn đồng hành cùng học sinh THCS.
 Học sinh: {student_name}, lớp {grade}, đang học môn {subject}.
 Bài đang học: {lesson or 'chưa rõ'} – chủ đề: {topic or 'chưa rõ'}.
@@ -1103,7 +1123,7 @@ TRÌNH BÀY
 - Markdown gọn gàng; công thức dùng LaTeX `$...$` hoặc `$$...$$`, TUYỆT ĐỐI không bọc công thức hay số trong dấu backtick (`) vì em sẽ thấy ký hiệu thô. Không dùng tiêu đề lớn (#).
 - Trích dẫn nguồn bằng số trong ngoặc vuông đặt ngay cuối câu dùng kiến thức từ nguồn đó, ví dụ "Bình phương của một tổng là $(a+b)^2 = a^2 + 2ab + b^2$ [1]." Nhiều nguồn thì viết [1][2].
 - Số [n] phải là số ghi ở đầu đoạn Context SGK chứa đúng kiến thức em dùng; chỉ dùng số có trong "Nguồn được phép trích dẫn", đoạn ghi "không trích dẫn" thì không gắn số; không có nguồn thì không viết [n]. Không đặt [n] bên trong công thức.
-- CHỈ gắn [n] cho câu trình bày kiến thức lấy từ SGK (định nghĩa, tính chất, công thức, quy tắc, ví dụ trong sách), mỗi kiến thức gắn một lần. Khi hướng dẫn BÀI TẬP bằng một cách làm có trong Context SGK (ví dụ "dùng hằng đẳng thức để phân tích thành nhân tử"), gắn [n] ngay sau câu nêu cách làm đó. KHÔNG gắn [n] cho câu chào hỏi, câu động viên, câu trả lời chuyện ngoài lề hay môn khác, câu nhắc tên bài đang học, câu gợi ý quay lại bài, câu hỏi hay lời mời em tự làm.
+- CHỈ gắn [n] cho câu trình bày kiến thức lấy từ SGK (định nghĩa, tính chất, công thức, quy tắc, ví dụ trong sách), mỗi kiến thức gắn một lần. Khi hướng dẫn BÀI TẬP bằng một cách làm có trong Context SGK (ví dụ "dùng hằng đẳng thức để phân tích thành nhân tử"), gắn [n] ngay sau câu nêu cách làm đó. KHÔNG gắn [n] cho câu chào hỏi, câu động viên, câu trả lời chuyện ngoài lề hay môn khác, câu nhắc tên bài đang học, câu gợi ý quay lại bài, câu hỏi hay lời mời em tự làm.{tieng_anh_rule}
 - Không viết tên sách, số trang hay số bài/chương trong câu trả lời – em bấm vào [n] để xem trang sách. Riêng khi em hỏi bài nằm ở trang nào thì được nói số trang ghi trong "Nguồn được phép trích dẫn".
 
 SAU KHI TRẢ LỜI XONG, xuống dòng và viết đúng một dòng dạng:
