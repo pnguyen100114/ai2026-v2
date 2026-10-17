@@ -240,29 +240,28 @@ def _search_by_grade(own, others):
     return lambda *a, **k: own if k.get('grade') is not None else others
 
 
-def test_lesson_clearly_in_another_grade_is_taught_from_that_grades_pages(client, app_mod, monkeypatch):
+@pytest.mark.parametrize('message', ['Thế nào là câu ghép?', 'Giải bất phương trình bậc nhất một ẩn 3x - 5 > 7.'])
+def test_lesson_clearly_in_another_grade_is_not_taught_and_points_to_grade_choice(client, app_mod, monkeypatch, message):
     # Câu ghép hỏi ở Ngữ văn 8: trang lớp 9 hơn hẳn mọi trang lớp 8 (đo thật: 0.740 so với 0.652).
-    # Thầy cô góp ý Mimo phải bám sách: giảng theo trang sách lớp 9, có trích dẫn, không theo trí nhớ.
+    # Nhóm thống nhất 17/10: bám đúng lớp em đã chọn, không giảng, kể cả gợi ý bước đầu của bài tập;
+    # chỉ báo bài ở lớp nào và mời em chọn lại lớp ở Trang chủ.
     own = [make_match(score=0.652, page=68, pdf_page=70)]
-    cau_ghep = 'Câu ghép là câu có từ hai cụm chủ - vị trở lên, các cụm này không bao chứa nhau.'
-    others = [make_match(score=0.740, grade=9, page=15, pdf_page=16, text=cau_ghep, source='Ngu van 9 tap 2.pdf'),
-              make_match(score=0.736, grade=9, page=16, pdf_page=17, text=cau_ghep, source='Ngu van 9 tap 2.pdf')]
+    others = [make_match(score=0.740, grade=9, page=15, pdf_page=16, source='Toan 9 tap 1.pdf'),
+              make_match(score=0.736, grade=9, page=16, pdf_page=17, source='Toan 9 tap 1.pdf')]
     monkeypatch.setattr(app_mod, 'search_knowledge', _search_by_grade(own, others))
-    notice = 'Mimo không tìm thấy phần này trong sách Toán lớp 8 của em; phần này nằm ở sách Toán lớp 9.'
-    # Mô hình có lúc chép lại nguyên câu báo (đã gặp ở ca "nghĩa tường minh và hàm ý").
-    fake = FakeGemini(chunks=[notice + '\n\nCâu ghép là câu có từ hai cụm chủ - vị trở lên [1]. Em thử đặt một câu nhé?'])
+    fake = FakeGemini(chunks=['không được gọi'])
     monkeypatch.setattr(app_mod, 'gemini_client', fake)
 
-    events = stream(client, message='Thế nào là câu ghép?')
+    events = stream(client, message=message, session={'id': 's1'}, user_message_id='u1', assistant_message_id='a1')
 
-    assert events[0] == {'type': 'chunk', 'text': notice + '\n\n'}
     done = events[-1]
-    assert done['content'].startswith(notice + '\n\n') and done['content'].count(notice) == 1
-    assert [(s['source'], s['page']) for s in done['sources']] == [('Ngu van 9 tap 2.pdf', 15), ('Ngu van 9 tap 2.pdf', 16)]
-    prompt = fake.calls[0]['contents']
-    assert 'LẦN NÀY: Mimo ĐÃ hiện cho em câu' in prompt and 'giảng CHỈ bằng nội dung các đoạn đó' in prompt
-    # Trang lớp 8 không dạy câu ghép nên không được đưa vào làm nguồn.
-    assert 'trang 68' not in prompt
+    assert events[0] == {'type': 'chunk', 'text': done['content']}
+    assert done['content'].startswith('Phần này nằm ở sách Toán lớp 9, không có trong sách Toán lớp 8 em đang chọn.')
+    assert 'chọn lại Lớp 9' in done['content'] and done['content'].endswith('?')
+    assert done['sources'] == []
+    assert fake.calls == []
+    (_, kwargs), = app_mod.save_chat_turn.calls
+    assert kwargs['assistant_message']['content'] == done['content']
 
 
 def test_other_grades_disagreeing_do_not_name_a_grade(client, app_mod, monkeypatch):
@@ -271,19 +270,18 @@ def test_other_grades_disagreeing_do_not_name_a_grade(client, app_mod, monkeypat
     own = [make_match(score=0.715)]
     others = [make_match(score=0.771, grade=9), make_match(score=0.756, grade=7)]
     monkeypatch.setattr(app_mod, 'search_knowledge', _search_by_grade(own, others))
-    fake = FakeGemini(chunks=['Em hỏi thầy cô bộ môn nhé.'])
+    fake = FakeGemini(chunks=['không được gọi'])
     monkeypatch.setattr(app_mod, 'gemini_client', fake)
 
     done = stream(client, message='Unit 1 Hobbies học những từ vựng nào?')[-1]
 
-    assert done['content'].startswith('Mimo không tìm thấy phần này trong sách Toán lớp 8 của em.\n\n')
+    assert done['content'].startswith('Mimo không tìm thấy phần này trong sách Toán lớp 8 em đang chọn.')
+    assert 'chọn lại Lớp và Môn học' in done['content']
     assert 'lớp 7' not in done['content'] and 'lớp 9' not in done['content']
-    # Không biết bài ở sách nào thì không có trang làm chứng: Mimo không được giảng bằng trí nhớ.
-    assert done['sources'] == []
-    assert 'KHÔNG giảng nội dung' in fake.calls[0]['contents']
+    assert done['sources'] == [] and fake.calls == []
 
 
-def test_lesson_named_from_another_grade_is_taught_from_that_lessons_pages(client, app_mod, monkeypatch):
+def test_lesson_named_from_another_grade_points_to_that_grade(client, app_mod, monkeypatch):
     # "Unit 1 Hobbies" hỏi ở Tiếng Anh 6: điểm của sách lớp 7 và lớp 8 sát nhau nên trước đây Mimo
     # lúc báo đúng, lúc lại trích trang Review của sách lớp 6. Danh mục biết chắc: Tiếng Anh 7.
     hobbies = make_match(score=0.70, grade=7, source='TA7.pdf', page=8, pdf_page=9,
@@ -297,15 +295,16 @@ def test_lesson_named_from_another_grade_is_taught_from_that_lessons_pages(clien
         return [make_match(score=0.66, grade=6, source='TA6 -TAP 1.pdf', page=68, pdf_page=69)]
 
     monkeypatch.setattr(app_mod, 'search_knowledge', search)
-    fake = FakeGemini(chunks=['Từ vựng về sở thích gồm building dollhouses, gardening [1]. Em thích sở thích nào?'])
+    fake = FakeGemini(chunks=['không được gọi'])
     monkeypatch.setattr(app_mod, 'gemini_client', fake)
 
     done = stream(client, message='Unit 1 Hobbies học những từ vựng nào?',
                   student={'grade': 6, 'subject': 'Tiếng Anh'})[-1]
 
     assert done['content'].startswith(
-        'Mimo không tìm thấy phần này trong sách Tiếng Anh lớp 6 của em; phần này nằm ở sách Tiếng Anh lớp 7.')
-    assert [(s['source'], s['page']) for s in done['sources']] == [('TA7.pdf', 8)]
+        'Phần này nằm ở sách Tiếng Anh lớp 7, không có trong sách Tiếng Anh lớp 6 em đang chọn.')
+    assert 'chọn lại Lớp 7' in done['content']
+    assert done['sources'] == [] and fake.calls == []
     assert {'$in': ['TA7.pdf']} in [k['extra_filter'].get('source') for k in calls if k.get('extra_filter')]
 
 
@@ -768,3 +767,40 @@ def test_photos_beyond_the_daily_limit_get_a_fixed_reply_and_no_model_call(clien
 
     assert done['content'] == app_mod.ANH_HET_LUOT_TRA_LOI
     assert len(fake.calls) == goi_truoc
+
+
+def _pdf(pages: int) -> str:
+    import base64
+
+    import pymupdf
+    with pymupdf.open() as document:
+        for _ in range(pages):
+            document.new_page().insert_text((72, 72), 'Cho a, b, c thoả a^2 + b^2 + c^2 = ab + bc + ca. CMR a = b = c')
+        return 'data:application/pdf;base64,' + base64.b64encode(document.tobytes()).decode()
+
+
+def test_short_pdf_is_sent_to_gemini_whole(client, app_mod, monkeypatch):
+    fake = FakeGemini(text='{"classification":"in_scope","safety_risk":"none"}', chunks=['Mimo đọc được đề rồi.'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+
+    stream(client, message='Em làm bài này sao ạ?', image_data=_pdf(2), image_mime_type='application/pdf',
+           session={'id': 's1'}, user_message_id='u1', assistant_message_id='a1')
+
+    # Xét phạm vi và trả lời đều nhận nguyên file PDF.
+    assert [call['contents'][1].inline_data.mime_type for call in fake.calls] == ['application/pdf', 'application/pdf']
+    (_, kwargs), = app_mod.save_chat_turn.calls
+    assert kwargs['user_message']['content'].endswith('📄 File PDF đề bài đã đính kèm.')
+
+
+@pytest.mark.parametrize('pdf, detail', [
+    (lambda: _pdf(11), '11 trang'),
+    (lambda: 'data:application/pdf;base64,bm90IGEgcGRm', 'chưa mở được'),
+])
+def test_long_or_broken_pdf_is_rejected_before_the_model(client, app_mod, monkeypatch, pdf, detail):
+    fake = FakeGemini(chunks=['không được gọi'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+
+    response = client.post('/api/chat/stream', json={'message': 'Giải giúp em', 'image_data': pdf(), 'image_mime_type': 'application/pdf'})
+
+    assert response.status_code == 400 and detail in response.json()['detail']
+    assert fake.calls == []

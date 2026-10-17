@@ -22,6 +22,7 @@ import {
   MessageSquare,
   MoreHorizontal,
   Paperclip,
+  FileText,
   Pencil,
   Plus,
   RefreshCcw,
@@ -221,6 +222,19 @@ const ACCURACY_NOTICE = 'Mimo có thể nhầm lẫn, em nhớ đối chiếu l�
 // asleep). Longer than the backend's own Gemini limit (GEMINI_TIMEOUT_MS) so its message wins when it can.
 const CHAT_IDLE_TIMEOUT_MS = 60_000
 const IMAGE_MAX_SIDE = 1600
+
+// Gemini reads a short PDF whole, like ChatGPT/Gemini do. A larger one (a photo saved as PDF is ~16 MB)
+// is sent as page 1 rendered to a JPEG instead. Base64 of 5 MB still fits the backend's IMAGE_DATA_MAX_LENGTH.
+const PDF_INLINE_MAX_BYTES = 5 * 1024 * 1024
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error ?? new Error('read'))
+    reader.readAsDataURL(file)
+  })
+}
 
 // Phone photos are several MB; re-encode to a JPEG that is plenty for reading a problem and fits the request limit.
 function shrinkImage(file: File): Promise<{ data: string; mime: string }> {
@@ -621,8 +635,9 @@ function App() {
     const chatSubject = currentSession?.subject || student.subject
     const chatGrade = gradeFromLabel(currentSession?.grade, student.grade)
 
-    const userContent = imageData ? `${submittedMessage}\n\n📷 Ảnh đề bài đã đính kèm.` : submittedMessage
-    const userMessage: ChatMessage = { id: messageId(), sender: 'user', text: userContent, timestamp: Date.now(), role: 'user', content: userContent, prompt: submittedMessage, imagePreview: imageData }
+    const isPdf = imageMimeType === 'application/pdf'
+    const userContent = imageData ? `${submittedMessage}\n\n${isPdf ? '📄 File PDF đề bài đã đính kèm.' : '📷 Ảnh đề bài đã đính kèm.'}` : submittedMessage
+    const userMessage: ChatMessage = { id: messageId(), sender: 'user', text: userContent, timestamp: Date.now(), role: 'user', content: userContent, prompt: submittedMessage, imagePreview: isPdf ? undefined : imageData }
     const assistantMessage: ChatMessage = { id: messageId(), sender: 'assistant', text: '', timestamp: Date.now(), role: 'assistant', content: '' }
     if (imageData) lastImageRef.current = { userId: userMessage.id, data: imageData, mime: imageMimeType }
     // Patch a message by id in both the open chat and the stored sessions: the student may switch chats while Mimo is still writing.
@@ -1359,8 +1374,29 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
 
   const handleFile = (file?: File) => {
     if (!file) return
+    if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+      if (file.size <= PDF_INLINE_MAX_BYTES) {
+        setInputNotice('')
+        fileToDataUrl(file)
+          .then((data) => setImageAttachment({ data, mime: 'application/pdf', name: file.name }))
+          .catch(() => setInputNotice('Mimo chưa đọc được file này, em chọn lại nhé.'))
+        return
+      }
+      setInputNotice('Mimo đang mở file PDF…')
+      import('./lib/pdf')
+        .then(({ renderPdfFirstPage }) => renderPdfFirstPage(file, IMAGE_MAX_SIDE))
+        .then(({ data, mime, pageCount }) => {
+          setImageAttachment({ data, mime, name: file.name })
+          setInputNotice(pageCount > 1 ? 'File PDF lớn hơn 5 MB nên Mimo chỉ đọc trang đầu. Đề ở trang khác thì em chụp ảnh trang đó gửi Mimo nhé.' : '')
+        })
+        .catch((err) => {
+          console.error('Could not open PDF', err)
+          setInputNotice(err instanceof Error && err.name === 'PasswordException' ? 'File PDF này có mật khẩu nên Mimo chưa mở được, em chụp ảnh đề bài nhé.' : 'Mimo chưa mở được file PDF này, em chụp ảnh đề bài gửi Mimo nhé.')
+        })
+      return
+    }
     if (!file.type.startsWith('image/')) {
-      setInputNotice('Mimo chỉ đọc được file ảnh (JPG, PNG) thôi nhé.')
+      setInputNotice('Mimo đọc được ảnh (JPG, PNG) hoặc file PDF thôi nhé.')
       return
     }
     setInputNotice('')
@@ -1452,7 +1488,7 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
 
         <form className="chat-form" onSubmit={handleSubmit} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); handleFile(event.dataTransfer.files[0]) }}>
           {inputNotice && <div className="attachment-chip input-notice" role="alert"><span>{inputNotice}</span><button type="button" onClick={() => setInputNotice('')} aria-label="Đóng thông báo"><X size={13} /></button></div>}
-          {imageAttachment && <div className="attachment-chip"><img src={imageAttachment.data} alt="" className="attachment-preview" /><span>{imageAttachment.name}</span><button type="button" onClick={() => setImageAttachment(null)} aria-label="Bỏ ảnh"><X size={13} /></button></div>}
+          {imageAttachment && <div className="attachment-chip">{imageAttachment.mime === 'application/pdf' ? <FileText size={18} /> : <img src={imageAttachment.data} alt="" className="attachment-preview" />}<span>{imageAttachment.name}</span><button type="button" onClick={() => setImageAttachment(null)} aria-label="Bỏ file đính kèm"><X size={13} /></button></div>}
           <div className="composer-box">
           <textarea
             ref={draftRef}
@@ -1469,7 +1505,7 @@ function TutorPage({ student, chatScope, curriculumOnly, lessonName, recentSessi
               }
             }}
           />
-          <div className="chat-form-footer"><div className="input-tools"><button type="button" title={voiceState === 'recording' ? 'Bấm để dừng ghi âm' : 'Hỏi bằng giọng nói'} aria-label={voiceState === 'recording' ? 'Dừng ghi âm' : 'Hỏi bằng giọng nói'} aria-pressed={voiceState === 'recording'} disabled={voiceState === 'transcribing'} onClick={() => void handleVoiceInput()} className={voiceState === 'recording' ? 'active recording' : ''}>{voiceState === 'recording' ? <Square size={13} fill="currentColor" /> : <Mic size={15} />}</button><button type="button" title="Tải hoặc chụp ảnh đề bài" onClick={() => fileInputRef.current?.click()}><Paperclip size={15} /></button><input ref={fileInputRef} type="file" accept="image/*" hidden onChange={(event) => handleFile(event.target.files?.[0])} /><span className={voiceState !== 'idle' ? 'voice-status' : undefined} role={voiceState !== 'idle' ? 'status' : undefined}>{voiceState === 'recording' ? 'Mimo đang nghe em nói... bấm nút vuông để dừng' : voiceState === 'transcribing' ? 'Mimo đang chép lại lời em nói...' : draft.length > MESSAGE_MAX_LENGTH - 300 ? `${draft.length}/${MESSAGE_MAX_LENGTH} ký tự` : 'Enter để gửi · Shift + Enter để xuống dòng'}</span></div>{loading
+          <div className="chat-form-footer"><div className="input-tools"><button type="button" title={voiceState === 'recording' ? 'Bấm để dừng ghi âm' : 'Hỏi bằng giọng nói'} aria-label={voiceState === 'recording' ? 'Dừng ghi âm' : 'Hỏi bằng giọng nói'} aria-pressed={voiceState === 'recording'} disabled={voiceState === 'transcribing'} onClick={() => void handleVoiceInput()} className={voiceState === 'recording' ? 'active recording' : ''}>{voiceState === 'recording' ? <Square size={13} fill="currentColor" /> : <Mic size={15} />}</button><button type="button" title="Tải ảnh, file PDF hoặc chụp ảnh đề bài" onClick={() => fileInputRef.current?.click()}><Paperclip size={15} /></button><input ref={fileInputRef} type="file" accept="image/*,application/pdf,.pdf" hidden onChange={(event) => handleFile(event.target.files?.[0])} /><span className={voiceState !== 'idle' ? 'voice-status' : undefined} role={voiceState !== 'idle' ? 'status' : undefined}>{voiceState === 'recording' ? 'Mimo đang nghe em nói... bấm nút vuông để dừng' : voiceState === 'transcribing' ? 'Mimo đang chép lại lời em nói...' : draft.length > MESSAGE_MAX_LENGTH - 300 ? `${draft.length}/${MESSAGE_MAX_LENGTH} ký tự` : 'Enter để gửi · Shift + Enter để xuống dòng'}</span></div>{loading
             ? <button className="send-btn" type="button" onClick={onStop} aria-label="Dừng câu trả lời"><Square size={13} fill="currentColor" /> <span>Dừng</span></button>
             : <button className="send-btn" type="submit" disabled={!draft.trim() && !imageAttachment} aria-label="Gửi câu hỏi">
             <Send size={16} /> <span>Gửi câu hỏi</span>

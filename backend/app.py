@@ -397,6 +397,10 @@ ANH_HET_LUOT_TRA_LOI = (
     'Em gõ đề bài vào ô chat để Mimo giúp tiếp nhé, lát nữa hoặc ngày mai em gửi ảnh lại được. '
     'Em gõ đề vào đây được không?'
 )
+# Gemini đọc thẳng file PDF, mỗi trang tốn token như một ảnh và file đi hai lượt (xét phạm vi, trả lời),
+# nên chỉ nhận PDF ngắn. File lớn thì trình duyệt tự đổi trang đầu thành ảnh trước khi gửi.
+PDF_MIME_TYPE = 'application/pdf'
+PDF_MAX_PAGES = int(os.getenv('PDF_MAX_PAGES', '10'))
 # Chữ đi kèm ảnh thường chỉ là "Em làm bài này đúng chưa ạ?": tìm sách theo câu đó ra trang không liên
 # quan (đo 17/10: Tập hợp số nguyên, Xác suất thực nghiệm... ~3.400 token), vừa tốn tiền vừa dễ trích
 # nhầm. Bỏ các từ chung chung, còn dưới 2 từ có nội dung thì không tìm sách cho lượt đó.
@@ -416,7 +420,7 @@ def _chu_chung_chung(message: str) -> bool:
 
 def _do_net_anh(image_data: str | None) -> float | None:
     """Độ nét của ảnh em gửi; None nếu không đọc được ảnh (khi đó để mô hình tự xử lý như cũ)."""
-    if not image_data:
+    if not image_data or image_data.startswith(f'data:{PDF_MIME_TYPE}'):
         return None
     try:
         pix = pymupdf.Pixmap(base64.b64decode(image_data.split(',', 1)[-1]))
@@ -904,20 +908,37 @@ def answer_quiz(request: QuizAnswerRequest, user: dict[str, Any] = Depends(curre
     return {'success': True, **result}
 
 
+def _check_pdf_attachment(data: str) -> None:
+    """Từ chối PDF hỏng, có mật khẩu hoặc dài quá trước khi gửi cho mô hình."""
+    try:
+        with pymupdf.open(stream=base64.b64decode(data.split(',', 1)[-1], validate=True), filetype='pdf') as document:
+            locked, pages = document.needs_pass, document.page_count
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail='Mimo chưa mở được file PDF này, em chụp ảnh đề bài gửi Mimo nhé.') from exc
+    if locked:
+        raise HTTPException(status_code=400, detail='File PDF này có mật khẩu nên Mimo chưa mở được, em chụp ảnh đề bài nhé.')
+    if pages > PDF_MAX_PAGES:
+        raise HTTPException(status_code=400, detail=f'File PDF có {pages} trang, Mimo chỉ đọc được file tối đa {PDF_MAX_PAGES} trang. Em chụp ảnh trang có đề bài gửi Mimo nhé.')
+
+
 @app.post('/api/chat/stream')
 def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_user)):
     # NFC: Unikey's "Unicode tổ hợp" sends decomposed letters, which no keyword or regex here matches.
     message = unicodedata.normalize('NFC', request.message or '').strip()
     if not message:
         raise HTTPException(status_code=400, detail='Tin nhắn không được để trống.')
+    is_pdf = bool(request.image_data) and (request.image_mime_type or '').lower() == PDF_MIME_TYPE
+    if is_pdf:
+        _check_pdf_attachment(request.image_data or '')
     check_chat_rate(user)
     started_at = time.monotonic()
     asked_at = utc_now()
+    attachment_note = '📄 File PDF đề bài đã đính kèm.' if is_pdf else '📷 Ảnh đề bài đã đính kèm.'
 
     def persist(answer_text: str, done_payload: dict[str, Any]) -> None:
         if not request.user_message_id or not request.assistant_message_id:
             return
-        user_content = f'{message}\n\n📷 Ảnh đề bài đã đính kèm.' if request.image_data else message
+        user_content = f'{message}\n\n{attachment_note}' if request.image_data else message
         save_chat_turn(
             user,
             session=request.session,
@@ -1123,8 +1144,8 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         if item.get('grade') and int(item['grade']) != int(grade) and item.get('text')
         and float(item.get('score', 0.0)) > own_best
     ][:2]
-    # Hơn hẳn (OTHER_GRADE_MARGIN) thì chính Mimo báo cho em trước khi mô hình viết chữ nào, và
-    # không đoạn sách lớp em nào được trích: những trang đó không dạy điều em hỏi.
+    # Hơn hẳn (OTHER_GRADE_MARGIN) thì bài không thuộc sách lớp em: Mimo trả câu cố định
+    # tra_loi_ngoai_sach bên dưới, không gọi mô hình, không trích trang nào.
     ngoai_sach = bool(other_grade_matches) and float(other_grade_matches[0]['score']) - own_best >= OTHER_GRADE_MARGIN
     # Chỉ nêu lớp khi hai đoạn khớp nhất cùng một lớp. "Unit 1 Hobbies" khớp Tiếng Anh 8 rồi
     # Tiếng Anh 7: nêu "lớp 8" là đoán, nên chỉ nói sách lớp em không có.
@@ -1138,19 +1159,22 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         other_grade_matches = trang_bai_goi_ten[:2]
         lop_khac = {int(bai_lop_khac[0][0].grade)}
         ngoai_sach = biet_lop = True
-    bao_ngoai_sach = (
-        f'Mimo không tìm thấy phần này trong sách {subject} lớp {grade} của em'
-        + (f'; phần này nằm ở sách {subject} lớp {min(lop_khac)}.' if biet_lop else '.')
+    # Nhóm thống nhất 17/10: Mimo bám đúng lớp và môn em đã chọn. Bài nằm ở sách lớp khác thì Mimo
+    # không giảng, không gợi ý (kể cả bài tập), chỉ báo cho em và mời em chọn lại lớp/môn ở Trang
+    # chủ để lộ trình được tạo lại. Câu cố định, không gọi mô hình: bản trước giảng theo trang sách
+    # lớp khác, và vẫn dẫn em lớp 8 giải bất phương trình (bài Toán 9) tới bước 3x > 12.
+    tra_loi_ngoai_sach = (
+        (f'Phần này nằm ở sách {subject} lớp {min(lop_khac)}, không có trong sách {subject} lớp {grade} em đang chọn'
+         if biet_lop else f'Mimo không tìm thấy phần này trong sách {subject} lớp {grade} em đang chọn')
+        + '. Mimo bám sát đúng lớp và môn em đã chọn nên chưa giảng phần này.\n\n'
+        + (f'Nếu em muốn học phần này, em vào **Trang chủ** chọn lại Lớp {min(lop_khac)}' if biet_lop
+           else 'Nếu em đang học lớp hoặc môn khác, em vào **Trang chủ** chọn lại Lớp và Môn học')
+        + f' để Mimo tạo lại lộ trình học cho em nhé. Hay bây giờ mình học tiếp một bài trong lộ trình {subject} lớp {grade}?'
     ) if ngoai_sach else ''
-    # Thầy cô chấm 28 câu ngày 19/09 góp ý Mimo phải bám sát sách: bài sách lớp em không có thì
-    # không giảng bằng kiến thức của mô hình. Khi biết chắc bài nằm ở sách lớp nào, các trang đó
-    # thành nguồn trích [n] và là thứ duy nhất Mimo được dùng để giảng, em bấm vào là thấy trang.
-    if biet_lop:
-        context_matches = list(other_grade_matches)
 
     unique_matches: dict[tuple[Any, Any], dict[str, Any]] = {}
     # Lời chào và lời cảm ơn không được gắn trang sách, dù điểm tương đồng có cao tới đâu.
-    if _la_cau_hoi_hoc_tap(message) and (biet_lop or not ngoai_sach):
+    if _la_cau_hoi_hoc_tap(message) and not ngoai_sach:
         for item in context_matches:
             if item.get('in_lesson') or float(item.get('score', 0.0)) >= CHAT_SOURCE_MIN_SCORE:
                 unique_matches.setdefault(_page_key(item), item)
@@ -1187,40 +1211,27 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         f"{', ' + item['lesson_title'] if item.get('lesson_title') else ''}, không trích dẫn) "
         f"{item['text'][:600]}"
         for item in other_grade_matches
-    ) if not biet_lop else ''
-    if biet_lop:
-        lan_nay = (
-            f'\n- LẦN NÀY: Mimo ĐÃ hiện cho em câu «{bao_ngoai_sach}». KHÔNG viết lại câu đó. Các đoạn '
-            f'Context SGK ở trên là trang sách {subject} lớp {min(lop_khac)} dạy đúng điều em hỏi: giảng '
-            'CHỈ bằng nội dung các đoạn đó và gắn [n] như bình thường; điều gì các đoạn đó không nói thì '
-            'không thêm vào. Nếu là bài tập thì vẫn chỉ gợi ý theo cách làm trong các đoạn đó.'
-        )
-    elif bao_ngoai_sach:
-        lan_nay = (
-            f'\n- LẦN NÀY: Mimo ĐÃ hiện cho em câu «{bao_ngoai_sach}». KHÔNG viết lại câu đó, KHÔNG nói '
-            f'phần này thuộc chương trình hay sách lớp {grade}, KHÔNG giảng nội dung (kể cả "thông thường '
-            'gồm...", ví dụ hay định nghĩa). Chỉ mời em hỏi thầy cô bộ môn hoặc chọn một bài trong sách '
-            'lớp em. Nếu là bài tập thì vẫn gợi ý bước đầu bằng khái niệm của lớp em.'
-        )
-    else:
-        lan_nay = ''
+    )
+    # Bài chắc chắn ở sách lớp khác đã có tra_loi_ngoai_sach. Mục dưới đây cho những ca chỉ mô
+    # hình nhận ra được (điểm sách lớp khác không hơn hẳn), và theo cùng quyết định của nhóm.
     thieu_sach = (
         '\n\nKHI CÁC ĐOẠN SGK Ở TRÊN KHÔNG NÓI VỀ ĐIỀU EM HỎI\n'
-        '- Mimo chỉ dạy theo sách giáo khoa. Nếu em hỏi một KHÁI NIỆM hoặc BÀI HỌC thuộc chương trình '
-        'THCS (lớp 6–9) mà không đoạn nào ở trên thật sự dạy nó: KHÔNG giảng bằng kiến thức ngoài '
-        'sách (không định nghĩa, không "thông thường gồm...", không ví dụ). Nói ngắn gọn cho em biết '
-        f'phần này không có trong sách {subject} lớp {grade} mà Mimo đang có, rồi mời em hỏi thầy cô '
-        'bộ môn hoặc chọn một bài trong sách lớp em. Không gắn [n] cho câu trả lời này.\n'
+        f'- Mimo bám sát đúng sách {subject} lớp {grade} em đã chọn. Nếu em hỏi một KHÁI NIỆM hoặc BÀI HỌC '
+        'thuộc chương trình THCS (lớp 6–9) mà không đoạn nào ở trên thật sự dạy nó: KHÔNG giảng bằng '
+        'kiến thức ngoài sách (không định nghĩa, không "thông thường gồm...", không ví dụ). Nói ngắn gọn '
+        f'cho em biết phần này không có trong sách {subject} lớp {grade} em đang chọn, rồi gợi ý: nếu em '
+        'đang học lớp hoặc môn khác thì vào Trang chủ chọn lại Lớp và Môn học để Mimo tạo lại lộ trình, '
+        'còn không thì chọn một bài trong lộ trình lớp em. Không gắn [n] cho câu trả lời này.\n'
         '- Nếu em nhờ giải một BÀI TẬP: hướng dẫn bình thường bằng khái niệm nền tảng của lớp em, '
         'không cần câu báo đó - bài tập vốn không có nguyên văn trong sách. Riêng khi một đoạn '
-        'SÁCH LỚP KHÁC bên dưới dạy đúng dạng bài này thì nói thêm một câu ngắn rằng dạng bài này '
-        f'nằm ở sách lớp đó, sách {subject} lớp {grade} của em không có.\n'
+        'SÁCH LỚP KHÁC bên dưới dạy đúng dạng bài này: KHÔNG hướng dẫn, KHÔNG gợi ý bước nào; chỉ nói '
+        f'dạng bài này nằm ở sách lớp đó, không có trong sách {subject} lớp {grade} em đang chọn, rồi gợi '
+        'ý em vào Trang chủ chọn lại Lớp đó để Mimo tạo lại lộ trình học.\n'
         '- TUYỆT ĐỐI không tự đoán bài thuộc lớp nào. Chỉ nêu lớp khi một đoạn SÁCH LỚP KHÁC bên '
         'dưới thật sự dạy điều em hỏi, và nêu đúng lớp ghi ở đoạn đó. Không có đoạn như vậy thì '
         'không nhắc tới lớp nào khác.\n'
         '- Nếu phần em hỏi thuộc THPT hoặc đại học: KHÔNG giải thích, KHÔNG gợi ý, làm đúng quy tắc '
         'NGOÀI CẤP HỌC trong chỉ dẫn hệ thống.'
-        + lan_nay
         + (f'\n\nSÁCH LỚP KHÁC (chỉ để biết bài nằm ở lớp nào):\n{other_grade_text}' if other_grade_text else '')
     ) if tim_sach and _la_cau_hoi_hoc_tap(message) and not risk else ''
 
@@ -1326,6 +1337,15 @@ Tin nhắn hiện tại của học sinh: {message}'''
         if retrieval_error and not risk and _la_cau_hoi_hoc_tap(message):
             yield _stream_event({'type': 'error', 'message': 'Mimo chưa mở được sách giáo khoa lúc này. Em thử gửi lại sau ít phút nhé.'})
             return
+        if tra_loi_ngoai_sach and not risk:
+            done_payload = {
+                'type': 'done', 'content': tra_loi_ngoai_sach, 'sources': [],
+                'quick_replies': ['Hôm nay em nên học gì?', 'Em có bài tập cần gợi ý'], 'understanding': None,
+            }
+            persist(tra_loi_ngoai_sach, done_payload)
+            yield _stream_event({'type': 'chunk', 'text': tra_loi_ngoai_sach})
+            yield _stream_event(done_payload)
+            return
         if gemini_client is None:
             if risk:
                 yield from finish_safely('')
@@ -1335,10 +1355,6 @@ Tin nhắn hiện tại của học sinh: {message}'''
             return
         full_text = ''
         marker_at = -1
-        # Đã quyết trước khi gọi mô hình, nên em thấy câu báo ngay chữ đầu tiên.
-        opening = f'{bao_ngoai_sach}\n\n' if bao_ngoai_sach else ''
-        if opening:
-            yield _stream_event({'type': 'chunk', 'text': opening})
         try:
             emitted = 0
             for text in _stream_gemini_text(
@@ -1370,13 +1386,10 @@ Tin nhắn hiện tại của học sinh: {message}'''
                 message=message, passages=[item.get('text') or '' for item in cited_matches],
                 pages=[item.get('page') for item in cited_matches], topic=f'{lesson} {topic}',
             ).strip()
-            if bao_ngoai_sach:
-                # Prompt dặn không viết lại câu báo, mà mô hình vẫn có lúc chép nguyên văn.
-                answer_text = answer_text.replace(bao_ngoai_sach, '', 1).strip()
             # cited_matches chỉ có trang khi đây là câu hỏi học tập và sách có bài (xem unique_matches).
             answer_text = add_book_pointer(answer_text, [item.get('text') or '' for item in cited_matches],
                                            [item.get('lesson_title') for item in cited_matches])
-            answer_text = opening + ensure_closing_question(answer_text)
+            answer_text = ensure_closing_question(answer_text)
             # An answer that cites nothing (small talk, feelings) gets no sources, even if retrieval found pages.
             sources = [] if not cited_numbers(answer_text, len(cited_matches)) else [{
                 'source': item.get('source') or 'Nguồn tài liệu',
@@ -1401,7 +1414,7 @@ Tin nhắn hiện tại của học sinh: {message}'''
                 fallback_text = _quota_fallback(message, subject, grade)
                 done_payload = {'type': 'done', 'sources': [], 'quick_replies': ['Em thử viết bước đầu nhé', 'Cho em một ví dụ khác']}
                 yield _stream_event({'type': 'chunk', 'text': fallback_text})
-                persist(opening + fallback_text, done_payload)
+                persist(fallback_text, done_payload)
                 yield _stream_event(done_payload)
             else:
                 logger.exception('Gemini stream failed')
