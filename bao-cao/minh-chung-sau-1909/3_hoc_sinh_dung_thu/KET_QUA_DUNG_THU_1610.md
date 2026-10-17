@@ -3,8 +3,8 @@
 Số liệu dưới đây đọc từ database production ngày 17/10, chỉ lấy số tổng hợp, không ghi tên hay email.
 Khung giờ: 16/10/2026, 8:30–11:30 giờ Việt Nam. Bỏ tài khoản kiểm thử (`@example.com`, có chữ `test`).
 
-**Chưa có**: kết quả Google Form (Mimo có giải hộ không, em có tự làm tiếp được không, thang 1–5) và phiếu
-quan sát `phieu_quan_sat.csv` (đang để trống). Hai phần này chỉ người tổ chức buổi thử có.
+Kết quả Google Form (12 phiếu) nằm ở `KET_QUA_GOOGLE_FORM.md`. **Chưa có** phiếu quan sát `phieu_quan_sat.csv`
+(đang để trống).
 
 ## Ai dùng, dùng bao lâu
 
@@ -103,4 +103,4 @@ Look 2") được lưu.
 
 ## Còn thiếu
 
-- Kết quả Google Form và phiếu quan sát.
+- Phiếu quan sát.

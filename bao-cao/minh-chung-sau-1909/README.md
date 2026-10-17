@@ -8,7 +8,7 @@ Thư mục này chỉ gồm việc nhóm làm **sau ngày nộp 19/09/2026**. Ph
 |---|---|---|
 | `1_cham_chat_bo_thu/` | Kết quả 43 ca chấm chặt trên bản đang chạy; so sánh 14 ca năn nỉ giữa code 19/09 và code hiện tại | 1, 2 |
 | `2_thay_co_cham/` | Thầy cô bộ môn chấm 43 câu lần đo 17/10 và 28 câu của bản nộp 19/09 | 2 |
-| `3_hoc_sinh_dung_thu/` | Buổi 34 học sinh dùng thử ngày 16/10; câu hỏi Google Form | 3, 4 |
+| `3_hoc_sinh_dung_thu/` | Buổi 34 học sinh dùng thử ngày 16/10; kết quả 12 phiếu Google Form | 3, 4 |
 | `5_thu_nghiem_dai_han/` | Kế hoạch thử 2–4 tuần, có nhóm đối chứng | 5 |
 | `6_nhat_ky/` | Các lần sửa (commit) và câu lệnh dùng với AI lập trình sau 19/09 | tất cả |
 | `anh/` | Ảnh chụp bản đang chạy ngày 17/10 | 1, 2, 4 |

@@ -10,7 +10,7 @@ Tài liệu này chỉ ghi việc nhóm làm **sau ngày nộp 19/09/2026**. M�
 |---|---|---|---|
 | 1 | Sửa cách tự chấm bộ thử, kiểm tra lại câu ngoài chương trình và câu thời tiết | **Xong** | Bộ thử 28 → 43 ca chấm chặt; lần đo cuối **43/43** trên bản đang chạy |
 | 2 | Thầy cô chấm câu trả lời; dòng nhắc "Mimo có thể nhầm"; thêm ~10 câu năn nỉ | **Xong** | Thầy cô chấm nguyên văn 43 câu: **41 đúng, 2 có chỗ sai, 0 sai**, đã sửa cả 2; thêm **14** ca năn nỉ, lộ đáp án **3/14 → 0/14** |
-| 3 | 10–15 bạn dùng thử 15–20 phút, khảo sát Google Form | **Đã làm buổi thử**; còn thiếu bảng tổng hợp Google Form | **34** bạn lớp 7, **368** câu hỏi, trung vị **17 phút** mỗi bạn |
+| 3 | 10–15 bạn dùng thử 15–20 phút, khảo sát Google Form | **Xong** | **34** bạn lớp 7, **368** câu hỏi, trung vị **17 phút** mỗi bạn. Google Form 12 phiếu: tự làm tiếp **4,4/5**; **2/12** bạn thấy Mimo giải hộ |
 | 4 | Luyện tập tính độ khó, số lần dùng gợi ý, dạng lỗi hay gặp | **Xong phần sản phẩm** | Buổi thử: **178** lượt luyện tập của 14 bạn, có độ khó, gợi ý và dạng lỗi cho từng lượt |
 | 5 | Thử 2–4 tuần với 1–2 lớp, kiểm tra trước và sau, có nhóm đối chứng | **Chưa làm**, đã có kế hoạch | — |
 
@@ -104,7 +104,17 @@ Tài liệu này chỉ ghi việc nhóm làm **sau ngày nộp 19/09/2026**. M�
 | Thời gian chờ trả lời | trung vị 3,1 giây; 90% câu dưới 3,8 giây |
 | Câu có chữ xin đáp án hoặc nhờ giải hộ | 8 câu, của 4 bạn |
 
-- Phiếu Google Form có 12 câu, trong đó có đúng hai câu ban giám khảo yêu cầu: "Có lúc nào Mimo giải hết bài cho em không?" và "Sau gợi ý của Mimo, em có tự làm tiếp được bước sau không?".
+**Google Form sau buổi thử (12 phiếu)**
+
+| Câu hỏi | Kết quả |
+|---|---|
+| Khi nhờ giải trọn gói hoặc xin đáp án nhanh, Mimo phản hồi thế nào? | Chỉ gợi ý bước đầu, hỏi ngược lại: **10/12**. Giải hộ từ đầu đến cuối: **2/12** |
+| Sau gợi ý của Mimo, bạn tự làm tiếp được tới đâu? (thang 1–5) | Trung bình **4,4**; 11/12 bạn chọn 4 hoặc 5 |
+| Bấm số trích dẫn, Mimo có mở đúng trang sách không? | Đúng trang: 7/12 · lệch trang: 4/12 · không mở được: 1/12 |
+| Cần cải tiến gì? | 2 bạn góp ý tốc độ trả lời; 10 bạn không có góp ý cụ thể |
+
+- **2/12 bạn thấy Mimo giải hộ**, trong khi bộ thử đo 0/14 lộ đáp án. Buổi thử chạy trên code đã có luật "không giải tắt", nên cách học sinh thật hỏi vẫn có chỗ bộ thử chưa phủ. Phiếu không ghi câu hỏi cụ thể. Việc tiếp theo: đọc lại hội thoại của hai bạn (khi được đồng ý) và đưa cách hỏi đó vào bộ thử.
+- 5/12 phiếu báo trang lệch hoặc không mở được, khớp với góp ý "lệch trang" trong buổi thử. Nhóm đã sửa như ghi ở dưới.
 
 **Từ góp ý của học sinh tới sửa sản phẩm**
 
@@ -115,12 +125,12 @@ Tài liệu này chỉ ghi việc nhóm làm **sau ngày nộp 19/09/2026**. M�
 - Chạy lại 25 câu hỏi bài thật của buổi thử trên bản 17/10: câu có trang sách tăng từ **10/25 lên 18/25**.
 - Riêng Tiếng Anh: khi dò 16 câu, số câu trích đúng Unit em đang học tăng từ **0/10 lên 15/15**.
 
-**Còn thiếu:** bảng tổng hợp câu trả lời Google Form chưa có trong thư mục này. Nhóm sẽ bổ sung bản xuất từ Google Form.
+**Còn thiếu:** phiếu quan sát trong buổi thử chưa được điền.
 
 **Minh chứng**
 
 - `3_hoc_sinh_dung_thu/KET_QUA_DUNG_THU_1610.md`: số liệu đầy đủ và cách nhóm tìm ra lỗi lệch trang.
-- `3_hoc_sinh_dung_thu/CAU_HOI_GOOGLE_FORM.md`: 12 câu hỏi khảo sát.
+- `3_hoc_sinh_dung_thu/KET_QUA_GOOGLE_FORM.md`: tổng hợp 12 phiếu Google Form, không có tên hay tài khoản.
 
 ---
 

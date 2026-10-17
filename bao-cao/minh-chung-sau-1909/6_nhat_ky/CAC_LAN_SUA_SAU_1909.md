@@ -1,6 +1,6 @@
 # Các lần sửa sau 19/09/2026
 
-61 commit trên nhánh `main`, cũ trước mới sau.
+62 commit trên nhánh `main`, cũ trước mới sau.
 
 | Thời gian | Commit | Nội dung |
 |---|---|---|
@@ -65,3 +65,4 @@
 | 17/10/2026 14:57 | `8df4a10` | Kịch bản thi ghi chi phí đo thật; thêm kết quả buổi dùng thử 16/10, chạy thử demo và tài liệu khó khăn – giải pháp |
 | 17/10/2026 15:17 | `44ce28e` | Đo lại 43 ca trên bản deploy cuối: 43/43; hồ sơ, kịch bản thi theo số mới; che email, tên học sinh trong nhật ký prompt |
 | 17/10/2026 15:25 | `02a387c` | Tài liệu khó khăn – giải pháp theo số mới: 43/43, lỗi hết tiền nạp Gemini, chi phí câu có ảnh, buổi dùng thử 34 bạn |
+| 17/10/2026 15:33 | `beb33cd` | Thư mục minh chứng cải tiến sau 19/09: tình trạng 5 yêu cầu của ban giám khảo, thầy cô chấm, buổi dùng thử, ảnh bản đang chạy |

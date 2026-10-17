@@ -174,7 +174,7 @@ Trả lời theo khuôn: **kết luận trước, một con số hoặc bằng c
 11. **Thử với học sinh thật ra sao?**
     - Sáng 16/10, 34 bạn lớp 7 dùng thử: 368 câu hỏi, trung vị 9 câu và 17 phút mỗi bạn, trung vị 3,1 giây một câu, cả buổi không lần nào phải chuyển mô hình dự phòng. 14 bạn làm 178 lượt luyện tập, đúng 56%. Số liệu đọc từ hệ thống, xem `thu-nghiem/KET_QUA_DUNG_THU_1610.md`.
     - Góp ý đã sửa: vài bạn báo lệch trang, hôm sau có nút "Trang này không đúng?". Góp ý chưa sửa: trang Hỏi Mimo còn thanh cuộn thứ hai.
-    - [Điền số từ Google Form: mấy bạn thấy Mimo giải hết bài, điểm tự làm tiếp trung bình trên thang 1–5.]
+    - Google Form 12 phiếu: 10/12 bạn thấy Mimo chỉ gợi ý bước đầu, **2/12 bạn thấy Mimo giải hộ**; tự làm tiếp được trung bình **4,4/5**; 7/12 mở đúng trang sách, 5/12 gặp trang lệch hoặc không mở được. Nếu bị hỏi về 2 phiếu "giải hộ": nói thật là bộ thử đo 0/14 nhưng học sinh thật vẫn tìm ra cách hỏi bộ thử chưa phủ, nhóm sẽ đọc lại hội thoại đó và thêm vào bộ thử. Xem `thu-nghiem/KET_QUA_GOOGLE_FORM.md`.
     - Nếu bị hỏi tỉ lệ trích trang của buổi thử: xem câu 16.
 
 ### Về minh bạch và vận hành
@@ -209,7 +209,7 @@ Các mục chưa đánh dấu xếp theo mức ảnh hưởng tới buổi thi; 
 - [x] Chạy thử 5 câu demo trên bản deploy (17/10). Đã thay câu 2; kết quả ở `KET_QUA_CHAY_THU_DEMO.md`.
 - [x] Số vector thật: `/api/health` báo 5.498 đoạn, sổ nạp ghi 29 cuốn, 5 môn, lớp 6–9. Đã sửa.
 - [x] Số liệu buổi dùng thử 16/10 từ hệ thống: 34 bạn, 368 câu (câu 11, `thu-nghiem/KET_QUA_DUNG_THU_1610.md`).
-- [ ] Điền số từ Google Form vào câu 11: mấy bạn thấy Mimo giải hết bài, điểm tự làm tiếp trung bình.
+- [x] Điền số từ Google Form vào câu 11: 2/12 thấy Mimo giải hộ, tự làm tiếp trung bình 4,4/5.
 - [x] Chi phí mỗi câu hỏi đo thật: khoảng 50 đồng câu chữ, khoảng 1.000 đồng câu có ảnh (câu 15).
 - [ ] Tạo một tài khoản demo chưa luyện bài 6 Toán 8 cho phần luyện tập.
 - [x] Vì sao chỉ 36/368 câu buổi 16/10 có trang: đã tìm ra, chạy lại 25 câu được 18/25 (câu 16, `thu-nghiem/KET_QUA_DUNG_THU_1610.md`). Vẫn đừng nói "câu nào cũng có trang".

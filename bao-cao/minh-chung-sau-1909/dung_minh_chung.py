@@ -98,11 +98,8 @@ ghi(DAY / '2_thay_co_cham' / 'THAY_CO_CHAM_BAN_NOP_1909.md', '\n'.join(dong) + '
 
 # ---------------------------------------------------------------- 3. học sinh dùng thử
 chep(BC / 'thu-nghiem' / 'KET_QUA_DUNG_THU_1610.md', DAY / '3_hoc_sinh_dung_thu' / 'KET_QUA_DUNG_THU_1610.md')
-gs = (BC / 'thu-nghiem' / 'tao_google_form.gs').read_text(encoding='utf-8')
-cau = re.findall(r"setTitle\('([^']+)'\)", gs)
-ghi(DAY / '3_hoc_sinh_dung_thu' / 'CAU_HOI_GOOGLE_FORM.md',
-    '# Câu hỏi Google Form sau buổi dùng thử\n\nForm dựng tự động bằng `bao-cao/thu-nghiem/tao_google_form.gs`.\n\n'
-    + '\n'.join(f'{i}. {c}' for i, c in enumerate(cau, 1)) + '\n')
+# Form thật nhóm gửi khác bản tao_google_form.gs, nên lấy bản tổng hợp từ câu trả lời thật.
+chep(BC / 'thu-nghiem' / 'KET_QUA_GOOGLE_FORM.md', DAY / '3_hoc_sinh_dung_thu' / 'KET_QUA_GOOGLE_FORM.md')
 
 # ---------------------------------------------------------------- 5. thử nghiệm dài hạn
 chep(BC / 'KE_HOACH_THU_NGHIEM.md', DAY / '5_thu_nghiem_dai_han' / 'KE_HOACH_THU_NGHIEM.md')
