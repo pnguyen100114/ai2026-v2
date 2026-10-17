@@ -14,6 +14,9 @@ THU_MUC = Path(__file__).resolve().parent
 NGUON = THU_MUC / 'ket_qua.json'
 # Thầy cô chấm lần chạy 19/09 (ket_qua_1909.json) trên bản rút gọn, trước khi có phieu_cham.py.
 CHAM_1909 = THU_MUC / 'cham_giao_vien_1909.csv'
+# Lần đo 17/10 10:01 đã được thầy cô chấm (phieu_cham_giao_vien.csv). Đo lại thì ket_qua.json đổi
+# câu trả lời, nên phiếu chấm gắn với bản lưu riêng này.
+DA_CHAM = THU_MUC / 'ket_qua_gv_1710.json'
 
 if not NGUON.exists():
     raise SystemExit('Chưa có ket_qua.json. Chạy chay_test.py trước.')
@@ -32,15 +35,28 @@ NHAN = {
 }
 
 
+def lan_da_cham() -> tuple[dict, list]:
+    """Lần chạy hiện tại nếu đã chấm, không thì lần đã chấm gần nhất (ket_qua_gv_1710.json)."""
+    if any(k.get('nguoi_cham_kien_thuc') for k in ket_qua) or not DA_CHAM.exists():
+        return data, ket_qua
+    gv = json.loads(DA_CHAM.read_text(encoding='utf-8'))
+    return gv, gv['ket_qua']
+
+
 def phan_giao_vien() -> str:
     """Thầy cô bộ môn chấm kiến thức, nhập qua phieu_cham.py. Chưa chấm thì nói thẳng là chưa."""
-    da_cham = [k for k in ket_qua if k.get('nguoi_cham_kien_thuc')]
+    lan, ds = lan_da_cham()
+    da_cham = [k for k in ds if k.get('nguoi_cham_kien_thuc')]
     if not da_cham:
         return ('**Chưa có thầy cô nào chấm lần chạy này.** Xuất phiếu bằng '
                 '`python bao-cao/bo-test/phieu_cham.py xuat`, gửi thầy cô đúng môn, rồi nhập lại bằng '
                 '`phieu_cham.py nhap <file>`.')
     dem = Counter(k['nguoi_cham_kien_thuc'] for k in da_cham)
-    dong = [f'Đã chấm **{len(da_cham)}/{len(ket_qua)}** câu: '
+    dong = [] if lan is data else [
+        f'Thầy cô chấm nguyên văn câu trả lời của lần chạy **{lan["chay_luc"].replace("T", " ")}** '
+        f'(`ket_qua_gv_1710.json`, phiếu `phieu_cham_giao_vien.csv`). Lần chạy ở mục 1 đo lại sau khi sửa '
+        'theo góp ý, câu chữ khác nên chưa chấm lại.', '']
+    dong += [f'Đã chấm **{len(da_cham)}/{len(ds)}** câu: '
             f'**{dem["đúng"]}** đúng · **{dem["có chỗ sai"]}** có chỗ sai · **{dem["sai"]}** sai.', '']
     sai = [k for k in da_cham if k['nguoi_cham_kien_thuc'] != 'đúng']
     if sai:
@@ -178,7 +194,7 @@ Máy **không** chấm kiến thức đúng hay sai — xem mục 3.
 
 ## 3. Thầy cô bộ môn chấm kiến thức
 
-### Lần chạy này
+### Lần đo 17/10
 
 {phan_giao_vien()}
 

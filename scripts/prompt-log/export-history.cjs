@@ -3,6 +3,7 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const { cheThongTin } = require("./che-thong-tin.cjs");
 
 const withReplies = process.argv.includes("--with-replies");
 const root = path.resolve(__dirname, "..", "..");
@@ -154,5 +155,5 @@ for (const s of sessions) {
 }
 
 fs.mkdirSync(path.dirname(outFile), { recursive: true });
-fs.writeFileSync(outFile, md);
+fs.writeFileSync(outFile, cheThongTin(md, root));
 console.log(`Da xuat ${total} prompt (Claude Code: ${byTool("Claude Code")}, Copilot: ${byTool("GitHub Copilot")}) tu ${sessions.length} phien (${kept.length} phien giu tu ban truoc) -> ${outFile}`);

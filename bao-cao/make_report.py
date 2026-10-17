@@ -108,7 +108,17 @@ T_NGAY = _ngay(_test['chay_luc'][:10])
 T_TRUOT = [k for k in _ket if not k['dat_may_cham']]
 nhom = lambda ten: T_NHOM.get(ten, [0, 0])
 # Thầy cô chấm kiến thức: lần đo hiện tại nhập qua phieu_cham.py; lần 19/09 chấm trên bản rút gọn.
-T_GV_CHAM = [k for k in _ket if k.get('nguoi_cham_kien_thuc')]
+# Đo lại sau khi sửa theo góp ý thì câu chữ đổi, nên điểm chấm lấy từ lần đã chấm (ket_qua_gv_1710.json).
+_gv_test = _test
+if not any(k.get('nguoi_cham_kien_thuc') for k in _ket):
+    _gv_file = ROOT / 'bao-cao' / 'bo-test' / 'ket_qua_gv_1710.json'
+    if _gv_file.exists():
+        _gv_test = json.loads(_gv_file.read_text(encoding='utf-8'))
+T_GV_LAN = _gv_test['chay_luc'][11:16]
+T_GV_NGAY = _ngay(_gv_test['chay_luc'][:10])
+T_GV_RIENG = _gv_test is not _test
+T_GV_DAT = sum(1 for k in _gv_test['ket_qua'] if k['dat_may_cham'])
+T_GV_CHAM = [k for k in _gv_test['ket_qua'] if k.get('nguoi_cham_kien_thuc')]
 T_GV_DEM = Counter(k['nguoi_cham_kien_thuc'] for k in T_GV_CHAM)
 with (ROOT / 'bao-cao' / 'bo-test' / 'cham_giao_vien_1909.csv').open(encoding='utf-8-sig', newline='') as _f:
     GV_1909 = list(csv.DictReader(_f))
@@ -502,7 +512,8 @@ doc.add_heading('Thầy cô bộ môn chấm kiến thức', level=2)
 para('Máy cho đạt một câu giảng sai nếu câu đó vẫn gắn đúng trang sách, mà học sinh lại tin vì thấy có trang sách. '
      'Nên phần kiến thức phải do thầy cô dạy đúng môn đọc và đánh dấu: đúng, có chỗ sai, hay sai.')
 if T_GV_CHAM:
-    para(f'Lần đo {T_NGAY}: thầy cô đã chấm {len(T_GV_CHAM)}/{T_TONG} câu — {T_GV_DEM["đúng"]} đúng, '
+    para(f'Lần đo {T_GV_NGAY}' + (f' lúc {T_GV_LAN} (máy chấm đạt {T_GV_DAT}/{len(_gv_test["ket_qua"])})' if T_GV_RIENG else '')
+         + f': thầy cô đã chấm nguyên văn {len(T_GV_CHAM)}/{len(_gv_test["ket_qua"])} câu — {T_GV_DEM["đúng"]} đúng, '
          f'{T_GV_DEM["có chỗ sai"]} có chỗ sai, {T_GV_DEM["sai"]} sai.')
     for _k in (k for k in T_GV_CHAM if k['nguoi_cham_kien_thuc'] != 'đúng'):
         bullet(f'Câu {_k["stt"]} ({_k["mon"]} {_k["lop"]}, “{_k["cau_hoi"]}”): {_k.get("nguoi_cham_ghi_chu") or ""}')
@@ -510,7 +521,10 @@ if T_GV_CHAM:
         para('Ngay trong ngày nhóm sửa theo góp ý: câu hỏi kiểu “Có phải … không ạ?” thì Mimo nói rõ đúng hay chưa đúng '
              'và nêu ngay kiến thức đúng theo sách, có trích trang; khi giảng phân tích ra thừa số nguyên tố thì làm mẫu '
              'các phép chia liên tiếp như sách Toán 6 rồi để em làm tiếp. Bộ thử thêm điều kiện “phải có” cho các câu này '
-             'để máy chấm cũng bắt được loại lỗi thầy cô chỉ ra.')
+             'để máy chấm cũng bắt được loại lỗi thầy cô chỉ ra.'
+             + (f' Lần đo lại sau khi sửa ({T_NGAY}, bảng ở trên) đạt {T_DAT}/{T_TONG}: câu 16 làm mẫu phép chia liên tiếp '
+                'rồi để em tự phân tích 36; câu 27 nói rõ “chưa đúng”, nêu (A + B)² = A² + 2AB + B² và trích trang sách Toán 8.'
+                if T_GV_RIENG else ''))
 para(f'Lần đo ngày 19/09 ({len(GV_1909)} câu): thầy cô chấm {GV_1909_DEM["đúng"]} câu đúng, {GV_1909_DEM["có chỗ sai"]} có chỗ sai, '
      f'{GV_1909_DEM["sai"]} sai' + (f', {GV_1909_DEM[""]} câu để trống' if GV_1909_DEM[""] else '')
      + '. Nhóm không coi kết quả này là bằng chứng chắc chắn, vì:')

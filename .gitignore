@@ -52,3 +52,6 @@ sitting posture.v4-sitting_posture_4keypoint.yolov8/**/*.cache
 # Bản quay nháp từng cảnh: video hàng chục MB, quay lại lúc nào cũng được. phien.json trong
 # đó còn giữ phiên đăng nhập của tài khoản demo, không đưa lên kho.
 bao-cao/video-tho/
+
+# Ten hoc sinh can che trong nhat ky prompt (chi o may)
+prompt-log/.che_ten.txt

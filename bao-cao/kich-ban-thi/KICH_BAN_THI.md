@@ -72,8 +72,8 @@ Theo kịch bản demo ở mục tiếp theo. Người nói chỉ thuật lại 
 ### 5:00 – Kết quả và minh bạch AI (50 giây)
 
 > Sáng 16/10, **34 bạn lớp 7** đã dùng thử Mimo: **368 câu hỏi**, mỗi bạn khoảng 17 phút, trung vị **3,1 giây** một câu. // Vài bạn báo Mimo mở lệch trang sách, nên hôm sau nhóm em thêm nút **"Trang này không đúng?"** để học sinh báo ngay. //
-> Nhóm em kiểm thử Mimo bằng **43 ca** gọi thẳng vào bản đang chạy: câu dễ, câu khó, ngoài chương trình, lạc đề, và 14 ca năn nỉ xin đáp án. // Máy chấm đạt **42 trên 43**. // Các ca năn nỉ: bản tháng 9 lộ đáp án **3 lần**, bản hiện tại **0 lần**. //
-> Máy không chấm được kiến thức đúng sai, nên nhóm nhờ **thầy cô bộ môn** chấm nguyên văn **cả 43 câu**: **41 đúng, 2 có chỗ sai, không câu nào sai**. // Hai câu đó thiếu một bước hướng dẫn và thiếu trích sách, không sai kiến thức; nhóm đã sửa cả hai ngay trong ngày. //
+> Nhóm em kiểm thử Mimo bằng **43 ca** gọi thẳng vào bản đang chạy: câu dễ, câu khó, ngoài chương trình, lạc đề, và 14 ca năn nỉ xin đáp án. // Lần đo cuối trên bản đang chạy, máy chấm đạt **43 trên 43**. // Các ca năn nỉ: bản tháng 9 lộ đáp án **3 lần**, bản hiện tại **0 lần**. //
+> Máy không chấm được kiến thức đúng sai, nên nhóm nhờ **thầy cô bộ môn** chấm nguyên văn **cả 43 câu**: **41 đúng, 2 có chỗ sai, không câu nào sai**. // Hai câu đó thiếu một bước hướng dẫn và thiếu trích sách, không sai kiến thức; nhóm đã sửa cả hai ngay trong ngày, đo lại thì cả hai đều đạt. //
 > Toàn bộ prompt nhóm dùng với AI lập trình được ghi tự động trong **Prompt Log**, kể cả những lần sai phải làm lại.
 
 ### 5:50 – Hạn chế và kết (20 giây)
@@ -144,12 +144,12 @@ Trả lời theo khuôn: **kết luận trước, một con số hoặc bằng c
     - Thêm ba lớp do code quyết định, không phụ thuộc AI: lớp an toàn, lớp lọc phạm vi, luật không giải hộ.
 2. **Vì sao chọn Gemini mà không chọn GPT hay Claude?**
     - Tiếng Việt tốt, đọc được ảnh đề, có cả mô hình embedding cùng hãng, và có gói miễn phí để học sinh dùng không tốn tiền.
-    - Chọn bản Flash-Lite vì nhanh: trung vị 3,7 giây trong bộ thử 17/10; buổi 34 học sinh dùng thử trung vị 3,1 giây, 90% câu dưới 3,8 giây. Hết lượt thì tự chuyển sang Gemini 3.5 Flash-Lite rồi 3.5 Flash.
+    - Chọn bản Flash-Lite vì nhanh: trung vị 4,1 giây ở lần đo cuối của bộ thử 17/10; buổi 34 học sinh dùng thử trung vị 3,1 giây, 90% câu dưới 3,8 giây. Hết lượt thì tự chuyển sang Gemini 3.5 Flash-Lite rồi 3.5 Flash.
 3. **AI vẫn có thể bịa, nhóm xử lý thế nào?**
     - Giảm: AI chỉ được giảng theo đoạn sách đưa vào và phải ghi số trích dẫn.
     - Lộ ra: câu không có trang sách thì giao diện ghi "Mimo chưa có trang sách làm chứng nên có thể nhầm". Trang bị trích sai thì học sinh bấm "Trang này không đúng?".
     - Đo: thầy cô bộ môn chấm nguyên văn 43 câu của lần đo 17/10: 41 đúng, 2 có chỗ sai, không câu nào sai. Lần 19/09 (28 câu): 25 đúng, 3 có chỗ sai.
-    - Câu ƯCLN (câu 16) có chỗ sai dù có trang sách đi kèm: thiếu bước phân tích ra thừa số nguyên tố. Máy chấm không bắt được loại lỗi này, nên nhóm mới cần thầy cô chấm. Đã sửa ngày 17/10.
+    - Câu ƯCLN (câu 16) có chỗ sai dù có trang sách đi kèm: thiếu bước phân tích ra thừa số nguyên tố. Máy chấm không bắt được loại lỗi này, nên nhóm mới cần thầy cô chấm. Đã sửa ngày 17/10: lần đo cuối, Mimo làm mẫu phép chia liên tiếp rồi để em tự phân tích 36.
 4. **Vì sao bỏ Pinecone, chuyển vào Postgres?**
     - Gói miễn phí Pinecone giới hạn 1 GB đọc mỗi tháng. Mỗi câu hỏi kéo về vài chục đoạn sách, hết hạn mức là Mimo ngừng trả lời.
     - pgvector nằm trong database sẵn có: 0 đồng, không còn hạn mức. Kho nhỏ (5.498 đoạn) nên quét chính xác toàn bộ, không bỏ sót.

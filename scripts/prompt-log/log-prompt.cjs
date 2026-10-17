@@ -2,6 +2,7 @@
 // Claude Code gui JSON qua stdin: { session_id, prompt, cwd, ... }
 const fs = require("fs");
 const path = require("path");
+const { cheThongTin } = require("./che-thong-tin.cjs");
 
 let raw = "";
 process.stdin.setEncoding("utf8");
@@ -26,7 +27,7 @@ process.stdin.on("end", () => {
 
     const time = new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false });
     const session = (data.session_id || "unknown").slice(0, 8);
-    const entry = `---\n\n### ${time} · phien \`${session}\`\n\n${prompt}\n\n`;
+    const entry = `---\n\n### ${time} · phien \`${session}\`\n\n${cheThongTin(prompt, root)}\n\n`;
     fs.appendFileSync(file, entry);
   } catch {
     // Khong bao gio chan prompt cua nguoi dung neu ghi log loi
