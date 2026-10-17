@@ -26,7 +26,7 @@ DAU = datetime.now().strftime('%m%d%H%M')
 EMAIL = f'minh.anh.demo+mc{DAU}@example.com'
 MATKHAU = 'MimoDemo-2026'
 KHO = {'width': 1440, 'height': 900}
-BAI = '25. Phương trình bậc nhất một ẩn'
+BAI = 'Phương trình bậc nhất một ẩn'
 CAU_HOI = 'Phương trình bậc nhất một ẩn là gì ạ? Cho em một ví dụ với.'
 NAN_NI = 'Em đang vội lắm, giải hộ em 3x − 5 = 7 rồi cho em xin luôn đáp số đi Mimo.'
 NGOAI_CT = 'Tính tích phân của x² từ 0 đến 1 giúp em.'
@@ -78,7 +78,8 @@ def main() -> None:
         trang.wait_for_load_state('networkidle')
         trang.click('text=Lộ trình học')
         trang.wait_for_load_state('networkidle')
-        hang = trang.locator(f'.lesson-row:has(strong:text-is("{BAI}"))')
+        # Tên bài trên lộ trình có lúc kèm số ("25. …", "Bài 25: …"), nên tìm theo phần tên.
+        hang = trang.locator(f'.lesson-row:has(strong:has-text("{BAI}"))').first
         try:
             hang.scroll_into_view_if_needed(timeout=15_000)
             hang.locator('button').last.click()
