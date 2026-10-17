@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field, field_validator
 
 try:
     from backend.accounts import router as accounts_router
-    from backend.answer_cleanup import clean_answer, cited_numbers, ensure_closing_question, strip_citations
+    from backend.answer_cleanup import add_book_pointer, clean_answer, cited_numbers, ensure_closing_question, strip_citations
     from backend.ai_roadmap import build_roadmap_prompt, parse_generated_roadmap
     from backend.db import (
         check_chat_rate, check_rate, current_user, get_ai_roadmap, get_generated_question, init_db, lesson_history,
@@ -42,7 +42,7 @@ try:
     )
 except ImportError:  # pragma: no cover
     from accounts import router as accounts_router
-    from answer_cleanup import clean_answer, cited_numbers, ensure_closing_question, strip_citations
+    from answer_cleanup import add_book_pointer, clean_answer, cited_numbers, ensure_closing_question, strip_citations
     from ai_roadmap import build_roadmap_prompt, parse_generated_roadmap
     from db import (
         check_chat_rate, check_rate, current_user, get_ai_roadmap, get_generated_question, init_db, lesson_history,
@@ -1103,7 +1103,7 @@ TRÌNH BÀY
 - Markdown gọn gàng; công thức dùng LaTeX `$...$` hoặc `$$...$$`, TUYỆT ĐỐI không bọc công thức hay số trong dấu backtick (`) vì em sẽ thấy ký hiệu thô. Không dùng tiêu đề lớn (#).
 - Trích dẫn nguồn bằng số trong ngoặc vuông đặt ngay cuối câu dùng kiến thức từ nguồn đó, ví dụ "Bình phương của một tổng là $(a+b)^2 = a^2 + 2ab + b^2$ [1]." Nhiều nguồn thì viết [1][2].
 - Số [n] phải là số ghi ở đầu đoạn Context SGK chứa đúng kiến thức em dùng; chỉ dùng số có trong "Nguồn được phép trích dẫn", đoạn ghi "không trích dẫn" thì không gắn số; không có nguồn thì không viết [n]. Không đặt [n] bên trong công thức.
-- CHỈ gắn [n] cho câu trình bày kiến thức lấy từ SGK (định nghĩa, tính chất, công thức, quy tắc, ví dụ trong sách), mỗi kiến thức gắn một lần. KHÔNG gắn [n] cho câu chào hỏi, câu động viên, câu trả lời chuyện ngoài lề hay môn khác, câu nhắc tên bài đang học, câu gợi ý quay lại bài, câu hỏi hay lời mời em tự làm.
+- CHỈ gắn [n] cho câu trình bày kiến thức lấy từ SGK (định nghĩa, tính chất, công thức, quy tắc, ví dụ trong sách), mỗi kiến thức gắn một lần. Khi hướng dẫn BÀI TẬP bằng một cách làm có trong Context SGK (ví dụ "dùng hằng đẳng thức để phân tích thành nhân tử"), gắn [n] ngay sau câu nêu cách làm đó. KHÔNG gắn [n] cho câu chào hỏi, câu động viên, câu trả lời chuyện ngoài lề hay môn khác, câu nhắc tên bài đang học, câu gợi ý quay lại bài, câu hỏi hay lời mời em tự làm.
 - Không viết tên sách, số trang hay số bài/chương trong câu trả lời – em bấm vào [n] để xem trang sách. Riêng khi em hỏi bài nằm ở trang nào thì được nói số trang ghi trong "Nguồn được phép trích dẫn".
 
 SAU KHI TRẢ LỜI XONG, xuống dòng và viết đúng một dòng dạng:
@@ -1179,6 +1179,8 @@ Tin nhắn hiện tại của học sinh: {message}'''
             if bao_ngoai_sach:
                 # Prompt dặn không viết lại câu báo, mà mô hình vẫn có lúc chép nguyên văn.
                 answer_text = answer_text.replace(bao_ngoai_sach, '', 1).strip()
+            # cited_matches chỉ có trang khi đây là câu hỏi học tập và sách có bài (xem unique_matches).
+            answer_text = add_book_pointer(answer_text, [item.get('text') or '' for item in cited_matches])
             answer_text = opening + ensure_closing_question(answer_text)
             # An answer that cites nothing (small talk, feelings) gets no sources, even if retrieval found pages.
             sources = [] if not cited_numbers(answer_text, len(cited_matches)) else [{

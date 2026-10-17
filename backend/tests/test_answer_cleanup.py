@@ -107,3 +107,28 @@ def test_question_mark_inside_a_formula_does_not_count_as_asking():
 def test_strip_citations(text, expected):
     from backend.answer_cleanup import strip_citations
     assert strip_citations(text) == expected
+
+
+# Trang 44 Toán 8 tập một (chữ đọc từ PDF, công thức bị lỗi OCR như thật).
+TRANG_44 = ('Chú ý. Cách làm như ví dụ trên gọi là phân tích đa thức thành nhân tử bằng cách sử dụng hằng đẳng thức. '
+            'Phân tích các đa thức sau thành nhân tử a) (x+1} ~ y?')
+KHONG_TRICH = ('Để phân tích đa thức $x^2 - 6x + 9$ thành nhân tử, em có thể sử dụng hằng đẳng thức đáng nhớ đấy.\n\n'
+               'Em hãy thử viết $x^2 - 6x + 9$ dưới dạng $a^2 - 2ab + b^2$ xem sao?')
+
+
+def test_answer_based_on_a_page_but_citing_nothing_gets_a_pointer_before_the_closing_question():
+    from backend.answer_cleanup import add_book_pointer
+    text = add_book_pointer(KHONG_TRICH, ['Trang mở đầu chương.', TRANG_44])
+    assert cited_numbers(text, 2) == [2]
+    assert text.endswith('Em đối chiếu cách làm này trong sách giáo khoa ở [2] nhé.\n\n'
+                         'Em hãy thử viết $x^2 - 6x + 9$ dưới dạng $a^2 - 2ab + b^2$ xem sao?')
+
+
+@pytest.mark.parametrize('text, passages', [
+    ('Hằng đẳng thức bình phương một tổng là $(a+b)^2$ [1].', [TRANG_44]),   # đã trích
+    (KHONG_TRICH, []),                                                     # không có trang nào
+    ('Chào em, hôm nay em muốn học gì?', [TRANG_44]),                       # không dựa vào trang nào
+])
+def test_book_pointer_is_not_added(text, passages):
+    from backend.answer_cleanup import add_book_pointer
+    assert add_book_pointer(text, passages) == text

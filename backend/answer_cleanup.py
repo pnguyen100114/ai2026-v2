@@ -107,6 +107,35 @@ def _keep_citation(text: str, masked: str, match: re.Match[str], passages: list[
     return all(len(sentence & _bigrams(passages[value - 1])) >= MIN_SHARED_BIGRAMS for value in values)
 
 
+# Trang sách phải trùng ít nhất chừng này cặp từ với câu trả lời thì mới coi là câu trả lời dựa vào
+# trang đó. Ca "Phân tích x² - 6x + 9" (17/10) trùng 9 cặp với trang 44 Toán 8 tập một.
+MIN_POINTER_BIGRAMS = 4
+BOOK_POINTER = 'Em đối chiếu cách làm này trong sách giáo khoa ở [{n}] nhé.'
+
+
+def add_book_pointer(text: str, passages: list[str]) -> str:
+    """Câu trả lời dựa vào sách mà quên gắn [n]: thêm một câu trỏ tới trang khớp nhất.
+
+    Prompt dặn gắn [n], nhưng mô hình lúc nhớ lúc quên: ca "Phân tích x² - 6x + 9 thành nhân tử"
+    có lần trích, có lần không, dù cách làm (dùng hằng đẳng thức) chép đúng trang 44. Không có
+    [n] thì giao diện không hiện trang nào, và em không có cách nào đối chiếu với sách. Câu thêm
+    vào chỉ trỏ tới trang, không gắn số vào câu nào mô hình đã viết.
+    """
+    if not passages or cited_numbers(text, len(passages)):
+        return text
+    answer = _bigrams(MATH_SEGMENT.sub(' ', text))
+    shared = [len(answer & _bigrams(passage)) for passage in passages]
+    best = max(range(len(passages)), key=lambda index: shared[index])
+    if shared[best] < MIN_POINTER_BIGRAMS:
+        return text
+    pointer = BOOK_POINTER.format(n=best + 1)
+    paragraphs = re.split(r'(\n\s*\n)', text.rstrip())
+    # Trước câu hỏi cuối, để lượt của em vẫn là câu hỏi.
+    if len(paragraphs) >= 3 and '?' in _mask_math(paragraphs[-1]):
+        return ''.join(paragraphs[:-1]).rstrip() + f'\n\n{pointer}\n\n' + paragraphs[-1]
+    return f'{text.rstrip()}\n\n{pointer}'
+
+
 # Prompt bảo "kết thúc bằng đúng 1 câu hỏi", nhưng model lúc nhớ lúc quên: cùng một ca năn nỉ,
 # lần chạy này kết bằng "...xem nhé." lần sau lại có câu hỏi. Câu hỏi cuối là lượt của em, nên
 # code đảm bảo nó luôn có thay vì trông vào model.
