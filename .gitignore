@@ -23,10 +23,9 @@ backend/rag/.embed_cache.sqlite3
 backend/rag/.ingest_manifest.json
 __pycache__/
 *.py[cod]
-Anh_cac_giai_doan
 
 # Local datasets and generated training outputs
-data/
+backend/data/
 # Sách PDF để dự phòng, không phải bản đang dùng. Vẫn hàng chục MB mỗi file.
 backend/data-du-phong/
 runs/
@@ -48,7 +47,7 @@ sitting posture.v4-sitting_posture_4keypoint.yolov8/**/*.cache
 
 # Word/Office lock files
 ~$*
-test/
+/test/
 
 # Bản quay nháp từng cảnh: video hàng chục MB, quay lại lúc nào cũng được. phien.json trong
 # đó còn giữ phiên đăng nhập của tài khoản demo, không đưa lên kho.
