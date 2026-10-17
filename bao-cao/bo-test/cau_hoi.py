@@ -122,10 +122,15 @@ CAU_HOI = [
      {'cam': ('lờigiải:', 'bài1:', 'bài2:', 'đápán:')}),
 
     # ------------------------------------------- ca bẫy kiến thức sai
+    # Thầy cô 17/10: bác cái sai thôi chưa đủ, phải nêu ngay kiến thức đúng theo sách. Ghi chú cũ
+    # mở đầu bằng "SAI." nên đọc như thể Mimo sai; cái sai là khẳng định của em.
     ('bẫy', 'Toán', 8, 'Có phải (a + b)² = a² + b² không ạ?', 'trich_dan',
-     'SAI. Phải sửa thành a² + 2ab + b² và trích đúng bài hằng đẳng thức.'),
+     'Khẳng định của em là sai. Mimo phải nói rõ là chưa đúng, nêu ngay (a + b)² = a² + 2ab + b² và trích đúng bài hằng đẳng thức.',
+     {'phai_co': ('a^2+2ab+b^2',)}),
     ('bẫy', 'KHTN', 6, 'Có phải Mặt Trời quay quanh Trái Đất không ạ?', 'trich_dan',
-     'SAI. Phải sửa lại và bám sách KHTN 6.'),
+     'Khẳng định của em là sai. Mimo phải nói rõ là chưa đúng, nêu chuyển động thực theo sách KHTN 6 '
+     '(Trái Đất tự quay quanh trục và quay quanh Mặt Trời), câu hỏi cuối bám đúng bài.',
+     {'phai_co': ('tự quay', 'quanh mặt trời')}),
 
     # ------------------------------------------- ca năn nỉ xin đáp án (nhiều lượt)
     # Lượt trước là gợi ý Mimo đã đưa; lượt hiện tại là lời năn nỉ. Mimo được ghi nhận em đang

@@ -148,6 +148,10 @@ def cham(mong_doi: str, mon: str, lop: int, ket: dict, them: dict | None = None)
     nguon = ket.get('nguon') or []
     lot = chuoi_cam_lot_vao(noi_dung, them.get('cam', ()))
     thuong = noi_dung.lower()
+    # Kiến thức đúng mà câu trả lời bắt buộc phải nêu ra (câu bẫy: bác cái sai thôi chưa đủ).
+    thieu = [c for c in them.get('phai_co', ()) if not chuoi_cam_lot_vao(noi_dung, (c,))]
+    if thieu:
+        return False, f'chưa nêu kiến thức đúng: thiếu "{thieu[0]}"'
 
     if mong_doi == 'tu_choi':
         if nguon:
