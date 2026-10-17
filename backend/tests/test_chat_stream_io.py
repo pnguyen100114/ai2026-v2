@@ -322,6 +322,41 @@ def test_lesson_named_in_own_grade_is_never_announced_missing(client, app_mod, m
     assert 'không tìm thấy phần này' not in done['content']
 
 
+def test_follow_up_also_gets_pages_of_the_previous_question(client, app_mod, monkeypatch):
+    # "Vì sao lại đổi dấu ở giữa ạ?" tìm theo chính nó ra bài Phép cộng phân thức (đo 17/10).
+    truoc = 'Phân tích x² - 6x + 9 thành nhân tử'
+    bai_9 = make_match(score=0.69, page=44, pdf_page=45, lesson_title='Bài 9. Phân tích đa thức thành nhân tử',
+                       text='Phân tích đa thức thành nhân tử bằng cách sử dụng hằng đẳng thức (a - b)^2 = a^2 - 2ab + b^2.')
+    phan_thuc = make_match(score=0.72, page=40, pdf_page=41, lesson_title='Bài 23. Phép cộng và phép trừ phân thức',
+                           text='Muốn cộng hai phân thức cùng mẫu, ta cộng các tử thức với nhau và giữ nguyên mẫu thức.')
+    queries = []
+
+    def search(query, *args, **kwargs):
+        queries.append(query)
+        return [bai_9] if query == truoc else [phan_thuc]
+
+    monkeypatch.setattr(app_mod, 'search_knowledge', search)
+    fake = FakeGemini(chunks=['Vì $(a - b)^2 = a^2 - 2ab + b^2$ [1] nên hạng tử giữa mang dấu trừ. Em thử với x - 3 nhé?'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+
+    done = stream(client, message='Vì sao lại đổi dấu ở giữa ạ?',
+                  messages=[{'role': 'user', 'content': truoc}, {'role': 'assistant', 'content': 'Em dùng hằng đẳng thức nhé.'}])[-1]
+
+    assert truoc in queries
+    assert 'Phân tích đa thức thành nhân tử bằng cách sử dụng hằng đẳng thức' in fake.calls[0]['contents']
+    assert 44 in [s['page'] for s in done['sources']]
+
+
+def test_question_without_history_searches_only_itself(client, app_mod, monkeypatch):
+    queries = []
+    monkeypatch.setattr(app_mod, 'search_knowledge', lambda query, *a, **k: queries.append(query) or [make_match()])
+    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=['$(a+b)^2 = a^2 + 2ab + b^2$ [1].']))
+
+    stream(client, message='Hằng đẳng thức bình phương của một tổng là gì?')
+
+    assert set(queries) == {'Hằng đẳng thức bình phương của một tổng là gì?'}
+
+
 def test_other_grade_only_slightly_ahead_keeps_own_book_citations(client, app_mod, monkeypatch):
     # Câu năn nỉ "chỉ cần ghi A, B, C hay D" có độ chênh 0.043 mà vẫn là bài của lớp em.
     own = [make_match(score=0.70)]

@@ -419,6 +419,8 @@ def _is_quota_error(exc: Exception) -> bool:
 
 
 LESSON_CONTEXT_PAGES = 2
+# Trang tìm theo câu hỏi trước của em, cho câu tiếp nối ("Nếu x âm thì sao?").
+PREVIOUS_QUESTION_PAGES = 2
 LESSON_PAGES_CACHE_SIZE = 256
 _lesson_pages_cache: dict[tuple[str, int, str], list[dict[str, Any]]] = {}
 
@@ -920,6 +922,15 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     named_pages_task = _io_pool.submit(
         search_knowledge, message, subject=subject, grade=bai_lop_khac[0][0].grade, top_k=2, extra_filter=loc_bai_lop_khac,
     ) if loc_bai_lop_khac else None
+    # Câu tiếp nối tìm theo chính nó thì lệch bài: "Vì sao lại đổi dấu ở giữa ạ?" sau câu phân tích
+    # x² - 6x + 9 ra bài Phép cộng phân thức. Tìm thêm trang theo câu hỏi trước của em rồi để mô
+    # hình đọc mà chọn trang trích, như trang của bài đang học. Không ghép hai câu thành một câu tìm:
+    # đo 17/10, em đổi sang chủ đề mới thì câu ghép kéo trang của chủ đề cũ lên trước.
+    cau_truoc = next((item for item in reversed(user_history) if _la_cau_hoi_hoc_tap(item)), '') \
+        if _la_cau_hoi_hoc_tap(message) and not risk else ''
+    previous_pages_task = _io_pool.submit(
+        search_knowledge, cau_truoc, subject=subject, grade=grade, top_k=PREVIOUS_QUESTION_PAGES,
+    ) if cau_truoc else None
     # _lesson_pages và lesson_history tự nuốt lỗi của mình và trả về danh sách rỗng.
     lesson_pages_task = _io_pool.submit(_lesson_pages, subject, int(grade), topic) if topic else None
     earlier_turns_task = _io_pool.submit(
@@ -942,7 +953,12 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     ]
     seen_pages = {_page_key(item) for item in relevant_matches[:3]}
     lesson_pages = [item for item in _lookup_result(lesson_pages_task) if _page_key(item) not in seen_pages][:LESSON_CONTEXT_PAGES] if not retrieval_error else []
-    context_matches = sorted(relevant_matches[:3] + lesson_pages, key=lambda item: float(item.get('score', 0.0)), reverse=True)
+    seen_pages |= {_page_key(item) for item in lesson_pages}
+    previous_pages = [
+        item for item in _lookup_result(previous_pages_task)
+        if item.get('text') and float(item.get('score', 0.0)) >= RAG_SCORE_THRESHOLD and _page_key(item) not in seen_pages
+    ] if not retrieval_error else []
+    context_matches = sorted(relevant_matches[:3] + lesson_pages + previous_pages, key=lambda item: float(item.get('score', 0.0)), reverse=True)
     # Tiếng Anh: câu hỏi gọi tên mục ("Skills 1") thì chỉ trang của đúng Unit đó được đưa vào, vì mục
     # cùng tên ở Unit khác khớp ngang (xem unit_cua_cau_hoi).
     unit_hoi = unit_cua_cau_hoi(subject, grade, message, topic or lesson)
