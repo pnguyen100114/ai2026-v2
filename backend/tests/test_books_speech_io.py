@@ -43,6 +43,21 @@ def test_lesson_titles_are_unique_within_a_course():
         assert len(titles) == len(set(titles)), (course.subject, course.grade)
 
 
+def test_lesson_named_by_number_and_title_is_found_in_its_own_grade():
+    # Tiếng Anh 6 Unit 1 là My New School; "Unit 1 Hobbies" là bài của Tiếng Anh 7.
+    found = books.lessons_named('Tiếng Anh', 'Unit 1 Hobbies học những từ vựng nào?')
+    assert [course.grade for course, _ in found] == [7]
+    course, lessons = found[0]
+    assert {item.chapter_title for item in lessons} == {'Unit 1: Hobbies'}
+    assert books.lessons_page_filter(course, lessons)['source'] == {'$in': ['TA7.pdf']}
+
+
+@pytest.mark.parametrize('message', ['Unit 1 học gì?', 'Hobbies là gì?', 'Thế nào là câu ghép?'])
+def test_lesson_named_needs_both_number_and_title(message):
+    # Chỉ số hoặc chỉ tên thì chưa chắc em hỏi bài nào: để cách tìm thường xử lý.
+    assert books.lessons_named('Tiếng Anh' if 'Unit' in message or 'Hobbies' in message else 'Ngữ văn', message) == []
+
+
 @pytest.mark.parametrize('source', ['KHTN.pdf', 'KHTN 6.pdf', 'khtn 6.PDF', 'backend/data/KHTN.pdf'])
 def test_find_book_follows_aliases(source):
     assert books.find_book(source).id == 'khtn6'

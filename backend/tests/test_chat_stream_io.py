@@ -240,14 +240,17 @@ def _search_by_grade(own, others):
     return lambda *a, **k: own if k.get('grade') is not None else others
 
 
-def test_lesson_clearly_in_another_grade_is_announced_by_mimo_not_the_model(client, app_mod, monkeypatch):
+def test_lesson_clearly_in_another_grade_is_taught_from_that_grades_pages(client, app_mod, monkeypatch):
     # Câu ghép hỏi ở Ngữ văn 8: trang lớp 9 hơn hẳn mọi trang lớp 8 (đo thật: 0.740 so với 0.652).
-    own = [make_match(score=0.652, page=68)]
-    others = [make_match(score=0.740, grade=9, page=15), make_match(score=0.736, grade=9, page=16)]
+    # Thầy cô góp ý Mimo phải bám sách: giảng theo trang sách lớp 9, có trích dẫn, không theo trí nhớ.
+    own = [make_match(score=0.652, page=68, pdf_page=70)]
+    cau_ghep = 'Câu ghép là câu có từ hai cụm chủ - vị trở lên, các cụm này không bao chứa nhau.'
+    others = [make_match(score=0.740, grade=9, page=15, pdf_page=16, text=cau_ghep, source='Ngu van 9 tap 2.pdf'),
+              make_match(score=0.736, grade=9, page=16, pdf_page=17, text=cau_ghep, source='Ngu van 9 tap 2.pdf')]
     monkeypatch.setattr(app_mod, 'search_knowledge', _search_by_grade(own, others))
     notice = 'Mimo không tìm thấy phần này trong sách Toán lớp 8 của em; phần này nằm ở sách Toán lớp 9.'
     # Mô hình có lúc chép lại nguyên câu báo (đã gặp ở ca "nghĩa tường minh và hàm ý").
-    fake = FakeGemini(chunks=[notice + '\n\nCâu ghép có từ hai cụm chủ - vị trở lên [1]. Em thử đặt một câu nhé?'])
+    fake = FakeGemini(chunks=[notice + '\n\nCâu ghép là câu có từ hai cụm chủ - vị trở lên [1]. Em thử đặt một câu nhé?'])
     monkeypatch.setattr(app_mod, 'gemini_client', fake)
 
     events = stream(client, message='Thế nào là câu ghép?')
@@ -255,8 +258,11 @@ def test_lesson_clearly_in_another_grade_is_announced_by_mimo_not_the_model(clie
     assert events[0] == {'type': 'chunk', 'text': notice + '\n\n'}
     done = events[-1]
     assert done['content'].startswith(notice + '\n\n') and done['content'].count(notice) == 1
-    assert done['sources'] == [] and '[1]' not in done['content']
-    assert 'LẦN NÀY: Mimo ĐÃ hiện cho em câu' in fake.calls[0]['contents']
+    assert [(s['source'], s['page']) for s in done['sources']] == [('Ngu van 9 tap 2.pdf', 15), ('Ngu van 9 tap 2.pdf', 16)]
+    prompt = fake.calls[0]['contents']
+    assert 'LẦN NÀY: Mimo ĐÃ hiện cho em câu' in prompt and 'giảng CHỈ bằng nội dung các đoạn đó' in prompt
+    # Trang lớp 8 không dạy câu ghép nên không được đưa vào làm nguồn.
+    assert 'trang 68' not in prompt
 
 
 def test_other_grades_disagreeing_do_not_name_a_grade(client, app_mod, monkeypatch):
@@ -265,12 +271,55 @@ def test_other_grades_disagreeing_do_not_name_a_grade(client, app_mod, monkeypat
     own = [make_match(score=0.715)]
     others = [make_match(score=0.771, grade=9), make_match(score=0.756, grade=7)]
     monkeypatch.setattr(app_mod, 'search_knowledge', _search_by_grade(own, others))
-    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=['Từ vựng về sở thích gồm...']))
+    fake = FakeGemini(chunks=['Em hỏi thầy cô bộ môn nhé.'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
 
-    content = stream(client, message='Unit 1 Hobbies học những từ vựng nào?')[-1]['content']
+    done = stream(client, message='Unit 1 Hobbies học những từ vựng nào?')[-1]
 
-    assert content.startswith('Mimo không tìm thấy phần này trong sách Toán lớp 8 của em.\n\n')
-    assert 'lớp 7' not in content and 'lớp 9' not in content
+    assert done['content'].startswith('Mimo không tìm thấy phần này trong sách Toán lớp 8 của em.\n\n')
+    assert 'lớp 7' not in done['content'] and 'lớp 9' not in done['content']
+    # Không biết bài ở sách nào thì không có trang làm chứng: Mimo không được giảng bằng trí nhớ.
+    assert done['sources'] == []
+    assert 'KHÔNG giảng nội dung' in fake.calls[0]['contents']
+
+
+def test_lesson_named_from_another_grade_is_taught_from_that_lessons_pages(client, app_mod, monkeypatch):
+    # "Unit 1 Hobbies" hỏi ở Tiếng Anh 6: điểm của sách lớp 7 và lớp 8 sát nhau nên trước đây Mimo
+    # lúc báo đúng, lúc lại trích trang Review của sách lớp 6. Danh mục biết chắc: Tiếng Anh 7.
+    hobbies = make_match(score=0.70, grade=7, source='TA7.pdf', page=8, pdf_page=9,
+                         text='Unit 1 Hobbies. Getting Started: building dollhouses, gardening, horse riding.')
+    calls = []
+
+    def search(*args, **kwargs):
+        calls.append(kwargs)
+        if kwargs.get('extra_filter'):
+            return [hobbies]
+        return [make_match(score=0.66, grade=6, source='TA6 -TAP 1.pdf', page=68, pdf_page=69)]
+
+    monkeypatch.setattr(app_mod, 'search_knowledge', search)
+    fake = FakeGemini(chunks=['Từ vựng về sở thích gồm building dollhouses, gardening [1]. Em thích sở thích nào?'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+
+    done = stream(client, message='Unit 1 Hobbies học những từ vựng nào?',
+                  student={'grade': 6, 'subject': 'Tiếng Anh'})[-1]
+
+    assert done['content'].startswith(
+        'Mimo không tìm thấy phần này trong sách Tiếng Anh lớp 6 của em; phần này nằm ở sách Tiếng Anh lớp 7.')
+    assert [(s['source'], s['page']) for s in done['sources']] == [('TA7.pdf', 8)]
+    assert {'$in': ['TA7.pdf']} in [k['extra_filter'].get('source') for k in calls if k.get('extra_filter')]
+
+
+def test_lesson_named_in_own_grade_is_never_announced_missing(client, app_mod, monkeypatch):
+    # Em lớp 7 gọi đúng "Unit 1 Hobbies": sách lớp em có bài, dù trang lớp khác khớp hơn.
+    own = [make_match(score=0.66, grade=7, source='TA7.pdf')]
+    others = [make_match(score=0.75, grade=8, source='TA8.pdf'), make_match(score=0.74, grade=8, source='TA8.pdf', pdf_page=15)]
+    monkeypatch.setattr(app_mod, 'search_knowledge', _search_by_grade(own, others))
+    monkeypatch.setattr(app_mod, 'gemini_client', FakeGemini(chunks=['Hobbies là sở thích. Em thích gì?']))
+
+    done = stream(client, message='Unit 1 Hobbies học những từ vựng nào?',
+                  student={'grade': 7, 'subject': 'Tiếng Anh'})[-1]
+
+    assert 'không tìm thấy phần này' not in done['content']
 
 
 def test_other_grade_only_slightly_ahead_keeps_own_book_citations(client, app_mod, monkeypatch):

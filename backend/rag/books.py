@@ -1586,6 +1586,52 @@ def find_lesson(subject: Any, grade: Any, topic: Any) -> tuple[Course, Lesson] |
     return None
 
 
+def _goi_ten(folded: str, kind: str, number: Any, name: str) -> bool:
+    """Câu hỏi gọi đúng "Unit 1 ... Hobbies" / "Bài 7 ... Tập hợp các số thực": cả số lẫn tên."""
+    name = name.strip()
+    return len(name) >= 4 and bool(re.search(rf'\b{kind}\s*{number}\b', folded)) and bool(re.search(rf'\b{re.escape(name)}\b', folded))
+
+
+def lessons_named(subject: Any, text: Any) -> list[tuple[Course, list[Lesson]]]:
+    """Bài (hoặc Unit) mà câu hỏi gọi đích danh, ở mọi lớp của môn này.
+
+    Điểm tìm kiếm không phân biệt được "Unit 1 Hobbies" của Tiếng Anh 7 với chủ đề sở thích ở
+    Tiếng Anh 8, nên Mimo lúc nhận ra bài ở lớp khác, lúc lại tưởng sách lớp em có. Khi em gọi
+    cả số lẫn tên bài thì danh mục trả lời chắc chắn. Chỉ nhận khi có cả hai, để câu hỏi chung
+    chung không bị gán nhầm vào một bài.
+    """
+    folded = _fold(text)
+    if not folded:
+        return []
+    canonical = canonical_subject(subject)
+    found: list[tuple[Course, list[Lesson]]] = []
+    for course in COURSES:
+        if course.subject != canonical:
+            continue
+        lessons = course.lessons()
+        for chapter, chapter_title, _volume, _items in course.outline:
+            named = re.match(r'(unit|bai)\s*(\d+)\s*[:.\-–]?\s*(.+)', _fold(chapter_title))
+            if named and _goi_ten(folded, named[1], named[2], named[3]):
+                found.append((course, [item for item in lessons if item.chapter == chapter and item.chapter_title == chapter_title]))
+        if course.numbered_lessons:
+            found += [(course, [item]) for item in lessons if _goi_ten(folded, 'bai', item.lesson, _fold(item.title))]
+    return found
+
+
+def lessons_page_filter(course: Course, lessons: list[Lesson]) -> dict[str, Any] | None:
+    """Bộ lọc tìm kiếm trong đúng các trang của những bài này (cùng một tập sách)."""
+    ranges = [_page_range(course, lesson) for lesson in lessons]
+    ranges = [item for item in ranges if item is not None]
+    book = course_book(course, lessons[0].volume) if lessons else None
+    if not ranges or book is None:
+        return None
+    start, end = min(item[0] for item in ranges), max(item[1] for item in ranges)
+    return {
+        'source': {'$in': list(book.files)},
+        'page': {'$gte': start - book.page_offset, '$lte': end - book.page_offset},
+    }
+
+
 def lesson_page_filter(subject: Any, grade: Any, topic: Any) -> dict[str, Any] | None:
     """Pinecone filter restricting a search to the pages of one lesson (stored `page` is the PDF page)."""
     found = find_lesson(subject, grade, topic)

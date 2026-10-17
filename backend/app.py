@@ -66,12 +66,12 @@ except ImportError:  # pragma: no cover
 
 try:
     from backend.rag import page_store
-    from backend.rag.books import build_catalog_roadmap, canonical_subject, lesson_page_filter, resolve_book_file
+    from backend.rag.books import build_catalog_roadmap, canonical_subject, lesson_page_filter, lessons_named, lessons_page_filter, resolve_book_file
     from backend.rag.curriculum import build_roadmap, get_curriculum
     from backend.rag.retriever import RAG_SCORE_THRESHOLD, search_knowledge
 except ImportError:  # pragma: no cover
     from rag import page_store
-    from rag.books import build_catalog_roadmap, canonical_subject, lesson_page_filter, resolve_book_file
+    from rag.books import build_catalog_roadmap, canonical_subject, lesson_page_filter, lessons_named, lessons_page_filter, resolve_book_file
     from rag.curriculum import build_roadmap, get_curriculum
     from rag.retriever import RAG_SCORE_THRESHOLD, search_knowledge
 
@@ -900,6 +900,18 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     other_grades_task = _io_pool.submit(
         search_knowledge, message, subject=subject, grade=None, top_k=6,
     ) if _la_cau_hoi_hoc_tap(message) and not risk else None
+    # Em gọi đích danh một bài ("Unit 1 Hobbies"): danh mục biết chắc bài đó ở sách lớp nào, khỏi
+    # đoán bằng điểm tương đồng. Bài chỉ có ở sách đúng một lớp khác thì tìm trong trang bài đó.
+    bai_goi_ten = lessons_named(subject, message) if _la_cau_hoi_hoc_tap(message) and not risk else []
+    bai_lop_em = any(course.grade == int(grade) for course, _ in bai_goi_ten)
+    bai_lop_khac = [(course, items) for course, items in bai_goi_ten if course.grade != int(grade)]
+    loc_bai_lop_khac = (
+        lessons_page_filter(*bai_lop_khac[0])
+        if not bai_lop_em and len({course.grade for course, _ in bai_lop_khac}) == 1 else None
+    )
+    named_pages_task = _io_pool.submit(
+        search_knowledge, message, subject=subject, grade=bai_lop_khac[0][0].grade, top_k=2, extra_filter=loc_bai_lop_khac,
+    ) if loc_bai_lop_khac else None
     # _lesson_pages và lesson_history tự nuốt lỗi của mình và trả về danh sách rỗng.
     lesson_pages_task = _io_pool.submit(_lesson_pages, subject, int(grade), topic) if topic else None
     earlier_turns_task = _io_pool.submit(
@@ -944,14 +956,28 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     # Chỉ nêu lớp khi hai đoạn khớp nhất cùng một lớp. "Unit 1 Hobbies" khớp Tiếng Anh 8 rồi
     # Tiếng Anh 7: nêu "lớp 8" là đoán, nên chỉ nói sách lớp em không có.
     lop_khac = {int(item['grade']) for item in other_grade_matches}
+    biet_lop = ngoai_sach and len(other_grade_matches) == 2 and len(lop_khac) == 1
+    if bai_lop_em:
+        # Bài em gọi tên có trong sách lớp em: không báo "sách không có", dù điểm nói gì.
+        ngoai_sach = biet_lop = False
+    trang_bai_goi_ten = [item for item in _lookup_result(named_pages_task) if item.get('text')]
+    if trang_bai_goi_ten:
+        other_grade_matches = trang_bai_goi_ten[:2]
+        lop_khac = {int(bai_lop_khac[0][0].grade)}
+        ngoai_sach = biet_lop = True
     bao_ngoai_sach = (
         f'Mimo không tìm thấy phần này trong sách {subject} lớp {grade} của em'
-        + (f'; phần này nằm ở sách {subject} lớp {min(lop_khac)}.' if len(other_grade_matches) == 2 and len(lop_khac) == 1 else '.')
+        + (f'; phần này nằm ở sách {subject} lớp {min(lop_khac)}.' if biet_lop else '.')
     ) if ngoai_sach else ''
+    # Thầy cô chấm 28 câu ngày 19/09 góp ý Mimo phải bám sát sách: bài sách lớp em không có thì
+    # không giảng bằng kiến thức của mô hình. Khi biết chắc bài nằm ở sách lớp nào, các trang đó
+    # thành nguồn trích [n] và là thứ duy nhất Mimo được dùng để giảng, em bấm vào là thấy trang.
+    if biet_lop:
+        context_matches = list(other_grade_matches)
 
     unique_matches: dict[tuple[Any, Any], dict[str, Any]] = {}
     # Lời chào và lời cảm ơn không được gắn trang sách, dù điểm tương đồng có cao tới đâu.
-    if _la_cau_hoi_hoc_tap(message) and not ngoai_sach:
+    if _la_cau_hoi_hoc_tap(message) and (biet_lop or not ngoai_sach):
         for item in context_matches:
             if float(item.get('score', 0.0)) >= CHAT_SOURCE_MIN_SCORE:
                 unique_matches.setdefault(_page_key(item), item)
@@ -970,9 +996,10 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     )
 
     # Học sinh hỏi một BÀI HỌC mà kho không có đoạn nào đủ gần: phải nói thẳng là sách của em
-    # không có bài đó. Nếu không, mô hình lấy trí nhớ của chính nó ra giảng, và cả lời hứa "chỉ
-    # dạy theo sách giáo khoa" sụp ngay tại đó - học sinh không có cách nào biết câu trả lời
-    # này không kiểm chứng được.
+    # không có bài đó, và không giảng bằng trí nhớ của mô hình. Nếu không, cả lời hứa "chỉ dạy
+    # theo sách giáo khoa" sụp ngay tại đó - học sinh không có cách nào biết câu trả lời này
+    # không kiểm chứng được. (Trước 17/10 Mimo vẫn giảng kèm câu báo; thầy cô chấm câu "hàm ý"
+    # và "bất phương trình" là có chỗ sai vì không bám sách.)
     #
     # KHÔNG gắn điều kiện vào điểm tương đồng. Đã đo: "Unit 1 Hobbies" (sách thiếu) đạt 0.715
     # còn "Hai tam giác cạnh-góc-cạnh" (sách có) chỉ 0.686 - hai nhóm chồng lên nhau nên không
@@ -987,16 +1014,32 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         f"{', ' + item['lesson_title'] if item.get('lesson_title') else ''}, không trích dẫn) "
         f"{item['text'][:600]}"
         for item in other_grade_matches
-    )
+    ) if not biet_lop else ''
+    if biet_lop:
+        lan_nay = (
+            f'\n- LẦN NÀY: Mimo ĐÃ hiện cho em câu «{bao_ngoai_sach}». KHÔNG viết lại câu đó. Các đoạn '
+            f'Context SGK ở trên là trang sách {subject} lớp {min(lop_khac)} dạy đúng điều em hỏi: giảng '
+            'CHỈ bằng nội dung các đoạn đó và gắn [n] như bình thường; điều gì các đoạn đó không nói thì '
+            'không thêm vào. Nếu là bài tập thì vẫn chỉ gợi ý theo cách làm trong các đoạn đó.'
+        )
+    elif bao_ngoai_sach:
+        lan_nay = (
+            f'\n- LẦN NÀY: Mimo ĐÃ hiện cho em câu «{bao_ngoai_sach}». KHÔNG viết lại câu đó, KHÔNG nói '
+            f'phần này thuộc chương trình hay sách lớp {grade}, KHÔNG giảng nội dung (kể cả "thông thường '
+            'gồm...", ví dụ hay định nghĩa). Chỉ mời em hỏi thầy cô bộ môn hoặc chọn một bài trong sách '
+            'lớp em. Nếu là bài tập thì vẫn gợi ý bước đầu bằng khái niệm của lớp em.'
+        )
+    else:
+        lan_nay = ''
     thieu_sach = (
         '\n\nKHI CÁC ĐOẠN SGK Ở TRÊN KHÔNG NÓI VỀ ĐIỀU EM HỎI\n'
-        '- Nếu em hỏi một KHÁI NIỆM hoặc BÀI HỌC thuộc chương trình THCS (lớp 6–9) mà không đoạn '
-        'nào ở trên thật sự dạy nó: vẫn giải thích đầy đủ cho em, nhưng MỞ ĐẦU bằng đúng một câu '
-        'ngắn cho em biết phần này '
-        f'không có trong sách {subject} lớp {grade} mà Mimo đang có. Sau câu đó thì dạy bình '
-        'thường. Không gắn [n] cho câu trả lời này.\n'
+        '- Mimo chỉ dạy theo sách giáo khoa. Nếu em hỏi một KHÁI NIỆM hoặc BÀI HỌC thuộc chương trình '
+        'THCS (lớp 6–9) mà không đoạn nào ở trên thật sự dạy nó: KHÔNG giảng bằng kiến thức ngoài '
+        'sách (không định nghĩa, không "thông thường gồm...", không ví dụ). Nói ngắn gọn cho em biết '
+        f'phần này không có trong sách {subject} lớp {grade} mà Mimo đang có, rồi mời em hỏi thầy cô '
+        'bộ môn hoặc chọn một bài trong sách lớp em. Không gắn [n] cho câu trả lời này.\n'
         '- Nếu em nhờ giải một BÀI TẬP: hướng dẫn bình thường bằng khái niệm nền tảng của lớp em, '
-        'không cần câu mở đầu đó - bài tập vốn không có nguyên văn trong sách. Riêng khi một đoạn '
+        'không cần câu báo đó - bài tập vốn không có nguyên văn trong sách. Riêng khi một đoạn '
         'SÁCH LỚP KHÁC bên dưới dạy đúng dạng bài này thì nói thêm một câu ngắn rằng dạng bài này '
         f'nằm ở sách lớp đó, sách {subject} lớp {grade} của em không có.\n'
         '- TUYỆT ĐỐI không tự đoán bài thuộc lớp nào. Chỉ nêu lớp khi một đoạn SÁCH LỚP KHÁC bên '
@@ -1004,9 +1047,7 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         'không nhắc tới lớp nào khác.\n'
         '- Nếu phần em hỏi thuộc THPT hoặc đại học: KHÔNG giải thích, KHÔNG gợi ý, làm đúng quy tắc '
         'NGOÀI CẤP HỌC trong chỉ dẫn hệ thống.'
-        + (f'\n- LẦN NÀY: Mimo ĐÃ hiện cho em câu «{bao_ngoai_sach}». KHÔNG viết lại câu đó, KHÔNG nói '
-           f'phần này thuộc chương trình hay sách lớp {grade}; vào thẳng phần giải thích (hoặc gợi ý, nếu '
-           'là bài tập).' if bao_ngoai_sach else '')
+        + lan_nay
         + (f'\n\nSÁCH LỚP KHÁC (chỉ để biết bài nằm ở lớp nào):\n{other_grade_text}' if other_grade_text else '')
     ) if _la_cau_hoi_hoc_tap(message) and not risk else ''
 
@@ -1070,7 +1111,7 @@ SAU KHI TRẢ LỜI XONG, xuống dòng và viết đúng một dòng dạng:
 - understanding: một trong "mất gốc", "hiểu sơ", "đã hiểu" – ước lượng mức hiểu của em dựa trên hội thoại; ghi null nếu hội thoại chưa có nội dung bài học để đánh giá (chào hỏi, tâm sự, chuyện ngoài lề).{image_text_rule}
 
 Context SGK:
-{context_text or f'Chưa có SGK phù hợp trong hệ thống: vẫn dạy bình thường theo kiến thức chuẩn của chương trình GDPT 2018 môn {subject} lớp {grade}, không trích dẫn tên sách hay số trang; câu nào không chắc thì nói thật.'}
+{context_text or (f'Không tìm thấy đoạn SGK {subject} lớp {grade} nào phù hợp: làm đúng mục KHI CÁC ĐOẠN SGK Ở TRÊN KHÔNG NÓI VỀ ĐIỀU EM HỎI bên dưới, không trích dẫn tên sách hay số trang.' if thieu_sach else f'Chưa có SGK phù hợp trong hệ thống: vẫn dạy bình thường theo kiến thức chuẩn của chương trình GDPT 2018 môn {subject} lớp {grade}, không trích dẫn tên sách hay số trang; câu nào không chắc thì nói thật.')}
 Nguồn được phép trích dẫn:
 {source_text or 'Không có nguồn đạt ngưỡng; không tự tạo tên sách hoặc số trang.'}{thieu_sach}
 Những lần trước em học bài này (ở các cuộc trò chuyện khác):

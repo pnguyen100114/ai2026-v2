@@ -31,6 +31,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from cau_hoi import CAU_HOI  # noqa: E402
+from backend.rag.books import find_book  # noqa: E402
+
+
+def lop_cua_sach(nguon: dict) -> int | None:
+    """Nguồn trong câu trả lời chỉ có tên file PDF; lớp của sách lấy từ danh mục books.py."""
+    sach = find_book(nguon.get('source') or nguon.get('sach'))
+    return sach.grade if sach else None
 
 THU_MUC = Path(__file__).resolve().parent
 
@@ -182,7 +189,7 @@ def cham(mong_doi: str, mon: str, lop: int, ket: dict, them: dict | None = None)
     if mong_doi == 'trich_dan':
         if not nguon:
             return False, 'không trích dẫn nguồn nào'
-        lech = [n for n in nguon if str(n.get('grade') or lop) != str(lop)]
+        lech = [n for n in nguon if lop_cua_sach(n) not in (None, lop)]
         if lech:
             return False, f'trích nguồn sai lớp ({len(lech)}/{len(nguon)} nguồn)'
         thieu_trang = [n for n in nguon if not n.get('page')]
@@ -191,13 +198,18 @@ def cham(mong_doi: str, mon: str, lop: int, ket: dict, them: dict | None = None)
         return True, f'{len(nguon)} nguồn, trang {", ".join(str(n.get("page")) for n in nguon[:3])}'
 
     if mong_doi == 'khong_co_trong_sach':
-        if nguon:
-            return False, f'bịa {len(nguon)} trích dẫn cho bài không có trong sách'
+        # Từ 17/10 (thầy cô góp ý Mimo phải bám sách): bài nằm ở sách lớp khác thì Mimo giảng theo
+        # đúng trang sách lớp đó và trích dẫn. Trích trang sách lớp em, hay sách của lớp khác lớp có
+        # bài, vẫn là bịa nguồn.
+        lop_that = (them or {}).get('lop_that')
+        sai_sach = [n for n in nguon if lop_cua_sach(n) != lop_that]
+        if sai_sach:
+            return False, f'bịa {len(sai_sach)} trích dẫn cho bài không có trong sách'
         if lot:
             return False, f'giải hộ tới đáp án: có "{lot[0]}"'
-        # Không bịa nguồn mới là một nửa. Nửa còn lại: Mimo VẪN dạy (không từ chối, vì kiến
-        # thức vừa sức lớp em) nhưng phải BÁO cho em biết phần này không có trong sách -
-        # giao diện không hiện gì khi thiếu nguồn, nên câu báo đó là tín hiệu duy nhất em có.
+        # Không bịa nguồn mới là một nửa. Nửa còn lại: Mimo phải BÁO cho em biết sách lớp em
+        # không có phần này, nếu không em tưởng trang sách lớp khác là bài của lớp mình. Việc
+        # không sách nào có bài thì Mimo không giảng bằng trí nhớ, máy chưa chấm được: người đọc.
         #
         # Dò từ khoá thì không chắc chắn: một câu báo diễn đạt kiểu khác sẽ bị chấm nhầm là
         # trượt. Nên ca nào cũng phải người đọc xác nhận lại, xem cột nguoi_cham_kien_thuc.
