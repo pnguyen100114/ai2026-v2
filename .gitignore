@@ -56,6 +56,3 @@ bao-cao/video-tho/
 # Ten hoc sinh can che trong nhat ky prompt (chi o may)
 prompt-log/.che_ten.txt
 
-# Nhật ký prompt chỉ giữ ở máy (có thông tin cá nhân), không lên git
-prompt-log/PROMPT_LOG.md
-prompt-log/PROMPT_HISTORY.md
