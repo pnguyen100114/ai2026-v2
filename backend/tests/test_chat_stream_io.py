@@ -349,6 +349,22 @@ def test_prompt_numbers_sources_in_same_order_as_done_sources(client, app_mod, m
     assert [s['page'] for s in sources] == [12, 18]
 
 
+def test_history_reaches_the_prompt_without_old_citation_numbers(client, app_mod, monkeypatch):
+    # Lượt trước [2] là trang 7; để nguyên trong lịch sử thì lượt sau Mimo chép lại [2] dù [2] giờ là trang khác.
+    monkeypatch.setattr(app_mod, 'search_knowledge', lambda *a, **k: [make_match()])
+    monkeypatch.setattr(app_mod, 'lesson_history', lambda *a, **k: [{'role': 'assistant', 'content': 'Tập $N$ là vô hạn [3].'}])
+    fake = FakeGemini(chunks=['ok'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+
+    stream(client, message='Ký hiệu tập N* đúng không Mimo?', session={'id': 's1', 'lesson': 'Bài 1: Tập hợp'},
+           context={'currentLesson': 'Bài 1: Tập hợp', 'currentTopic': 'Tập hợp'},
+           messages=[{'role': 'assistant', 'content': 'Ta viết $N = \\{0; 1; 2; 3; \\dots\\}$ [2].'}])
+
+    prompt = fake.calls[0]['contents']
+    assert 'Mimo: Ta viết $N = \\{0; 1; 2; 3; \\dots\\}$.' in prompt
+    assert 'Mimo: Tập $N$ là vô hạn.' in prompt
+
+
 def test_prompt_contains_student_input(client, app_mod, monkeypatch):
     monkeypatch.setattr(app_mod, 'search_knowledge', lambda *a, **k: [make_match()])
     fake = FakeGemini(chunks=['ok'])

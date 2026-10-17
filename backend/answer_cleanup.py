@@ -64,6 +64,23 @@ def cited_numbers(text: str, source_count: int) -> list[int]:
     return numbers
 
 
+def strip_citations(text: str) -> str:
+    """Text without its "[n]" source numbers; "[1; 2]" inside a formula is an interval and stays.
+
+    A past answer's [n] counted that turn's sources. Left in the chat history it reads to the model
+    like this turn's [n]: em hỏi "N = {0; 1; 2;...} [2]" (trang 7), lượt sau trang 7 thành [3] mà
+    Mimo vẫn chép [2], trỏ sang trang 5 (Toán 6, 17/10).
+    """
+    masked = _mask_math(text)
+    pieces: list[str] = []
+    last = 0
+    for match in CITATION.finditer(masked):
+        pieces.append(text[last:match.start()])
+        last = match.end()
+    pieces.append(text[last:])
+    return ''.join(pieces)
+
+
 def _keep_citation(text: str, masked: str, match: re.Match[str], passages: list[str], pages: list[object], topic_bigrams: set[tuple[str, str]]) -> bool:
     values = [int(value) for value in re.split(r'[,;]', match.group(1))]
     if not all(1 <= value <= len(passages) for value in values):

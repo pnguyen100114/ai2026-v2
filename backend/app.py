@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field, field_validator
 
 try:
     from backend.accounts import router as accounts_router
-    from backend.answer_cleanup import clean_answer, cited_numbers, ensure_closing_question
+    from backend.answer_cleanup import clean_answer, cited_numbers, ensure_closing_question, strip_citations
     from backend.ai_roadmap import build_roadmap_prompt, parse_generated_roadmap
     from backend.db import (
         check_chat_rate, check_rate, current_user, get_ai_roadmap, get_generated_question, init_db, lesson_history,
@@ -42,7 +42,7 @@ try:
     )
 except ImportError:  # pragma: no cover
     from accounts import router as accounts_router
-    from answer_cleanup import clean_answer, cited_numbers, ensure_closing_question
+    from answer_cleanup import clean_answer, cited_numbers, ensure_closing_question, strip_citations
     from ai_roadmap import build_roadmap_prompt, parse_generated_roadmap
     from db import (
         check_chat_rate, check_rate, current_user, get_ai_roadmap, get_generated_question, init_db, lesson_history,
@@ -1052,8 +1052,9 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     ) if _la_cau_hoi_hoc_tap(message) and not risk else ''
 
     # The photo itself is only sent in the turn it was attached; later turns see the problem Gemini copied out of it.
+    # Past answers lose their [n]: those numbers counted that turn's sources, not this turn's.
     previous = [
-        f"{'Học sinh' if item.get('role') == 'user' else 'Mimo'}: {(item.get('content') or '')[:800]}"
+        f"{'Học sinh' if item.get('role') == 'user' else 'Mimo'}: {strip_citations(item.get('content') or '')[:800]}"
         + (f"\n(Nội dung đề bài trong ảnh em đã gửi: {str(item['image_text'])[:IMAGE_TEXT_MAX_LENGTH]})" if item.get('image_text') else '')
         for item in history[-8:]
     ]
@@ -1061,7 +1062,7 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
 - image_text (CHỈ vì lượt này em có gửi ảnh): chép lại nguyên văn đề bài trong ảnh (chữ, số, công thức viết LaTeX, chỗ trống ghi "....."; hình vẽ thì mô tả ngắn các dữ kiện), tối đa 1500 ký tự, xuống dòng viết \\n để JSON vẫn nằm trên một dòng. Ảnh không có đề bài thì mô tả ngắn ảnh.''' if request.image_data else ''
     marker_example = '{"quick_replies":["...","..."],"understanding":"...","image_text":"..."}' if request.image_data else '{"quick_replies":["...","..."],"understanding":"..."}'
     earlier_lesson_turns = [
-        f"{'Học sinh' if item['role'] == 'user' else 'Mimo'}: {item['content'][:300]}"
+        f"{'Học sinh' if item['role'] == 'user' else 'Mimo'}: {strip_citations(item['content'])[:300]}"
         for item in _lookup_result(earlier_turns_task)
     ]
     progress_text = _lesson_progress(user, subject, int(grade), topic)

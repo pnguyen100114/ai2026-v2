@@ -93,3 +93,17 @@ def test_answer_that_already_asks_is_left_alone(answer):
 def test_question_mark_inside_a_formula_does_not_count_as_asking():
     from backend.answer_cleanup import ensure_closing_question
     assert ensure_closing_question('Ta có $x = ?$ ở đây.').endswith('Em còn chỗ nào muốn hỏi thêm Mimo không?')
+
+
+@pytest.mark.parametrize('text, expected', [
+    # A past answer's numbers point at that turn's sources: gone before it goes back into the prompt.
+    ('Người ta viết là $N = \{0; 1; 2; 3; \dots\}$ [2]. Vì vô số phần tử nên có dấu ba chấm [2][4].',
+     'Người ta viết là $N = \{0; 1; 2; 3; \dots\}$. Vì vô số phần tử nên có dấu ba chấm.'),
+    ('Đúng rồi [1, 3]!', 'Đúng rồi!'),
+    # "[1; 2]" inside a formula is an interval, not a citation.
+    ('Với $x \in [1; 2]$ thì sao?', 'Với $x \in [1; 2]$ thì sao?'),
+    ('Em chào Mimo', 'Em chào Mimo'),
+])
+def test_strip_citations(text, expected):
+    from backend.answer_cleanup import strip_citations
+    assert strip_citations(text) == expected
