@@ -22,6 +22,10 @@ sys.path.insert(0, str(ROOT))
 # Must be set before backend.db is imported; load_dotenv never overrides existing variables.
 os.environ['DATABASE_URL'] = ''
 os.environ['AUTH_SECRET'] = 'test-secret'
+# rag/embeddings.py refuses to import without a key, and ingest's text-cleaning helpers are
+# tested through that import. A fake key lets a fresh clone without backend/.env run every test;
+# no test reaches Gemini.
+os.environ['GEMINI_API_KEY'] = 'test-key'
 os.environ['CHAT_RATE_PER_MINUTE'] = '1000'
 os.environ['CHAT_RATE_PER_DAY'] = '1000'
 

@@ -7,17 +7,14 @@ import matplotlib.image as mpimg
 
 ROOT = Path(__file__).resolve().parent.parent
 
-import sqlite3
-import statistics
-_db = sqlite3.connect(ROOT / 'backend' / 'local.db')
-
 # Mọi con số dưới đây lấy từ dữ liệu, KHÔNG gõ tay. Bản trước gõ cứng "4765 đoạn", "52 câu
 # hỏi", "194/194 ca" nên hồ sơ lạc hậu ngay khi nạp thêm sách hay thêm test mà không ai biết.
 import json as _json
 
-_man = _json.loads((ROOT / 'backend' / 'rag' / '.ingest_manifest.json').read_text(encoding='utf-8'))
-N_VECTORS = sum(b['chunks'] for b in _man.values())
-N_BOOKS = len(_man)
+# Sổ nạp sách không lên GitHub; chot_so_lieu.py chốt số cuốn, số đoạn vào so_lieu_goc.json.
+_kho = _json.loads((ROOT / 'bao-cao' / 'so_lieu_goc.json').read_text(encoding='utf-8'))['kho_sach']
+N_VECTORS = _kho['so_doan']
+N_BOOKS = _kho['so_cuon']
 
 # Kết quả bộ kiểm thử chạy trên bản đã triển khai (bao-cao/bo-test/).
 _test = _json.loads((ROOT / 'bao-cao' / 'bo-test' / 'ket_qua.json').read_text(encoding='utf-8'))
@@ -27,7 +24,6 @@ N_TEST_DAT = sum(1 for k in _ket if k['dat_may_cham'])
 N_TEST_MON = len({k['mon'] for k in _ket})
 _giay = sorted(k['giay'] for k in _ket)
 LAT_MED = _giay[len(_giay) // 2]
-N_QUESTIONS = _db.execute("select count(*) from messages where role='user'").fetchone()[0]
 
 # Số câu lệnh lấy từ prompt-log/PROMPT_HISTORY.md, cùng một nguồn với make_report.py. Gõ cứng
 # ở đây thì mỗi lần chạy lại export-history.cjs là hình và chữ trong hồ sơ nói hai con số khác nhau.

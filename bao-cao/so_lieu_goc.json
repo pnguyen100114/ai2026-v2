@@ -1,0 +1,70 @@
+{
+  "thu_nghiem": {
+    "tu_ngay": "2026-09-13",
+    "den_ngay": "2026-09-14",
+    "tai_khoan": 2,
+    "phien": 16,
+    "cau_hoi": 52,
+    "cau_kem_anh": 2,
+    "phien_theo_mon": [
+      [
+        "Ngữ văn",
+        "Lớp 8",
+        1
+      ],
+      [
+        "Toán",
+        "Lớp 6",
+        1
+      ],
+      [
+        "Toán",
+        "Lớp 7",
+        1
+      ],
+      [
+        "Ngữ văn",
+        "Lớp 7",
+        3
+      ],
+      [
+        "Toán",
+        "Lớp 8",
+        4
+      ],
+      [
+        "KHTN",
+        "Lớp 6",
+        6
+      ]
+    ],
+    "muc_hieu": {
+      "hiểu sơ": 32,
+      "mất gốc": 2,
+      "none": 14,
+      "đã hiểu": 4
+    },
+    "luot_luyen_tap": 7,
+    "lo_trinh_ai": 9
+  },
+  "kho_sach": {
+    "so_cuon": 29,
+    "so_doan": 5498,
+    "nap_xong": "2026-10-17"
+  },
+  "sach_loi": {
+    "quet_thieu": [
+      [
+        "TA6 -TAP 1",
+        74
+      ],
+      [
+        "TA6 -TAP 2",
+        74
+      ]
+    ],
+    "watermark": [
+      "TOAN8-Tap1"
+    ]
+  }
+}

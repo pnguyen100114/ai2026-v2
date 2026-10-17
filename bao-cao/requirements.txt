@@ -1,0 +1,8 @@
+# Thư viện cho các script trong bao-cao/ (hồ sơ Word, biểu đồ, chụp ảnh, quay video).
+# Cài sau backend: .venv\Scripts\python.exe -m pip install -r bao-cao\requirements.txt
+# chup_anh.py và quay_video.py còn cần trình duyệt: .venv\Scripts\python.exe -m playwright install chromium
+-r ../backend/requirements-dev.txt
+python-docx>=1.2,<2
+matplotlib>=3.9,<4
+pillow>=11
+playwright>=1.50,<2

@@ -2,12 +2,12 @@
 
 NGUYÊN TẮC: không con số nào trong hồ sơ được gõ tay. Mọi số đều đọc từ nguồn sự thật của nó:
 
-    kho sách            backend/rag/.ingest_manifest.json   (sổ nạp sách)
     chất lượng trả lời  bao-cao/bo-test/ket_qua.json        (bộ ca chạy qua API đã deploy)
-    đợt thử nghiệm      backend/local.db                    (khóa cứng trong 2 ngày 13-14/9)
     câu lệnh AI         prompt-log/PROMPT_HISTORY.md
     mục lục gõ tay      backend/rag/books.py
-    bản quét thiếu      đếm thẳng số trang trong backend/data/*.pdf
+    kho sách, đợt thử   bao-cao/so_lieu_goc.json            (chot_so_lieu.py đếm từ local.db,
+    nghiệm, sách lỗi                                         sổ nạp sách và PDF; ba nguồn đó
+                                                             không lên GitHub)
 
 Bản hồ sơ trước từng gõ cứng "4765 vector" trong khi kho thật có 4760, và khai thời gian trả
 lời 5,1 giây trong khi bản đã deploy lúc đó chỉ còn 3,7 giây. Con số gõ tay thì không ai phát
@@ -19,7 +19,6 @@ import csv
 import json
 import os
 import re
-import sqlite3
 from collections import Counter
 from pathlib import Path
 
@@ -55,48 +54,27 @@ _ngay = lambda text: f'{text[8:10]}/{text[5:7]}/{text[:4]}'
 WEB = 'https://ai2026-v2.vercel.app'
 API = 'https://gia-su-ai-api.onrender.com'
 
-# ---------------------------------------------------------------- đợt thử nghiệm (backend/local.db)
-# local.db là DB chạy thật: mỗi lần mở app ở máy lại đẻ thêm tài khoản và câu hỏi. Khóa cứng
-# theo ngày, không thì số liệu nộp bị thổi lên mà không ai biết.
-TRIAL_FROM, TRIAL_TO = '2026-09-13', '2026-09-14'
-IN_TRIAL = f"substr({{}}.created_at, 1, 10) between '{TRIAL_FROM}' and '{TRIAL_TO}'"
-TRIAL_LABEL = f'{_ngay(TRIAL_FROM)[:2]} và {_ngay(TRIAL_TO)}'
+# ---------------------------------------------------------------- số liệu chốt từ nguồn không lên kho
+# local.db, sổ nạp sách và PDF chỉ có ở máy đã nạp sách; chot_so_lieu.py đếm từ đó ra file này
+# để máy nào clone về cũng dựng được hồ sơ với đúng các con số đó.
+_goc = json.loads((OUT / 'so_lieu_goc.json').read_text(encoding='utf-8'))
 
-db = sqlite3.connect(ROOT / 'backend' / 'local.db')
-q = lambda s: db.execute(s).fetchall()
-n_users = q(f'select count(*) from users where {IN_TRIAL.format("users")}')[0][0]
-n_sessions = q(f'select count(*) from chat_sessions where {IN_TRIAL.format("chat_sessions")}')[0][0]
-n_questions = q(f"select count(*) from messages where role='user' and {IN_TRIAL.format('messages')}")[0][0]
-n_images = q(f"select count(*) from messages where role='user' and has_image=1 and {IN_TRIAL.format('messages')}")[0][0]
-sessions = q(f'select subject, grade, count(*) from chat_sessions where {IN_TRIAL.format("chat_sessions")} group by subject, grade order by count(*)')
-understanding = dict(q(f"select coalesce(understanding,'none'), count(*) from messages where role='assistant' and {IN_TRIAL.format('messages')} group by 1"))
-quiz_total = q(f'select count(*) from quiz_attempts where {IN_TRIAL.format("quiz_attempts")}')[0][0]
-n_ai_roadmaps = q(f'select count(*) from ai_roadmaps where {IN_TRIAL.format("ai_roadmaps")}')[0][0]
+# Đợt thử nghiệm khóa cứng trong 2 ngày 13-14/9 (xem chot_so_lieu.py).
+_thu = _goc['thu_nghiem']
+TRIAL_LABEL = f"{_ngay(_thu['tu_ngay'])[:2]} và {_ngay(_thu['den_ngay'])}"
+n_users, n_sessions, n_questions = _thu['tai_khoan'], _thu['phien'], _thu['cau_hoi']
+n_images = _thu['cau_kem_anh']
+sessions = _thu['phien_theo_mon']
+understanding = _thu['muc_hieu']
+quiz_total = _thu['luot_luyen_tap']
+n_ai_roadmaps = _thu['lo_trinh_ai']
 
-# ---------------------------------------------------------------- kho sách (sổ nạp sách)
-_manifest = json.loads((ROOT / 'backend' / 'rag' / '.ingest_manifest.json').read_text(encoding='utf-8'))
-N_BOOKS = len(_manifest)
-N_VECTORS = sum(book['chunks'] for book in _manifest.values())
-INGEST_DATE = _ngay(max(book['ingested_at'] for book in _manifest.values())[:10])
+N_BOOKS = _goc['kho_sach']['so_cuon']
+N_VECTORS = _goc['kho_sach']['so_doan']
+INGEST_DATE = _ngay(_goc['kho_sach']['nap_xong'])
 
-# ---------------------------------------------------------------- chất lượng sách trong kho
-import pymupdf as _fitz
-
-# Bản quét thiếu: đếm thẳng số trang PDF. Sách in mỏng nhất trong bộ cũng trên 100 trang,
-# nên dưới 80 trang chắc chắn là bản scan dở dang.
-SACH_NGAN = []
-# Bản chia sẻ lại: lớp chữ của từng trang mang watermark của trang web phát tán. Watermark đó
-# còn IN ĐÈ lên ảnh trang, nên học sinh bấm "Xem trang" là thấy. Đếm thẳng thay vì gõ tay.
-_WATERMARK = re.compile(r'blogtailieu|tailieu\.com|sách chia sẻ', re.IGNORECASE)
-SACH_WATERMARK = []
-for _f in sorted((ROOT / 'backend' / 'data').glob('*.pdf')):
-    with _fitz.open(_f) as _d:
-        if _d.page_count < 80:
-            SACH_NGAN.append((_f.stem, _d.page_count))
-        _mau = range(10, min(_d.page_count, 40))
-        if _mau and all(_WATERMARK.search(_d[_i].get_text() or '') for _i in _mau):
-            SACH_WATERMARK.append(_f.stem)
-SACH_NGAN.sort(key=lambda x: x[1])
+SACH_NGAN = _goc['sach_loi']['quet_thieu']
+SACH_WATERMARK = _goc['sach_loi']['watermark']
 
 # Số môn-lớp đã có mục lục gõ tay (books.py), so với tổng số cuốn trong kho.
 try:
