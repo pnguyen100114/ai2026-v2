@@ -30,3 +30,19 @@ def test_parse_suggestions(raw, expected):
 ])
 def test_parse_image_text(raw, expected):
     assert _parse_image_text(raw) == expected
+
+
+# Mô hình viết LaTeX với MỘT dấu \ trong dòng JSON. "\dots", "\cdot", "\le" làm json.loads hỏng cả dòng
+# (17/10: mất đề chép từ ảnh lẫn gợi ý trả lời nhanh); "\frac", "\times" đọc được nhưng thành ký tự \f, \t.
+@pytest.mark.parametrize('raw, expected', [
+    (r'{"image_text":"Cho $A = \frac{1}{11} + \dots + \frac{1}{70}$"}', r'Cho $A = \frac{1}{11} + \dots + \frac{1}{70}$'),
+    (r'{"image_text":"$x \le 5$\nBài 2: $2 \times 3$"}', r'$x \le 5$' + '\n' + r'Bài 2: $2 \times 3$'),
+    (r'{"image_text":"Đã đúng: \frac{1}{2}"}', r'Đã đúng: \frac{1}{2}'),
+])
+def test_parse_image_text_keeps_single_backslash_latex(raw, expected):
+    assert _parse_image_text(raw) == expected
+
+
+def test_parse_suggestions_survives_latex_in_another_field():
+    raw = r'{"quick_replies":["Vì sao $a \cdot b$?","Cho em ví dụ"],"understanding":"hiểu sơ","image_text":"$\dots$"}'
+    assert _parse_suggestions(raw) == {'quick_replies': [r'Vì sao $a \cdot b$?', 'Cho em ví dụ'], 'understanding': 'hiểu sơ'}

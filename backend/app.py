@@ -105,8 +105,8 @@ GEMINI_FALLBACK_MODELS = [model.strip() for model in os.getenv('GEMINI_FALLBACK_
 # chép sai đề ảnh nhoè, chê nhầm bài chứng minh đúng). Câu có ảnh ít nên chi phí tăng không đáng kể.
 GEMINI_IMAGE_MODEL = os.getenv('GEMINI_IMAGE_MODEL', 'gemini-3.5-flash')
 # Model này suy nghĩ trước khi viết và phần suy nghĩ tính vào trần token đầu ra: với trần 800 của bản lite,
-# câu trả lời bị cắt ngay sau câu mở đầu (17/10). Tối đa ~0,037 USD mỗi câu có ảnh.
-IMAGE_MAX_OUTPUT_TOKENS = int(os.getenv('IMAGE_MAX_OUTPUT_TOKENS', '4096'))
+# câu trả lời bị cắt ngay sau câu mở đầu; với 4096 vẫn có lần cắt giữa câu (17/10). Tối đa ~0,074 USD mỗi câu có ảnh.
+IMAGE_MAX_OUTPUT_TOKENS = int(os.getenv('IMAGE_MAX_OUTPUT_TOKENS', '8192'))
 # google-genai waits forever by default. httpx applies this to each read, so a streamed answer can
 # run longer as long as words keep coming; a stalled one ends with an error the student can retry
 # instead of holding a chat-io worker and the student's screen. Keep it below the browser's own
@@ -406,6 +406,25 @@ def _do_net_anh(image_data: str | None) -> float | None:
         return None
 
 
+CHEP_DE_PROMPT = (
+    'Chép lại nguyên văn đề bài (và bài làm, nếu ảnh có) trong ảnh này. Công thức viết LaTeX giữa hai dấu $. '
+    'Chỗ không đọc chắc thì ghi [không đọc rõ], không đoán. Chỉ trả về phần chép, không nhận xét, tối đa 1500 ký tự.'
+)
+
+
+def _chep_de_anh(request: ChatRequest) -> str:
+    """Đề trong ảnh do một lượt gọi riêng chép ra, dùng khi câu trả lời chính không kèm image_text.
+
+    Model ảnh suy nghĩ dài nên có lần hết trần token trước khi viết dòng JSON cuối (17/10: 3/6 lần
+    mất đề), và lượt chat sau không còn biết đề. Chỉ gọi cho ảnh rõ: với ảnh mờ, bản lite đoán ra đề khác.
+    """
+    contents = _gemini_contents(CHEP_DE_PROMPT, request)
+    if isinstance(contents, str):
+        return ''
+    response = _generate_content(contents=contents, config=types.GenerateContentConfig(max_output_tokens=1200))
+    return (getattr(response, 'text', None) or '').strip()[:IMAGE_TEXT_MAX_LENGTH]
+
+
 def _stream_event(payload: dict[str, Any]) -> str:
     return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
@@ -421,14 +440,41 @@ def _chip_text(item: Any) -> str:
     return text if text.count('$') % 2 == 0 else text.replace('$', '').strip()
 
 
+# Lệnh LaTeX mô hình hay viết với MỘT dấu \ trong dòng JSON cuối câu trả lời. "\dots", "\cdot", "\le"
+# là escape không hợp lệ nên json.loads hỏng cả dòng: mất đề chép từ ảnh, mất gợi ý trả lời nhanh
+# (17/10, ảnh đề 1/11 + ... + 1/70). "\frac", "\times", "\beta" lại hợp lệ (\f, \t, \b) nên âm thầm
+# thành ký tự điều khiển. Nhân đôi dấu \ trước các lệnh này rồi mới đọc.
+LATEX_COMMAND = re.compile(
+    r'(?<!\\)\\(?=(?:d?frac|tfrac|sqrt|cdot|cdots|ldots|dots|times|div|pm|mp|le|leq|ge|geq|ne|neq|approx|'
+    r'equiv|sim|cong|in|notin|subset|cup|cap|perp|parallel|angle|triangle|circ|infty|pi|alpha|beta|gamma|'
+    r'delta|Delta|theta|lambda|mu|sigma|varphi|phi|omega|Omega|left|right|Rightarrow|Leftrightarrow|'
+    r'rightarrow|to|overline|widehat|hat|vec|bar|text|mathrm|displaystyle|quad|sum|prod|int|log|ln|sin|'
+    r'cos|tan|cot|%)(?![a-zA-Z]))'
+)
+INVALID_JSON_ESCAPE = re.compile(r'(?<!\\)\\(?!["\\/bfnrtu])')
+
+
+def _marker_json(raw: str) -> dict[str, Any]:
+    """Đọc dòng JSON sau SUGGESTION_MARKER; chịu được LaTeX một dấu \\ và output hỏng."""
+    cleaned = (raw or '').strip().strip('`').strip()
+    start, end = cleaned.find('{'), cleaned.rfind('}')
+    if start < 0 or end <= start:
+        return {}
+    text = cleaned[start:end + 1]
+    for candidate in (text, INVALID_JSON_ESCAPE.sub(r'\\\\', LATEX_COMMAND.sub(r'\\\\', text))):
+        try:
+            payload = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict) and candidate is text and LATEX_COMMAND.search(text):
+            continue  # đọc được nhưng "\frac" đã thành ký tự \f: dùng bản đã sửa
+        return payload if isinstance(payload, dict) else {}
+    return {}
+
+
 def _parse_suggestions(raw: str) -> dict[str, Any]:
     """Parse the JSON line Gemini appends after SUGGESTION_MARKER; tolerate missing or malformed output."""
-    cleaned = raw.strip().strip('`').strip()
-    start, end = cleaned.find('{'), cleaned.rfind('}')
-    try:
-        payload = json.loads(cleaned[start:end + 1]) if start >= 0 and end > start else {}
-    except json.JSONDecodeError:
-        payload = {}
+    payload = _marker_json(raw)
     replies = payload.get('quick_replies') if isinstance(payload.get('quick_replies'), list) else []
     understanding = payload.get('understanding')
     return {
@@ -442,13 +488,7 @@ IMAGE_TEXT_MAX_LENGTH = 1500
 
 def _parse_image_text(raw: str) -> str:
     """The problem Gemini copied out of the student's photo, so later turns still know it without the image."""
-    cleaned = raw.strip().strip('`').strip()
-    start, end = cleaned.find('{'), cleaned.rfind('}')
-    try:
-        payload = json.loads(cleaned[start:end + 1]) if start >= 0 and end > start else {}
-    except json.JSONDecodeError:
-        return ''
-    value = payload.get('image_text') if isinstance(payload, dict) else None
+    value = _marker_json(raw).get('image_text')
     return value.strip()[:IMAGE_TEXT_MAX_LENGTH] if isinstance(value, str) else ''
 
 
@@ -469,6 +509,17 @@ _lesson_pages_cache: dict[tuple[str, int, str], list[dict[str, Any]]] = {}
 # phải chờ tổng của cả ba. Đo trên máy dev (database ở Sydney): 2,2s + 2,2s + 1,3s. Chạy
 # song song thì chỉ còn đúng việc lâu nhất.
 _io_pool = ThreadPoolExecutor(max_workers=12, thread_name_prefix='chat-io')
+
+
+def _lookup_text(task: Any) -> str:
+    """Kết quả chuỗi của một lượt tra thêm; lỗi hay chậm thì bỏ qua."""
+    if task is None:
+        return ''
+    try:
+        return task.result(timeout=CHAT_LOOKUP_TIMEOUT) or ''
+    except Exception:
+        logger.warning('Chép đề trong ảnh thất bại, bỏ qua', exc_info=True)
+        return ''
 
 
 def _lookup_result(task: Any) -> list[dict[str, Any]]:
@@ -974,6 +1025,9 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     # đo 17/10, em đổi sang chủ đề mới thì câu ghép kéo trang của chủ đề cũ lên trước.
     cau_truoc = next((item for item in reversed(user_history) if _la_cau_hoi_hoc_tap(item)), '') \
         if _la_cau_hoi_hoc_tap(message) and not risk else ''
+    # Đề trong ảnh chép bằng một lượt riêng, chạy song song: dùng khi câu trả lời chính không kèm đề.
+    chep_de_task = _io_pool.submit(_chep_de_anh, request) \
+        if request.image_data and do_net_anh is not None and do_net_anh >= ANH_CO_THE_MO and gemini_client is not None else None
     previous_pages_task = _io_pool.submit(
         search_knowledge, cau_truoc, subject=subject, grade=grade, top_k=PREVIOUS_QUESTION_PAGES,
     ) if cau_truoc else None
@@ -1265,7 +1319,7 @@ Tin nhắn hiện tại của học sinh: {message}'''
             meta_raw = full_text[marker_at + len(SUGGESTION_MARKER):] if marker_at >= 0 else ''
             meta = _parse_suggestions(meta_raw)
             if request.image_data:
-                meta['image_text'] = _parse_image_text(meta_raw)
+                meta['image_text'] = _parse_image_text(meta_raw) or _lookup_text(chep_de_task)
             # The streamed text is replaced by this cleaned copy when the answer is done.
             answer_text = clean_answer(
                 full_text[:marker_at] if marker_at >= 0 else full_text,

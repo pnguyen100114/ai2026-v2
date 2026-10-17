@@ -722,4 +722,19 @@ def test_sharp_photo_is_answered_by_the_image_model(client, app_mod, monkeypatch
     stream(client, message='Em làm bài này đúng chưa ạ?', image_data=_anh_jpeg(sharp=True), image_mime_type='image/jpeg')
 
     assert app_mod._do_net_anh(_anh_jpeg(sharp=True)) > app_mod.ANH_CO_THE_MO
-    assert fake.calls[-1]['model'] == app_mod.GEMINI_IMAGE_MODEL
+    assert app_mod.GEMINI_IMAGE_MODEL in [call['model'] for call in fake.calls]
+
+
+def test_photo_answer_without_marker_still_remembers_the_problem(client, app_mod, monkeypatch):
+    # Model ảnh có lần hết trần token trước dòng JSON cuối (17/10: 3/6 lần), lượt sau không còn biết đề.
+    fake = FakeGemini(text='{"classification":"in_scope","safety_risk":"none"}',
+                      chunks=['Bài em làm đúng rồi. Em có muốn thử bài khác không?'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+    monkeypatch.setattr(app_mod, 'search_knowledge', lambda *a, **k: [make_match()])
+    de = r'Cho $A = \frac{1}{11} + \dots + \frac{1}{70}$'
+    monkeypatch.setattr(app_mod, '_chep_de_anh', lambda request: de)
+
+    done = stream(client, message='Em làm bài này đúng chưa ạ?', image_data=_anh_jpeg(sharp=True),
+                  image_mime_type='image/jpeg')[-1]
+
+    assert done['image_text'] == de
