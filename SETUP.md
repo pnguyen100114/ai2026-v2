@@ -151,7 +151,7 @@ gì để render nút "Xem trang". Chạy một lần ở máy có PDF để ren
 ```powershell
 npm run lint
 npm run build
-.venv\Scripts\python.exe -m pytest        # 214 ca kiểm thử backend
+.venv\Scripts\python.exe -m pytest        # kiểm thử backend, chạy offline, không cần backend/.env
 ```
 
 Bộ kiểm thử chất lượng trả lời chạy qua **API đã deploy**, không gọi hàm trong máy — để số liệu phản
@@ -163,6 +163,19 @@ Bộ kiểm thử chất lượng trả lời chạy qua **API đã deploy**, kh
 ```
 
 Muốn chạy bộ này với backend ở máy: thêm `--api http://127.0.0.1:8000`.
+
+Dựng lại hồ sơ, biểu đồ, hình minh họa trong `bao-cao/` (máy nào clone về cũng chạy được, cần
+`npm install` cho icon và Chrome để chụp hình):
+
+```powershell
+.venv\Scripts\python.exe -m pip install -r bao-cao\requirements.txt
+.venv\Scripts\python.exe bao-cao\illustrations.py
+.venv\Scripts\python.exe bao-cao\make_report.py
+```
+
+Số liệu đợt thử nghiệm, kho sách và sách lỗi đọc từ `bao-cao/so_lieu_goc.json`. Nguồn của chúng
+(`backend/local.db`, sổ nạp sách, PDF) không lên GitHub, nên chỉ máy đã nạp sách chạy
+`bao-cao\chot_so_lieu.py` để cập nhật file này sau mỗi lần nạp thêm sách, rồi commit.
 
 ## 9. Xóa dữ liệu ở trình duyệt để đăng nhập lại
 
