@@ -118,17 +118,29 @@ KHONG_TRICH = ('Để phân tích đa thức $x^2 - 6x + 9$ thành nhân tử, e
 
 def test_answer_based_on_a_page_but_citing_nothing_gets_a_pointer_before_the_closing_question():
     from backend.answer_cleanup import add_book_pointer
-    text = add_book_pointer(KHONG_TRICH, ['Trang mở đầu chương.', TRANG_44])
+    text = add_book_pointer(KHONG_TRICH, ['Trang mở đầu chương.', TRANG_44],
+                            ['Bài 9. Phân tích đa thức thành nhân tử', 'Bài 9. Phân tích đa thức thành nhân tử'])
     assert cited_numbers(text, 2) == [2]
     assert text.endswith('Em đối chiếu cách làm này trong sách giáo khoa ở [2] nhé.\n\n'
                          'Em hãy thử viết $x^2 - 6x + 9$ dưới dạng $a^2 - 2ab + b^2$ xem sao?')
 
 
-@pytest.mark.parametrize('text, passages', [
-    ('Hằng đẳng thức bình phương một tổng là $(a+b)^2$ [1].', [TRANG_44]),   # đã trích
-    (KHONG_TRICH, []),                                                     # không có trang nào
-    ('Chào em, hôm nay em muốn học gì?', [TRANG_44]),                       # không dựa vào trang nào
+BAI_9 = ['Bài 9. Phân tích đa thức thành nhân tử']
+# Ca năn nỉ 17/10: trang tìm theo lời năn nỉ là trang bất kỳ, chữ thì trùng ("phương trình",
+# "giá trị") nhưng tên bài không liên quan. Trỏ tới đó là trỏ sai trang.
+GIAI_PT = ('Để giải phương trình $x^2 - 5x + 6 = 0$, em tìm hai số có tổng bằng 5 và tích bằng 6 rồi viết '
+           'phương trình thành tích, sau đó cho từng nhân tử bằng 0 để tìm giá trị của x.')
+TRANG_HINH_CAU = ('Giải phương trình để tìm bán kính, sau đó tính giá trị diện tích mặt cầu. Viết phương trình '
+                  'thành tích rồi cho từng nhân tử bằng 0 để tìm giá trị của x.')
+
+
+@pytest.mark.parametrize('text, passages, titles', [
+    ('Hằng đẳng thức bình phương một tổng là $(a+b)^2$ [1].', [TRANG_44], BAI_9),   # đã trích
+    (KHONG_TRICH, [], []),                                                         # không có trang nào
+    ('Chào em, hôm nay em muốn học gì?', [TRANG_44], BAI_9),                        # không dựa vào trang nào
+    (KHONG_TRICH, [TRANG_44], [None]),                                             # trang không có tên bài
+    (GIAI_PT, [TRANG_HINH_CAU], ['Bài 32. Hình cầu']),                             # tên bài không khớp
 ])
-def test_book_pointer_is_not_added(text, passages):
+def test_book_pointer_is_not_added(text, passages, titles):
     from backend.answer_cleanup import add_book_pointer
-    assert add_book_pointer(text, passages) == text
+    assert add_book_pointer(text, passages, titles) == text

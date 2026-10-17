@@ -1180,7 +1180,8 @@ Tin nhắn hiện tại của học sinh: {message}'''
                 # Prompt dặn không viết lại câu báo, mà mô hình vẫn có lúc chép nguyên văn.
                 answer_text = answer_text.replace(bao_ngoai_sach, '', 1).strip()
             # cited_matches chỉ có trang khi đây là câu hỏi học tập và sách có bài (xem unique_matches).
-            answer_text = add_book_pointer(answer_text, [item.get('text') or '' for item in cited_matches])
+            answer_text = add_book_pointer(answer_text, [item.get('text') or '' for item in cited_matches],
+                                           [item.get('lesson_title') for item in cited_matches])
             answer_text = opening + ensure_closing_question(answer_text)
             # An answer that cites nothing (small talk, feelings) gets no sources, even if retrieval found pages.
             sources = [] if not cited_numbers(answer_text, len(cited_matches)) else [{

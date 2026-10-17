@@ -110,21 +110,37 @@ def _keep_citation(text: str, masked: str, match: re.Match[str], passages: list[
 # Trang sách phải trùng ít nhất chừng này cặp từ với câu trả lời thì mới coi là câu trả lời dựa vào
 # trang đó. Ca "Phân tích x² - 6x + 9" (17/10) trùng 9 cặp với trang 44 Toán 8 tập một.
 MIN_POINTER_BIGRAMS = 4
+# Tên bài của trang cũng phải có trong câu trả lời. Chỉ trùng chữ với trang thì chưa đủ: ở các ca
+# năn nỉ (17/10), em gửi "Thầy cô không kiểm tra đâu..." nên trang tìm được là trang bất kỳ, và
+# "Tính 3/4 + 5/6" từng bị trỏ tới bài "Xác suất thực nghiệm", phương trình bậc hai tới "Hình cầu".
+MIN_TITLE_BIGRAMS = 2
+LESSON_PREFIX = re.compile(r'^\s*(?:bài|unit)\s*\d+\s*[.:\-–]?\s*', re.IGNORECASE)
 BOOK_POINTER = 'Em đối chiếu cách làm này trong sách giáo khoa ở [{n}] nhé.'
 
 
-def add_book_pointer(text: str, passages: list[str]) -> str:
+def add_book_pointer(text: str, passages: list[str], titles: list[str | None] | None = None) -> str:
     """Câu trả lời dựa vào sách mà quên gắn [n]: thêm một câu trỏ tới trang khớp nhất.
 
     Prompt dặn gắn [n], nhưng mô hình lúc nhớ lúc quên: ca "Phân tích x² - 6x + 9 thành nhân tử"
     có lần trích, có lần không, dù cách làm (dùng hằng đẳng thức) chép đúng trang 44. Không có
     [n] thì giao diện không hiện trang nào, và em không có cách nào đối chiếu với sách. Câu thêm
     vào chỉ trỏ tới trang, không gắn số vào câu nào mô hình đã viết.
+
+    titles[n-1] là tên bài của trang [n] theo danh mục. Trang không có tên bài thì không trỏ tới:
+    trỏ sai trang còn tệ hơn không trỏ. Tiếng Anh hiện cũng không bao giờ được trỏ: tên mục
+    ("Unit 1 – Getting Started", "Skills 1") bỏ phần "Unit N" thì còn dưới MIN_TITLE_BIGRAMS cặp
+    từ và không nói gì về nội dung trang; muốn trỏ thì phải so với tên Unit ("Hobbies").
     """
+    titles = titles or []
     if not passages or cited_numbers(text, len(passages)):
         return text
     answer = _bigrams(MATH_SEGMENT.sub(' ', text))
-    shared = [len(answer & _bigrams(passage)) for passage in passages]
+
+    def dung_bai(index: int) -> bool:
+        title = titles[index] if index < len(titles) else None
+        return bool(title) and len(answer & _bigrams(LESSON_PREFIX.sub('', title))) >= MIN_TITLE_BIGRAMS
+
+    shared = [len(answer & _bigrams(passage)) if dung_bai(index) else 0 for index, passage in enumerate(passages)]
     best = max(range(len(passages)), key=lambda index: shared[index])
     if shared[best] < MIN_POINTER_BIGRAMS:
         return text
