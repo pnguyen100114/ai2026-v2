@@ -19,6 +19,8 @@ import csv
 import json
 import os
 import re
+import subprocess
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -125,7 +127,15 @@ _count = lambda label: int(re.search(rf'\|\s*{label}\s*\|\s*\**(\d+)', _history)
 N_PROMPTS_CLAUDE, N_PROMPTS_COPILOT = _count('Claude Code'), _count('GitHub Copilot')
 N_PROMPTS = N_PROMPTS_CLAUDE + N_PROMPTS_COPILOT
 
-N_TESTS = 214     # pytest ngày 19/9/2026: 214 passed
+# ---------------------------------------------------------------- kiểm thử tự động của máy chủ
+# Chạy thẳng pytest (offline, ~10 giây) thay vì gõ số: bản trước ghi cứng 214 trong khi bộ đã lên
+# hơn 360 ca. Hồ sơ viết "đều đạt", nên còn ca hỏng thì dừng, không in ra một câu sai.
+_pytest = subprocess.run([sys.executable, '-m', 'pytest', '-q', '-p', 'no:cacheprovider'],
+                         cwd=ROOT, capture_output=True, text=True, encoding='utf-8', errors='replace')
+_tong_ket = _pytest.stdout.strip().splitlines()[-1] if _pytest.stdout.strip() else ''
+if _pytest.returncode != 0 or not re.search(r'\d+ passed', _tong_ket):
+    raise SystemExit(f'pytest chưa đạt hết, sửa test trước khi dựng hồ sơ:\n{_tong_ket or _pytest.stderr[-2000:]}')
+N_TESTS = int(re.search(r'(\d+) passed', _tong_ket).group(1))
 
 
 def save(fig, name):
@@ -574,6 +584,7 @@ out = OUT / os.getenv('REPORT_NAME', 'Ho_so_du_an_Gia_Su_AI_Mimo_v5.docx')
 doc.save(out)
 print('Đã lưu', out)
 print(f'  kho sách   {N_BOOKS} cuốn · {N_VECTORS} đoạn · nạp xong {INGEST_DATE}')
+print(f'  pytest     {N_TESTS} ca đạt')
 print(f'  kiểm thử   {T_DAT}/{T_TONG} ca ngày {T_NGAY} · trung vị {vn(T_LAT_MED)}s · trích dẫn {T_NGUON_DAT}/{T_NGUON_CAN}')
 print(f'  đợt thử    {n_users} tài khoản · {n_sessions} phiên · {n_questions} câu ({TRIAL_LABEL})')
 print(f'  câu lệnh   {N_PROMPTS} ({N_PROMPTS_CLAUDE} Claude Code + {N_PROMPTS_COPILOT} Copilot)')

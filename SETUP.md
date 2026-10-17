@@ -263,7 +263,7 @@ AI2026-v2/
 │   │   ├── retriever.py          # Tìm đoạn sách gần nghĩa nhất
 │   │   ├── vector_store.py       # Kho vector trong database dự án
 │   │   └── render_pages.py       # Render ảnh trang SGK lên Supabase Storage
-│   ├── tests/                    # 214 ca pytest
+│   ├── tests/                    # kiểm thử pytest, chạy offline
 │   └── data/                     # PDF sách giáo khoa (không đẩy lên GitHub)
 ├── bao-cao/                      # Hồ sơ dự thi, biểu đồ, bộ kiểm thử chất lượng
 ├── prompt-log/                   # Lịch sử câu lệnh đã dùng với công cụ AI
