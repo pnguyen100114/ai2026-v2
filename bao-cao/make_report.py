@@ -504,6 +504,13 @@ para('Máy cho đạt một câu giảng sai nếu câu đó vẫn gắn đúng 
 if T_GV_CHAM:
     para(f'Lần đo {T_NGAY}: thầy cô đã chấm {len(T_GV_CHAM)}/{T_TONG} câu — {T_GV_DEM["đúng"]} đúng, '
          f'{T_GV_DEM["có chỗ sai"]} có chỗ sai, {T_GV_DEM["sai"]} sai.')
+    for _k in (k for k in T_GV_CHAM if k['nguoi_cham_kien_thuc'] != 'đúng'):
+        bullet(f'Câu {_k["stt"]} ({_k["mon"]} {_k["lop"]}, “{_k["cau_hoi"]}”): {_k.get("nguoi_cham_ghi_chu") or ""}')
+    if T_GV_DEM['có chỗ sai'] or T_GV_DEM['sai']:
+        para('Ngay trong ngày nhóm sửa theo góp ý: câu hỏi kiểu “Có phải … không ạ?” thì Mimo nói rõ đúng hay chưa đúng '
+             'và nêu ngay kiến thức đúng theo sách, có trích trang; khi giảng phân tích ra thừa số nguyên tố thì làm mẫu '
+             'các phép chia liên tiếp như sách Toán 6 rồi để em làm tiếp. Bộ thử thêm điều kiện “phải có” cho các câu này '
+             'để máy chấm cũng bắt được loại lỗi thầy cô chỉ ra.')
 para(f'Lần đo ngày 19/09 ({len(GV_1909)} câu): thầy cô chấm {GV_1909_DEM["đúng"]} câu đúng, {GV_1909_DEM["có chỗ sai"]} có chỗ sai, '
      f'{GV_1909_DEM["sai"]} sai' + (f', {GV_1909_DEM[""]} câu để trống' if GV_1909_DEM[""] else '')
      + '. Nhóm không coi kết quả này là bằng chứng chắc chắn, vì:')

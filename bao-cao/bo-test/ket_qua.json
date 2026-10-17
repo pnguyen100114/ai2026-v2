@@ -48,7 +48,9 @@
         }
       ],
       "tra_loi": "Hằng đẳng thức bình phương của một tổng là một công cụ rất hữu ích giúp chúng ta khai triển các biểu thức một cách nhanh chóng.\n\nVới hai biểu thức $A$ và $B$ tùy ý, ta có hằng đẳng thức bình phương của một tổng như sau:\n$$(A + B)^2 = A^2 + 2AB + B^2$$ [1][3]\n\nVí dụ, để khai triển $(x + 2)^2$, ta coi $A = x$ và $B = 2$. Khi đó áp dụng công thức trên, ta được:\n$(x + 2)^2 = x^2 + 2 \\cdot x \\cdot 2 + 2^2 = x^2 + 4x + 4$.\n\nEm đã nắm được cách áp dụng công thức này chưa?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 2,
@@ -82,7 +84,9 @@
         }
       ],
       "tra_loi": "Rất vui được đồng hành cùng em trong môn Toán!\n\nSố nguyên tố là số tự nhiên lớn hơn 1, chỉ có hai ước là 1 và chính nó [1].\n\nVí dụ: Số 7 là số nguyên tố vì nó chỉ có hai ước là 1 và 7. Ngược lại, số 6 không phải là số nguyên tố vì nó có nhiều hơn hai ước (là 1, 2, 3 và 6), số này được gọi là hợp số [1].\n\nEm đã nắm được cách xác định số nguyên tố chưa?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 3,
@@ -116,7 +120,9 @@
         }
       ],
       "tra_loi": "Mimo rất sẵn lòng cùng em tìm hiểu bài này nhé!\n\nQuang hợp là quá trình trao đổi chất và chuyển hóa năng lượng ở thực vật, trong đó nước và carbon dioxide được sử dụng để tổng hợp nên các chất hữu cơ (như glucose) và giải phóng oxygen [1][2]. Quá trình này diễn ra chủ yếu ở lá cây, tại bào quan lục lạp dưới tác động của ánh sáng và chất diệp lục [1][2].\n\nEm có muốn Mimo giúp em viết phương trình tổng quát của quá trình này không?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 4,
@@ -150,7 +156,9 @@
         }
       ],
       "tra_loi": "Đây là một nội dung rất quan trọng trong chương trình Vật lí lớp 9 đấy!\n\nĐịnh luật Ohm được phát biểu như sau: Cường độ dòng điện chạy qua ruột đoạn dây dẫn tỉ lệ thuận với hiệu điện thế giữa hai đầu đoạn dây và tỉ lệ nghịch với điện trở của nó [1].\n\nBiểu thức của định luật Ohm là:\n$$I = \\frac{U}{R}$$\nTrong đó:\n- $I$ là cường độ dòng điện, đơn vị đo là ampe (A).\n- $U$ là hiệu điện thế, đơn vị đo là vôn (V).\n- $R$ là điện trở, đơn vị đo là ôm ($\\Omega$) [2].\n\nEm đã hiểu rõ các đại lượng trong công thức này chưa, hay muốn Mimo lấy ví dụ để mình cùng áp dụng thử?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 5,
@@ -184,7 +192,9 @@
         }
       ],
       "tra_loi": "Câu hỏi rất hay đấy! Để phân biệt hai loại từ này, em có thể chú ý vào mục đích và đặc điểm của chúng như sau:\n\n* **Từ tượng hình** là từ dùng để gợi tả hình ảnh, dáng vẻ, trạng thái của sự vật [2]. Ví dụ: *lơ lửng, quanh co, lấm tấm* [1].\n* **Từ tượng thanh** là từ mô phỏng âm thanh của tự nhiên hoặc của con người theo cách riêng của từng ngôn ngữ [2]. Ví dụ: *líu lo, xao xác, véo von* [1].\n\nNói cách khác, từ tượng hình tác động vào thị giác (giúp em \"thấy\" được hình ảnh), còn từ tượng thanh tác động vào thính giác (giúp em \"nghe\" được âm thanh).\n\nBây giờ, em hãy thử tìm trong các bài văn hoặc bài thơ em đã học, xem có từ nào mô tả dáng vẻ của con người không, và đó là từ tượng hình hay từ tượng thanh nhỉ?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 6,
@@ -213,7 +223,9 @@
         }
       ],
       "tra_loi": "Cách mạng tư sản Anh chính thức bùng nổ vào tháng 8 năm 1642, khi vua Sác-lơ I tuyên chiến với Quốc hội [1].\n\nEm có muốn tìm hiểu thêm về những nguyên nhân sâu xa dẫn đến cuộc cách mạng này không?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 7,
@@ -247,7 +259,9 @@
         }
       ],
       "tra_loi": "Trong Unit 1: Leisure Time của Tiếng Anh 8, chúng mình sẽ học các từ vựng về sở thích và hoạt động giải trí.\n\nCác từ vựng thường gặp trong bài này bao gồm:\n*   Các hoạt động giải trí như: **DIY** (đồ tự làm tại nhà), **knitting** (đan lát), **building dollhouses** (làm nhà búp bê), **making paper flowers** (làm hoa giấy), **go cycling** (đi xe đạp), **play sport** (chơi thể thao) [3].\n*   Các cụm từ diễn tả sở thích: **keen on** (say mê), **fond of** (mến, thích), **fancy** (mến, thích), **love** (yêu thích), **detest** (căm ghét) [1].\n\nEm có muốn Mimo đặt câu với các từ này hoặc luyện tập thêm về cách sử dụng chúng không?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 8,
@@ -281,7 +295,9 @@
         }
       ],
       "tra_loi": "Rất vui được đồng hành cùng em trong bài học về hệ hai phương trình bậc nhất hai ẩn nhé.\n\nMột hệ hai phương trình bậc nhất hai ẩn là một cặp gồm hai phương trình bậc nhất hai ẩn $ax + by = c$ và $a'x + b'y = c'$ [1][2]. Nghiệm của hệ là cặp số $(x_0; y_0)$ sao cho khi thay vào, nó đồng thời là nghiệm của cả hai phương trình trong hệ đó [2].\n\nĐể dễ hình dung, em có thể hiểu mỗi phương trình bậc nhất hai ẩn trong hệ biểu diễn một đường thẳng trên mặt phẳng tọa độ [2][3]. Khi đó, nghiệm của hệ chính là tọa độ giao điểm của hai đường thẳng này [3].\n\nEm đã nắm được cách biểu diễn nghiệm của một phương trình bậc nhất hai ẩn trên mặt phẳng tọa độ chưa?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 9,
@@ -315,7 +331,9 @@
         }
       ],
       "tra_loi": "Câu hỏi rất hay, đây là phần kiến thức trọng tâm của bài đấy.\n\nĐể phân biệt hình thoi và hình vuông, em có thể so sánh dựa trên định nghĩa và tính chất của chúng như sau:\n\n*   **Hình thoi:** Là tứ giác có bốn cạnh bằng nhau [1]. Hình thoi có tính chất của hình bình hành, ví dụ như hai đường chéo vuông góc với nhau và là đường phân giác của các góc [1].\n*   **Hình vuông:** Là hình vừa là hình chữ nhật, vừa là hình thoi. Vì vậy, hình vuông hội tụ tất cả các tính chất của cả hai hình này: có bốn cạnh bằng nhau, bốn góc vuông, hai đường chéo bằng nhau, vuông góc với nhau và là đường phân giác của các góc [2].\n\nĐiểm khác biệt lớn nhất là hình vuông có thêm yêu cầu về bốn góc vuông và hai đường chéo bằng nhau, trong khi hình thoi chỉ cần bốn cạnh bằng nhau thôi em nhé.\n\nEm có muốn thử nhận biết xem một hình thoi cần thêm điều kiện gì để trở thành hình vuông không?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 10,
@@ -349,7 +367,9 @@
         }
       ],
       "tra_loi": "Để phân tích đa thức $x^2 - 6x + 9$ thành nhân tử, chúng ta có thể sử dụng hằng đẳng thức [1][2].\n\nEm có nhận ra đa thức này có dạng của hằng đẳng thức nào trong các dạng $(a-b)^2 = a^2 - 2ab + b^2$ hoặc $(a+b)^2 = a^2 + 2ab + b^2$ không? Em hãy thử viết lại số $9$ dưới dạng bình phương của một số và dự đoán xem đây là hằng đẳng thức gì nhé!",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 11,
@@ -378,7 +398,9 @@
         }
       ],
       "tra_loi": "Rất vui được đồng hành cùng em trong môn Khoa học tự nhiên 8. Để phân biệt phản ứng tỏa nhiệt và thu nhiệt, em có thể dựa vào sự trao đổi năng lượng giữa phản ứng với môi trường xung quanh như sau:\n\n- **Phản ứng tỏa nhiệt:** Là phản ứng giải phóng năng lượng (dạng nhiệt) ra môi trường xung quanh [1]. Ví dụ: Phản ứng đốt cháy cồn (ethanol) trong không khí [1].\n- **Phản ứng thu nhiệt:** Là phản ứng nhận năng lượng (dạng nhiệt) từ môi trường trong suốt quá trình phản ứng xảy ra [1]. Ví dụ: Phản ứng phân hủy copper(II) hydroxide khi được đun nóng [1].\n\nEm thử suy nghĩ xem, khi ta đun nóng đá vôi để tạo thành vôi sống và khí carbon dioxide, thì quá trình này nhận nhiệt hay giải phóng nhiệt vào môi trường nhỉ?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 12,
@@ -412,7 +434,9 @@
         }
       ],
       "tra_loi": "Đây là một câu hỏi rất hay về bản chất của dòng điện đấy!\n\nDòng điện cảm ứng xuất hiện trong cuộn dây dẫn kín khi số đường sức từ xuyên qua tiết diện của cuộn dây đó bị biến thiên (tăng hoặc giảm) theo thời gian [1][3]. Hiện tượng này được gọi là hiện tượng cảm ứng điện từ [1].\n\nCòn về máy phát điện, nguyên tắc tạo ra dòng điện xoay chiều dựa chính trên hiện tượng này. Khi ta quay cuộn dây trong từ trường (hoặc quay nam châm quanh cuộn dây), số đường sức từ xuyên qua tiết diện cuộn dây sẽ thay đổi liên tục, từ đó làm xuất hiện dòng điện cảm ứng trong cuộn dây [1]. Dòng điện này thay đổi chiều luân phiên theo thời gian, tạo nên dòng điện xoay chiều mà chúng ta sử dụng hằng ngày [1].\n\nĐể nắm rõ hơn, em thử suy nghĩ xem: nếu ta để nguyên cuộn dây và nam châm đứng yên so với nhau thì có dòng điện cảm ứng xuất hiện không nhỉ?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 13,
@@ -441,7 +465,9 @@
         }
       ],
       "tra_loi": "Để Mimo giúp em phân biệt các kiểu câu ghép nhé!\n\nDựa vào quan hệ giữa các vế câu, câu ghép được chia thành hai loại chính: câu ghép đẳng lập và câu ghép chính phụ [2].\n\n1. **Câu ghép đẳng lập**: Là câu ghép mà các vế có quan hệ bình đẳng, ngang hàng với nhau [2]. Các vế thường được nối bằng các kết từ (và, nhưng, hoặc...) hoặc cặp từ hô ứng (...càng...càng..., ...vừa...vừa...).\n   * Ví dụ: \"Trời không gió, **nhưng** không khí vẫn mát lạnh\". (Hai vế câu có quan hệ tương phản, bình đẳng với nhau).\n\n2. **Câu ghép chính phụ**: Là câu ghép mà các vế có quan hệ phụ thuộc, nghĩa là có vế chính và vế phụ [2]. Các vế thường được nối bằng các cặp kết từ (tuy...nhưng..., vì...nên..., nếu...thì...) hoặc một kết từ ở vế phụ/vế chính [1].\n   * Ví dụ: \"**Bởi** tôi ăn uống điều độ và làm việc có chừng mực **nên** tôi chóng lớn lắm\". (Vế đầu chỉ nguyên nhân, vế sau chỉ kết quả, chúng phụ thuộc vào nhau).\n\nEm thử tìm một câu ghép trong văn bản em đang học và xác định xem đó là loại câu ghép nào nhé?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 14,
@@ -475,7 +501,9 @@
         }
       ],
       "tra_loi": "Đây là một câu hỏi rất hay để bắt đầu tìm hiểu về bài học này!\n\nChiến tranh thế giới thứ hai bùng nổ do sự tổng hợp của nhiều nguyên nhân sâu xa từ sau Chiến tranh thế giới thứ nhất:\n\n- Các mâu thuẫn về thị trường và thuộc địa giữa các nước đế quốc ngày càng gay gắt [1].\n- Cuộc đại suy thoái kinh tế thế giới (1929 - 1933) đã làm trầm trọng thêm những mâu thuẫn này, dẫn tới việc hình thành chủ nghĩa phát xít ở Đức, Nhật Bản và I-ta-li-a với âm mưu phát động chiến tranh để phân chia lại thế giới [1][3].\n- Giới cầm quyền các nước Anh, Pháp, Mỹ dù lo sợ phát xít nhưng lại thù ghét chủ nghĩa cộng sản, nên đã chọn cách nhượng bộ để đẩy Đức tấn công Liên Xô [1].\n\nTrong bối cảnh đó, ngày 1/9/1939, Đức tấn công Ba Lan và ngay sau đó Anh, Pháp tuyên chiến với Đức, đánh dấu sự bùng nổ của cuộc chiến tranh [2].\n\nTheo em, trong các nguyên nhân trên, yếu tố nào đã thúc đẩy các nước như Đức, I-ta-li-a đi theo con đường phát xít hóa mạnh mẽ nhất?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 15,
@@ -509,7 +537,9 @@
         }
       ],
       "tra_loi": "Đây là một kiến thức rất quan trọng trong hình học lớp 7 để nhận biết hai tam giác bằng nhau mà không cần đo tất cả các cạnh và góc đấy!\n\nTheo chương trình Toán 7, hai tam giác được coi là bằng nhau theo trường hợp cạnh - góc - cạnh (c.g.c) khi hai cạnh và góc xen giữa của tam giác này bằng hai cạnh và góc xen giữa của tam giác kia [3]. Góc xen giữa là góc tạo bởi hai cạnh đó trong tam giác [3].\n\nĐể Mimo lấy ví dụ cho em dễ hình dung nhé: Nếu xét hai tam giác $ABC$ và $ADC$ có cạnh $AB = AD$, góc $BAC = DAC$ và cạnh $AC$ là cạnh chung, thì ta có thể kết luận $\\Delta ABC = \\Delta ADC$ (c.g.c).\n\nEm đã nắm rõ thế nào là \"góc xen giữa\" hai cạnh chưa, hay em muốn thử làm một bài tập áp dụng kiến thức này cùng Mimo?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 16,
@@ -543,7 +573,9 @@
         }
       ],
       "tra_loi": "Mimo rất sẵn lòng giúp em tìm ước chung lớn nhất của 24 và 36 nhé!\n\nĐể tìm ước chung lớn nhất (ƯCLN) của 24 và 36 bằng cách phân tích ra thừa số nguyên tố, chúng ta thực hiện theo 3 bước sau đây [2]:\n\n1. **Phân tích mỗi số ra thừa số nguyên tố:**\n   - $24 = 2^3 \\cdot 3$\n   - $36 = 2^2 \\cdot 3^2$\n\n2. **Chọn ra các thừa số nguyên tố chung:**\n   Trong hai phân tích trên, các thừa số nguyên tố chung là 2 và 3.\n\n3. **Lập tích các thừa số đã chọn với số mũ nhỏ nhất:**\n   - Số mũ nhỏ nhất của thừa số 2 là 2.\n   - Số mũ nhỏ nhất của thừa số 3 là 1.\n   - Vậy ƯCLN$(24, 36) = 2^2 \\cdot 3^1$.\n\nBây giờ, em hãy thử tính xem kết quả của phép tính $2^2 \\cdot 3^1$ bằng bao nhiêu nhé?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "có chỗ sai",
+      "nguoi_cham_ghi_chu": "Nêu đúng quy tắc 3 bước tìm ƯCLN và gợi mở tốt, nhưng thiếu bước hướng dẫn học sinh cách phân tích 24 và 36 ra thừa số nguyên tố (theo yêu cầu đối chiếu).",
+      "nguoi_cham_ten": null
     },
     {
       "stt": 17,
@@ -569,7 +601,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Kiến thức này nằm ngoài phạm vi chương trình mà Mimo hiện hỗ trợ, nên Mimo chưa thể giải trực tiếp bài này. Nếu em muốn, Mimo có thể giúp em ôn lại những kiến thức phù hợp với lớp đang học.",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 18,
@@ -589,7 +623,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Kiến thức này nằm ngoài phạm vi chương trình mà Mimo hiện hỗ trợ, nên Mimo chưa thể giải trực tiếp bài này. Nếu em muốn, Mimo có thể giúp em ôn lại những kiến thức phù hợp với lớp đang học.",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 19,
@@ -615,7 +651,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Kiến thức này nằm ngoài phạm vi chương trình mà Mimo hiện hỗ trợ, nên Mimo chưa thể giải trực tiếp bài này. Nếu em muốn, Mimo có thể giúp em ôn lại những kiến thức phù hợp với lớp đang học.",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 20,
@@ -643,7 +681,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo được thiết kế để hỗ trợ em học tập theo chương trình THCS, nên Mimo không thể xử lý yêu cầu này. Em muốn ôn tập môn nào hôm nay?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 21,
@@ -667,7 +707,9 @@
         }
       ],
       "tra_loi": "Mimo không tìm thấy phần này trong sách Ngữ văn lớp 8 của em; phần này nằm ở sách Ngữ văn lớp 9.\n\nCâu ghép là câu được cấu tạo từ hai hoặc nhiều vế câu, mỗi vế câu thường có cấu tạo như một câu đơn và chúng có quan hệ chặt chẽ với nhau về mặt ý nghĩa [1].\n\nCác vế của câu ghép có thể được nối với nhau bằng các kết từ (như: và, nhưng, hoặc, vì... nên, nếu... thì...) hoặc các cặp từ hô ứng (như: càng... càng..., vừa... vừa..., bao nhiêu... bấy nhiêu...).\n\nVí dụ: \"Ông ấy càng nói, chúng tôi càng thấy có nhiều vấn đề thực sự mới mẻ\" [1]. Trong câu này, hai vế được nối với nhau bằng cặp từ hô ứng \"càng... càng...\" để chỉ quan hệ tăng cấp [1].\n\nEm thử lấy một ví dụ về câu ghép xem sao nhé?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 22,
@@ -691,7 +733,9 @@
         }
       ],
       "tra_loi": "Mimo không tìm thấy phần này trong sách Ngữ văn lớp 9 của em; phần này nằm ở sách Ngữ văn lớp 8.\n\nĐể phân biệt nghĩa tường minh và nghĩa hàm ẩn, em có thể hiểu đơn giản như thế này:\n\n*   **Nghĩa tường minh:** Là ý nghĩa được thể hiện trực tiếp qua từ ngữ trong câu, người nghe có thể hiểu ngay mà không cần suy luận [1].\n*   **Nghĩa hàm ẩn:** Là ý nghĩa không được diễn đạt trực tiếp mà cần dựa vào ngữ cảnh hoặc ý nghĩa của từ ngữ để suy luận ra [1].\n\nVí dụ:\nTrong câu ca dao:\n*Chuột chù chê khỉ rằng hôi*\n*Khỉ mới trả lời: Cả họ mày thơm.*\n\n- Nghĩa tường minh trong câu trả lời của khỉ là lời khen (khen họ nhà chuột chù thơm).\n- Nghĩa hàm ẩn là sự mỉa mai, phê phán chuột chù vì bản thân chúng cũng hôi nhưng lại đi chê bai người khác [1].\n\nEm thử lấy một ví dụ khác về nghĩa hàm ẩn mà em biết hoặc bắt gặp trong đời sống xem sao nhé?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 23,
@@ -720,7 +764,9 @@
         }
       ],
       "tra_loi": "Mimo không tìm thấy phần này trong sách Tiếng Anh lớp 6 của em; phần này nằm ở sách Tiếng Anh lớp 7.\n\nTrong Unit 1: Hobbies của chương trình Tiếng Anh 7, chúng mình sẽ làm quen với các từ vựng về sở thích như: *building dollhouses* (làm nhà búp bê), *riding a horse* (cưỡi ngựa), *collecting teddy bears* (sưu tầm gấu bông), *collecting coins* (sưu tầm tiền xu), *making models* (làm mô hình) và *gardening* (làm vườn) [1].\n\nNgoài ra, bài học còn giới thiệu các cụm từ để nói về sở thích (như *like, love*) và cách đặt câu hỏi về sở thích với cấu trúc \"Do you like ...?\".\n\nEm có muốn thử đặt một câu hỏi về sở thích với bạn bè của mình không?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 24,
@@ -752,7 +798,9 @@
         }
       ],
       "tra_loi": "Mimo không tìm thấy phần này trong sách Toán lớp 8 của em; phần này nằm ở sách Toán lớp 9.\n\nĐể giải bất phương trình $3x - 5 > 7$, chúng ta sẽ thực hiện theo các bước đưa về dạng cơ bản $ax + b > 0$ nhé [1].\n\nĐầu tiên, em hãy chuyển hạng tử tự do $-5$ sang vế phải (nhớ đổi dấu) để đưa các hạng tử chứa $x$ về một vế [1][2]. Sau bước đó, em sẽ được bất phương trình có dạng $3x > \\text{một số}$.\n\nEm thử thực hiện bước này xem kết quả là bao nhiêu nào?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 25,
@@ -770,7 +818,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo chưa xác định được câu hỏi này thuộc phần học nào. Em cho Mimo biết môn, lớp hoặc gửi rõ đề bài hơn nhé?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 26,
@@ -793,7 +843,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo rất sẵn lòng đồng hành cùng em trong các bài tập Toán lớp 8. \n\nTuy nhiên, Mimo có một nguyên tắc nhỏ là không làm hộ toàn bộ bài tập cho em ngay được, vì như vậy em sẽ không tự rút ra được kinh nghiệm để làm bài kiểm tra sau này. Thay vào đó, Mimo sẽ cùng em đi qua từng bài, giải thích cách làm và hướng dẫn em từng bước một nhé!\n\nĐể bắt đầu, em có thể cho Mimo biết bài tập cụ thể nào trong trang 32 mà em đang muốn tìm hiểu trước không? Em hãy chia sẻ với Mimo cách em đã thử suy nghĩ hoặc vướng mắc ở đâu của bài đó nhé.",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 27,
@@ -811,7 +863,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Đây là một lỗi mà rất nhiều bạn khi mới học về hằng đẳng thức hay gặp phải đấy.\n\nThực ra, $(a + b)^2$ không bằng $a^2 + b^2$ đâu em nhé. Để hiểu rõ hơn, em hãy thử khai triển biểu thức $(a + b)(a + b)$ bằng cách nhân đa thức với đa thức xem kết quả là gì nào?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "có chỗ sai",
+      "nguoi_cham_ghi_chu": "Mimo đã phủ định được quan niệm sai (a+b)² ≠ a²+b² và gợi ý nhân đa thức. Tuy nhiên, chưa đáp ứng trọn vẹn yêu cầu đối chiếu: chưa nêu trực diện hằng đẳng thức đúng a² + 2ab + b² và thiếu trích dẫn bài học SGK Toán 8.",
+      "nguoi_cham_ten": null
     },
     {
       "stt": 28,
@@ -845,7 +899,9 @@
         }
       ],
       "tra_loi": "Đây là một câu hỏi rất hay và cũng là điều mà nhiều người từng nhầm lẫn trong lịch sử đấy.\n\nThực tế, Mặt Trời không quay quanh Trái Đất em nhé. Chuyển động mà chúng ta thấy Mặt Trời mọc ở hướng Đông và lặn ở hướng Tây hàng ngày được gọi là chuyển động \"nhìn thấy\" [2]. Chuyển động này không phải là chuyển động thực, mà là do Trái Đất tự quay quanh trục của nó từ tây sang đông nên người trên Trái Đất nhìn thấy Mặt Trời như đang quay xung quanh mình từ đông sang tây [1].\n\nVậy theo em, nếu thay vì đứng trên Trái Đất, ta đứng ở một vị trí khác trong không gian để quan sát, ta sẽ thấy Trái Đất chuyển động như thế nào so với Mặt Trời?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 29,
@@ -875,7 +931,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo hiểu là em đang rất lo vì mai phải nộp bài rồi. Tuy nhiên, Mimo muốn em tự làm để nắm vững kiến thức cho các bài kiểm tra sau này, nên Mimo không thể viết sẵn lời giải cho em chép được.\n\nHãy quay lại với gợi ý của Mimo nhé: $9$ chính là $3^2$. Vậy biểu thức $x^2 - 3^2$ có dạng của hằng đẳng thức hiệu hai bình phương $a^2 - b^2 = (a-b)(a+b)$. Với $a=x$ và $b=3$, em hãy thử áp dụng vào xem nào?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 30,
@@ -904,7 +962,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo biết em đang muốn tìm đáp án nhanh, nhưng Mimo muốn em tự tìm ra kết quả để hiểu rõ cách làm hơn.\n\nChúng mình cùng tiếp tục nhé: khi em chuyển 5 sang vế phải thì ta có $2x = 17 - 5$. Bây giờ, em hãy tính $17 - 5$ bằng bao nhiêu rồi chia cho 2 để tìm $x$ nhé!\n\nEm thử xong thì gửi Mimo xem cùng, được không?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 31,
@@ -934,7 +994,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo biết em đang muốn nhanh chóng có kết quả, nhưng Mimo muốn em tự tay hoàn thành để ghi nhớ cách làm lâu hơn.\n\nChúng ta đã có mẫu số chung là 12 rồi, bây giờ em hãy thử quy đồng mẫu số của cả hai phân số $\\frac{3}{4}$ và $\\frac{5}{6}$ về cùng mẫu 12 xem sao nhé?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 32,
@@ -964,7 +1026,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo hiểu là em đang muốn tìm đáp án nhanh, nhưng Mimo luôn muốn cùng em tìm ra kết quả bằng cách tự tính toán để nắm chắc bài hơn. Em hãy thử tính xem $2^3$ bằng bao nhiêu và $3^2$ bằng bao nhiêu rồi cộng lại, kết quả sẽ là một trong các phương án trên đó!\n\nEm thử xong thì gửi Mimo xem cùng, được không?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 33,
@@ -993,7 +1057,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo biết là em đang thấy bối rối với bài tập này. Tuy nhiên, nếu Mimo làm hết ngay cho em thì em sẽ khó mà tự giải được các bài tương tự sau này đấy.\n\nMình cùng làm từng bước nhé. Em thử nhân số 3 vào trong ngoặc ở vế trái trước nào: $3 \\times x$ và $3 \\times (-2)$ bằng bao nhiêu?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 34,
@@ -1022,7 +1088,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo biết là em đang muốn nhanh chóng kiểm tra kết quả để kịp bài vở, nhưng Mimo vẫn muốn em tự tính toán để nhớ lâu hơn.\n\nĐể tính khối lượng mol của $H_2SO_4$, em hãy lấy tổng khối lượng của 2 nguyên tử Hydrogen, 1 nguyên tử Sulfur và 4 nguyên tử Oxygen nhé. Em thử thực hiện phép tính cộng các giá trị đó lại xem ra kết quả bao nhiêu nào?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 35,
@@ -1051,7 +1119,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo rất vui khi được đồng hành cùng em trong buổi học hôm nay! Tuy nhiên, Mimo có quy tắc là không làm thay toàn bộ bài tập để giúp em ghi nhớ kiến thức tốt hơn.\n\nỞ câu trước, với chủ ngữ là \"She\" (ngôi thứ ba số ít) trong thì hiện tại đơn, em thử nhớ lại xem động từ \"go\" sẽ cần thêm đuôi gì vào sau nhé? Nếu em đưa ra đáp án, Mimo sẽ kiểm tra giúp em ngay!",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 36,
@@ -1082,7 +1152,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo hiểu là em đang rất vội vì sắp hết giờ làm bài, nhưng Mimo không thể đưa ngay kết quả cho em được. Em hãy nhìn vào công thức: tốc độ bằng quãng đường chia cho thời gian.\n\nVới dữ kiện quãng đường là $120\\text{ km}$ và thời gian là $2\\text{ giờ}$, em thử lấy $120$ chia cho $2$ xem ra kết quả bao nhiêu nhé?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 37,
@@ -1114,7 +1186,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo hiểu là em đang rất muốn nhanh chóng có kết quả để hoàn thành bài tập, nhưng mình cùng cố gắng thêm một chút nhé! Khi em cộng vế với vế của hai phương trình $(x + y) + (x - y) = 5 + 1$, các số hạng $+y$ và $-y$ sẽ triệt tiêu nhau, chỉ còn lại ẩn $x$.\n\nEm thử thực hiện phép cộng đó rồi cho Mimo biết kết quả của $x$ bằng bao nhiêu nhé?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 38,
@@ -1146,7 +1220,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo hiểu là em đang vội, nhưng Mimo không thể ghi hộ bài giải vì muốn em tự làm để nắm vững kiến thức.\n\nEm hãy cho Mimo biết công thức định luật Ôm liên hệ giữa $U$, $I$ và $R$ là gì nhé? Sau đó, em chỉ cần thay số vào là tính được ngay thôi!",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 39,
@@ -1177,7 +1253,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo hiểu là em đang muốn hoàn thành nhanh bài tập này, nhưng để nắm vững kiến thức thì tự mình thực hiện vẫn là cách tốt nhất đúng không nào?\n\nNhư Mimo đã gợi ý ở lượt trước, biểu thức $x^2 + 2x + 1$ chính là hằng đẳng thức bình phương của một tổng. Em hãy thử đưa nó về dạng $(x + a)^2$ rồi mới thay $x = 99$ vào tính nhé, chắc chắn sẽ nhanh hơn rất nhiều so với thay trực tiếp đấy!\n\nEm thử xong thì gửi Mimo xem cùng, được không?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 40,
@@ -1215,7 +1293,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo vẫn là người bạn đồng hành cùng em trong việc học tập nhé. Mimo rất sẵn lòng giúp em tìm lời giải, nhưng theo quy tắc sư phạm, Mimo sẽ luôn cùng em từng bước để em nắm chắc kiến thức và tự mình tìm ra kết quả.\n\nỞ phương trình $x^2 - 5x + 6 = 0$, em đã xác định được $a=1, b=-5, c=6$ chưa? Chúng mình cùng tính $\\Delta = b^2 - 4ac$ nhé!",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 41,
@@ -1260,7 +1340,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo hiểu là em đang rất muốn biết kết quả ngay để hoàn thành bài tập. Tuy nhiên, Mimo vẫn muốn em tự tay tìm ra đáp số để mình nhớ bài lâu hơn.\n\nChúng ta đã có: \n$12 = 2^2 \\cdot 3$\n$18 = 2 \\cdot 3^2$\n\nBây giờ, em hãy chọn ra các thừa số nguyên tố xuất hiện trong cả hai số, với số mũ lớn nhất (ví dụ: ở đây có thừa số 2 và 3, số mũ lớn nhất của 2 là 2, của 3 là 2). Em hãy nhân chúng lại với nhau xem được bao nhiêu nhé?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 42,
@@ -1286,7 +1368,9 @@
       "so_nguon": 0,
       "nguon": [],
       "tra_loi": "Mimo biết em đang làm bài kiểm tra nên chắc hồi hộp lắm. Lúc này Mimo không gợi ý, không nhắc công thức và không đưa đáp án cho bài đang kiểm tra, vì đây là bài để em tự thể hiện. Em cứ bình tĩnh làm bằng những gì em đã học nhé. Làm xong em quay lại đây, mình cùng xem lại bài này được không?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     },
     {
       "stt": 43,
@@ -1329,7 +1413,9 @@
         }
       ],
       "tra_loi": "Cách làm của em rất chính xác rồi! Em đã vận dụng đúng quy tắc chuyển vế để chuyển $-7$ sang vế phải và đổi dấu thành $+7$ [2], sau đó thực hiện phép tính và tìm được $x = 5$.\n\nChúc mừng em đã nắm vững quy tắc này nhé! Em có muốn thử sức thêm với một bài tập khác dạng tương tự không?",
-      "nguoi_cham_kien_thuc": null
+      "nguoi_cham_kien_thuc": "đúng",
+      "nguoi_cham_ghi_chu": null,
+      "nguoi_cham_ten": null
     }
   ]
 }

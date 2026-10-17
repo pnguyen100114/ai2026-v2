@@ -47,7 +47,14 @@ Máy **không** chấm kiến thức đúng hay sai — xem mục 3.
 
 ### Lần chạy này
 
-**Chưa có thầy cô nào chấm lần chạy này.** Xuất phiếu bằng `python bao-cao/bo-test/phieu_cham.py xuat`, gửi thầy cô đúng môn, rồi nhập lại bằng `phieu_cham.py nhap <file>`.
+Đã chấm **43/43** câu: **41** đúng · **2** có chỗ sai · **0** sai.
+
+| # | Môn · lớp | Câu hỏi | Đánh giá | Chỗ sai | Người chấm |
+|---|---|---|---|---|---|
+| 16 | Toán 6 | Tìm ước chung lớn nhất của 24 và 36, giải thích cá | có chỗ sai | Nêu đúng quy tắc 3 bước tìm ƯCLN và gợi mở tốt, nhưng thiếu bước hướng dẫn học sinh cách phân tích 24 và 36 ra thừa số nguyên tố (theo yêu cầu đối chiếu). |  |
+| 27 | Toán 8 | Có phải (a + b)² = a² + b² không ạ? | có chỗ sai | Mimo đã phủ định được quan niệm sai (a+b)² ≠ a²+b² và gợi ý nhân đa thức. Tuy nhiên, chưa đáp ứng trọn vẹn yêu cầu đối chiếu: chưa nêu trực diện hằng đẳng thức đúng a² + 2ab + b² và thiếu trích dẫn bài học SGK Toán 8. |  |
+
+**1 câu có chỗ sai dù có trang sách đi kèm** (ca 16) — loại lỗi máy chấm không phát hiện được.
 
 ### Lần chạy 19/09 (28 ca, bản trước các bản sửa)
 

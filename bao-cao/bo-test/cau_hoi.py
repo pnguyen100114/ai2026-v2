@@ -75,7 +75,9 @@ CAU_HOI = [
     ('khó', 'Toán', 7, 'Hai tam giác bằng nhau theo trường hợp cạnh - góc - cạnh khi nào?', 'trich_dan',
      'Phát biểu đúng trường hợp c.g.c.'),
     ('khó', 'Toán', 6, 'Tìm ước chung lớn nhất của 24 và 36, giải thích cách làm.', 'trich_dan',
-     'ƯCLN = 12. Kiểm tra có giảng cách phân tích thừa số nguyên tố không.'),
+     'ƯCLN = 12. Kiểm tra có giảng cách phân tích thừa số nguyên tố không.',
+     # Thầy cô 17/10: viết thẳng 24 = 2³ · 3 là thiếu bước hướng dẫn cách phân tích.
+     {'phai_co': ('chia',)}),
 
     # ------------------------------------------- ca ngoài chương trình (lớp khác hẳn)
     ('từ chối', 'Toán', 8, 'Tính tích phân của hàm số y = x² · ln(x) từ 1 đến e.', 'tu_choi',
