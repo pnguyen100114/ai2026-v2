@@ -388,6 +388,32 @@ ANH_NHOE_TRA_LOI = (
 )
 
 
+# Câu có ảnh tốn ~800–1.350 đ (đo 17/10: ~9.300 token vào, 1.000–3.300 token suy nghĩ), nên giới hạn
+# số ảnh mỗi em. Đếm trong bộ nhớ của tiến trình như các giới hạn khác, khởi động lại thì đếm lại.
+IMAGE_RATE_PER_MINUTE = int(os.getenv('IMAGE_RATE_PER_MINUTE', '3'))
+IMAGE_RATE_PER_DAY = int(os.getenv('IMAGE_RATE_PER_DAY', '10'))
+ANH_HET_LUOT_TRA_LOI = (
+    f'Hôm nay Mimo đã đọc đủ {IMAGE_RATE_PER_DAY} ảnh của em rồi (hoặc em đang gửi ảnh hơi nhanh). '
+    'Em gõ đề bài vào ô chat để Mimo giúp tiếp nhé, lát nữa hoặc ngày mai em gửi ảnh lại được. '
+    'Em gõ đề vào đây được không?'
+)
+# Chữ đi kèm ảnh thường chỉ là "Em làm bài này đúng chưa ạ?": tìm sách theo câu đó ra trang không liên
+# quan (đo 17/10: Tập hợp số nguyên, Xác suất thực nghiệm... ~3.400 token), vừa tốn tiền vừa dễ trích
+# nhầm. Bỏ các từ chung chung, còn dưới 2 từ có nội dung thì không tìm sách cho lượt đó.
+TU_CHUNG_CHUNG = frozenset(
+    'a ah ak anh bai cach can cau check cho chua chup co coi cua da de di duoc dung em gi giai giup gui '
+    'hay hieu ho hoi khong kia la lai lam loi mimo minh muon nao nay nha nhe nhu nua oi phai ra roi sai sao '
+    'the thi toi tra tu va vay voi xem kiem dap an do ay nhanh ban chi coi hong ko k j dc o dau'.split()
+)
+
+
+def _chu_chung_chung(message: str) -> bool:
+    """Câu chữ kèm ảnh không có nội dung bài học để tìm sách ("Em làm bài này đúng chưa ạ?")."""
+    plain = unicodedata.normalize('NFKD', (message or '').lower().replace('đ', 'd'))
+    words = re.findall(r'[a-z0-9]+', plain.encode('ascii', 'ignore').decode())
+    return len([word for word in words if word not in TU_CHUNG_CHUNG]) < 2
+
+
 def _do_net_anh(image_data: str | None) -> float | None:
     """Độ nét của ảnh em gửi; None nếu không đọc được ảnh (khi đó để mô hình tự xử lý như cũ)."""
     if not image_data:
@@ -618,6 +644,7 @@ def _stream_gemini_text(contents: Any, first_model: str | None = None, max_token
     last_quota_error: Exception | None = None
     for model in _gemini_models(first_model):
         started = False
+        usage = None
         try:
             for chunk in gemini_client.models.generate_content_stream(
                 model=model,
@@ -631,6 +658,12 @@ def _stream_gemini_text(contents: Any, first_model: str | None = None, max_token
                 if text:
                     started = True
                     yield text
+                usage = getattr(chunk, 'usage_metadata', None) or usage
+            # Token thật của từng câu (phần suy nghĩ = tổng - vào - ra), để tính chi phí bằng số đo chứ
+            # không bằng trần.
+            if usage is not None:
+                logger.info('gemini usage model=%s vao=%s ra=%s tong=%s', model, usage.prompt_token_count,
+                            usage.candidates_token_count, usage.total_token_count)
             return
         except Exception as exc:
             if started or not _is_quota_error(exc):
@@ -922,6 +955,13 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     # "Mimo đã xem bài của em" (17/10, ảnh vở rung tay: 1/2 + 2/2² + ... thành 1/2 + 1/4 + ...).
     do_net_anh = _do_net_anh(request.image_data)
     anh_nhoe = not risk and do_net_anh is not None and do_net_anh < ANH_NHOE_NANG
+    # Ảnh nhoè trả lời cố định, không gọi mô hình, nên không tính vào lượt ảnh.
+    anh_het_luot = False
+    if request.image_data and not risk and not anh_nhoe:
+        try:
+            check_rate(f"image:{user['id']}", IMAGE_RATE_PER_MINUTE, IMAGE_RATE_PER_DAY)
+        except HTTPException:
+            anh_het_luot = True
     scope_query = message
     if is_follow_up(message) and user_history:
         scope_query = f'{user_history[-1]}\n{message}'
@@ -935,7 +975,7 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
             scope.label == 'off_topic' and scope.reason == 'non_educational_service_request'
         ):
             pass
-        elif request.image_data and not anh_nhoe:
+        elif request.image_data and not anh_nhoe and not anh_het_luot:
             scope_model_called = True
             scope = _model_scope_decision(
                 message, subject=subject, grade=int(grade), history=user_history, request=request,
@@ -952,7 +992,7 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     )
     risk = scope.safety_risk or risk
     taking_test = not risk and is_taking_test(message)
-    if not risk and (taking_test or anh_nhoe or scope.label != 'in_scope'):
+    if not risk and (taking_test or anh_nhoe or anh_het_luot or scope.label != 'in_scope'):
         quick_replies = ['Em muốn ôn Toán', 'Em gửi rõ câu hỏi hơn']
         if taking_test:
             scope_reply = (
@@ -965,6 +1005,9 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         elif anh_nhoe:
             scope_reply = ANH_NHOE_TRA_LOI
             quick_replies = ['Em chụp lại ảnh', 'Em gõ lại đề']
+        elif anh_het_luot:
+            scope_reply = ANH_HET_LUOT_TRA_LOI
+            quick_replies = ['Em gõ lại đề']
         elif scope.label == 'out_of_scope':
             scope_reply = (
                 'Kiến thức này nằm ngoài phạm vi chương trình mà Mimo hiện hỗ trợ, nên Mimo chưa thể '
@@ -1000,16 +1043,17 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
 
     # Ba việc chờ mạng dưới đây không cần kết quả của nhau, nên cùng khởi hành một lúc
     # (xem _io_pool). Kết quả được lấy ra đúng chỗ cần dùng ở bên dưới.
-    matches_task = _io_pool.submit(search_knowledge, message, subject=subject, grade=grade, top_k=5)
+    tim_sach = not (request.image_data and _chu_chung_chung(message))
+    matches_task = _io_pool.submit(search_knowledge, message, subject=subject, grade=grade, top_k=5) if tim_sach else None
     # Cùng môn, mọi lớp: để biết bài em hỏi nằm ở sách lớp nào khi sách lớp em không có. Trước
     # đây prompt bảo mô hình "đoán" lớp, và nó đoán sai (câu ghép "lớp 7 và 8", bất phương
     # trình "lớp 8" - cả hai đều là bài lớp 9). Chạy song song nên không thêm thời gian chờ.
     other_grades_task = _io_pool.submit(
         search_knowledge, message, subject=subject, grade=None, top_k=6,
-    ) if _la_cau_hoi_hoc_tap(message) and not risk else None
+    ) if tim_sach and _la_cau_hoi_hoc_tap(message) and not risk else None
     # Em gọi đích danh một bài ("Unit 1 Hobbies"): danh mục biết chắc bài đó ở sách lớp nào, khỏi
     # đoán bằng điểm tương đồng. Bài chỉ có ở sách đúng một lớp khác thì tìm trong trang bài đó.
-    bai_goi_ten = lessons_named(subject, message) if _la_cau_hoi_hoc_tap(message) and not risk else []
+    bai_goi_ten = lessons_named(subject, message) if tim_sach and _la_cau_hoi_hoc_tap(message) and not risk else []
     bai_lop_em = any(course.grade == int(grade) for course, _ in bai_goi_ten)
     bai_lop_khac = [(course, items) for course, items in bai_goi_ten if course.grade != int(grade)]
     loc_bai_lop_khac = (
@@ -1024,7 +1068,7 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     # hình đọc mà chọn trang trích, như trang của bài đang học. Không ghép hai câu thành một câu tìm:
     # đo 17/10, em đổi sang chủ đề mới thì câu ghép kéo trang của chủ đề cũ lên trước.
     cau_truoc = next((item for item in reversed(user_history) if _la_cau_hoi_hoc_tap(item)), '') \
-        if _la_cau_hoi_hoc_tap(message) and not risk else ''
+        if tim_sach and _la_cau_hoi_hoc_tap(message) and not risk else ''
     # Đề trong ảnh chép bằng một lượt riêng, chạy song song: dùng khi câu trả lời chính không kèm đề.
     chep_de_task = _io_pool.submit(_chep_de_anh, request) \
         if request.image_data and do_net_anh is not None and do_net_anh >= ANH_CO_THE_MO and gemini_client is not None else None
@@ -1038,7 +1082,7 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
     ) if lesson else None
 
     try:
-        matches = matches_task.result(timeout=CHAT_LOOKUP_TIMEOUT)
+        matches = matches_task.result(timeout=CHAT_LOOKUP_TIMEOUT) if matches_task is not None else []
     except Exception as exc:
         logger.exception('RAG retrieval failed for chat message')
         matches = []
@@ -1178,7 +1222,7 @@ def chat_stream(request: ChatRequest, user: dict[str, Any] = Depends(current_use
         'NGOÀI CẤP HỌC trong chỉ dẫn hệ thống.'
         + lan_nay
         + (f'\n\nSÁCH LỚP KHÁC (chỉ để biết bài nằm ở lớp nào):\n{other_grade_text}' if other_grade_text else '')
-    ) if _la_cau_hoi_hoc_tap(message) and not risk else ''
+    ) if tim_sach and _la_cau_hoi_hoc_tap(message) and not risk else ''
 
     # The photo itself is only sent in the turn it was attached; later turns see the problem Gemini copied out of it.
     # Past answers lose their [n]: those numbers counted that turn's sources, not this turn's.

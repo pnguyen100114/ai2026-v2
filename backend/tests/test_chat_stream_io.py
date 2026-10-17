@@ -738,3 +738,33 @@ def test_photo_answer_without_marker_still_remembers_the_problem(client, app_mod
                   image_mime_type='image/jpeg')[-1]
 
     assert done['image_text'] == de
+
+
+def test_generic_text_with_photo_does_not_search_the_book(client, app_mod, monkeypatch):
+    # "Em làm bài này đúng chưa ạ?" tìm sách ra trang không liên quan (~3.400 token, 17/10).
+    queries = []
+    monkeypatch.setattr(app_mod, 'search_knowledge', lambda query, *a, **k: queries.append(query) or [make_match()])
+    monkeypatch.setattr(app_mod, '_chep_de_anh', lambda request: '')
+    fake = FakeGemini(text='{"classification":"in_scope","safety_risk":"none"}', chunks=['Bài em đúng rồi. Em thử bài khác nhé?'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+
+    done = stream(client, message='Em làm bài này đúng chưa ạ?', image_data=_anh_jpeg(sharp=True), image_mime_type='image/jpeg')[-1]
+
+    assert queries == []
+    assert done['sources'] == []
+
+
+def test_photos_beyond_the_daily_limit_get_a_fixed_reply_and_no_model_call(client, app_mod, monkeypatch):
+    monkeypatch.setattr(app_mod, 'IMAGE_RATE_PER_DAY', 1)
+    monkeypatch.setattr(app_mod, 'search_knowledge', lambda *a, **k: [make_match()])
+    monkeypatch.setattr(app_mod, '_chep_de_anh', lambda request: '')
+    fake = FakeGemini(text='{"classification":"in_scope","safety_risk":"none"}', chunks=['Bài em đúng rồi. Em thử bài khác nhé?'])
+    monkeypatch.setattr(app_mod, 'gemini_client', fake)
+    anh = {'image_data': _anh_jpeg(sharp=True), 'image_mime_type': 'image/jpeg'}
+
+    stream(client, message='Em làm bài này đúng chưa ạ?', **anh)
+    goi_truoc = len(fake.calls)
+    done = stream(client, message='Còn bài này thì sao ạ?', **anh)[-1]
+
+    assert done['content'] == app_mod.ANH_HET_LUOT_TRA_LOI
+    assert len(fake.calls) == goi_truoc
