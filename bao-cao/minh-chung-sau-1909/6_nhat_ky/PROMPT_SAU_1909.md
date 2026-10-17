@@ -1,6 +1,6 @@
 # Prompt nhóm dùng với AI lập trình sau 19/09/2026
 
-153 prompt, lọc từ `prompt-log/PROMPT_HISTORY.md` (email và tên học sinh đã được che).
+172 prompt, lọc từ `prompt-log/PROMPT_HISTORY.md` (email và tên học sinh đã được che).
 
 ## Claude Code · phien `d5d1156e`
 
@@ -1231,6 +1231,183 @@ hãy check lại các phiên xem còn gì đang chạy đang cần tôi review k
 **Prompt:**
 
 update đi số liệu mới nhất đi rồi hãy làm
+
+### 417. 15:21:26 17/10/2026
+
+**Prompt:**
+
+tat file khó khăn rồi email thì Viết lại lịch sử git rồi force-push. Cách này khó hoàn tác.
+
+minh chứng tạo folder minh chứng sau ngày 19/09 trước đi,, nhớ là chỉ ghi những gì làm từ sau ngày đó nha, tại phần trước đã nộp rồi. bây giờ ban giám khảo chỉ muốn xem sau ngày đó, + file ghi cải tiến ban giám khảo yêu cầu mình đã làm gì tới đâu, chắc bỏ csv 
+
+tôi gửi lại 
+
+<pasted_content id="04f7">
+êu cầu cải tiến
+- Cách tự chấm bộ 28 câu còn dễ dãi: vài câu ngoài chương trình (tích phân, đạo hàm, thuyết tương đối) Mimo vẫn hướng dẫn mà lại được tính là "từ chối đạt", câu hỏi thời tiết còn được trả lời không có căn cứ. Hãy sửa cách chấm và kiểm tra lại những câu này.
+ - AI không thể đúng 100%: Mimo có thể giảng sai một ý dù có trang sách đi kèm (nguy hiểm hơn vì học sinh khó tự phát hiện), hoặc lỡ giải hộ khi học sinh năn nỉ. Hãy nhờ thầy cô bộ môn đánh dấu 28 câu trả lời "đúng / có chỗ sai / sai", thêm dòng nhắc "Mimo có thể nhầm, em đối chiếu với trang sách nhé", và thêm khoảng 10 câu năn nỉ vào bộ thử.
+ - Mời 10-15 bạn cùng lớp dùng Mimo khoảng 15-20 phút cho một bài đang học, rồi hỏi bằng Google Form: Mimo có giải hộ không, bạn có tự làm tiếp được không.
+ - Phần luyện tập thích ứng nên tính thêm độ khó của câu, số lần dùng gợi ý và dạng lỗi hay gặp, để gợi ý bài luyện sát với từng bạn hơn.
+ - Về lâu dài, thử 2-4 tuần với 1-2 lớp, làm bài kiểm tra ngắn trước và sau, so sánh nhóm dùng Mimo với nhóm không dùng.
+</pasted_content id="04f7">
+
+### 418. 15:43:16 17/10/2026
+
+**Prompt:**
+
+kết quả hs à ,, em gửi nha
+
+<pasted_content id="04f7">
+Timestamp	Tài khoản đăng nhập của bạn là gì ( email để login vô chương trình đó)	Khi bạn nhờ giải trọn gói hoặc cố tình xin đáp án nhanh, Mimo phản hồi thế nào? 	  Sau khi đọc gợi ý của Mimo, mức độ tự làm tiếp được bài tập của bạn ra sao?  	Bấm vào số trích dẫn nguồn sách [1], [2], Mimo có mở ra đúng trang sách giáo khoa bài bạn đang học không?	  Bạn thấy Mimo cần cải tiến thêm điều gì để thân thiện và dễ dùng hơn?  
+10/16/2026 9:58:53	[ten hoc sinh]	Chỉ gợi ý bước đầu / hỏi ngược lại để mình tự làm tiếp.	4	Đúng chính xác trang sách	..
+10/16/2026 10:00:06	[ten hoc sinh]	Chỉ gợi ý bước đầu / hỏi ngược lại để mình tự làm tiếp.	5	Đúng chính xác trang sách	..
+10/16/2026 10:52:45	[ten hoc sinh]	Giải hộ từ đầu đến cuối và cho ngay đáp số.	5	Lệch vài trang / không đúng bài	không cần thêm
+10/16/2026 14:11:37	[email da che]	Chỉ gợi ý bước đầu / hỏi ngược lại để mình tự làm tiếp.	5	Đúng chính xác trang sách	.
+10/16/2026 14:14:33	[email da che]	Chỉ gợi ý bước đầu / hỏi ngược lại để mình tự làm tiếp.	4	Lệch vài trang / không đúng bài	.
+10/16/2026 14:38:02	[email da che]	Chỉ gợi ý bước đầu / hỏi ngược lại để mình tự làm tiếp.	4	Không mở được trang sách	tốc độ trả lời câu hỏi
+10/16/2026 19:21:41	[email da che]	Giải hộ từ đầu đến cuối và cho ngay đáp số.	3	Đúng chính xác trang sách	tôi thấy được rồi
+10/17/2026 7:23:41	[ten hoc sinh]	Chỉ gợi ý bước đầu / hỏi ngược lại để mình tự làm tiếp.	5	Đúng chính xác trang sách	không
+10/17/2026 8:01:40	[email da che]	Chỉ gợi ý bước đầu / hỏi ngược lại để mình tự làm tiếp.	4	Đúng chính xác trang sách	không thấy gì để cải thiện
+10/17/2026 8:19:32	[email da che]	Chỉ gợi ý bước đầu / hỏi ngược lại để mình tự làm tiếp.	5	Đúng chính xác trang sách	"tốc độ trả lời của Mimo
+"
+10/17/2026 8:34:48	[email da che]	Chỉ gợi ý bước đầu / hỏi ngược lại để mình tự làm tiếp.	4	Lệch vài trang / không đúng bài	bình thường
+10/17/2026 8:35:13	[email da che]	Chỉ gợi ý bước đầu / hỏi ngược lại để mình tự làm tiếp.	5	Lệch vài trang / không đúng bài	bình thường
+</pasted_content id="04f7">
+
+### 419. 15:50:08 17/10/2026
+
+**Prompt:**
+
+Quyết có sửa lỗi hiển thị "a /= 0" rồi chụp lại ảnh minh chứng hay không.
+
+### 420. 16:00:46 17/10/2026
+
+**Prompt:**
+
+che thông tn đi
+
+
+
+## Claude Code · phien `2dc22c23`
+
+### 421. 15:10:45 17/10/2026
+
+**Prompt:**
+
+giờ có bạn khác cũng sửa máy khác giờ tôi cần bạn ấy xuất ra prompt log + history để nộp phần bạn giờ gửi bạn sao để cùng format như 2 file của tôi
+
+### 422. 15:13:31 17/10/2026
+
+**Prompt:**
+
+để riêng của bạn ấy sẽ tách biệt với cả tôi
+
+### 423. 15:14:42 17/10/2026
+
+**Prompt:**
+
+thôi chắc cho bạn câu prompt đi để bạn kêu AI của bạn làm
+
+
+
+## Claude Code · phien `2bc0bb68`
+
+### 424. 15:50:38 17/10/2026
+
+**Prompt:**
+
+Chạy script viết lại lịch sử git, như tôi đã báo ở lượt trước.,, chắc k đâu giờ mình để xóa file đó trên git đi, chỉ lưu local thôi
+
+
+
+## Claude Code · phien `45b889cc`
+
+### 425. 15:54:11 17/10/2026
+
+**Prompt:**
+
+Mimo chỉ đọc được file ảnh (JPG, PNG) thôi nhé.
+sao k nhận file ví dụ
+
+### 426. 16:01:26 17/10/2026
+
+**Prompt:**
+
+nói lại tiếng việt đi
+
+### 427. 16:02:52 17/10/2026
+
+**Prompt:**
+
+nhưng sao k như chat gpt genmini, bên đó bỏ nguyên file được mà , mình chỉ giới hạn file nhỏ thôi
+
+### 428. 16:16:33 17/10/2026
+
+**Prompt:**
+
+ok
+
+
+
+## Claude Code · phien `6d28d7c8`
+
+### 429. 16:13:16 17/10/2026
+
+**Prompt:**
+
+Thuộc chương trình Toán 9, không có trong Toán 8. ==> nhóm đã thống nhất là bám sát theo lớp, môn  đã chọn nên và không trả lời cho học sinh nhưng đưa ra gợi ý học sinh chọn lại lớp/môn để tạo lại lộ trình học. vậy hỗ trợ fix giúp nha
+
+
+
+## Claude Code · phien `3d94fa58`
+
+### 430. 16:22:49 17/10/2026
+
+**Prompt:**
+
+trong khi chờ chạy test lần cuối thì mình làm lại file kịch bản thi đi để nhóm xem và ôn mai thuyết trình
+
+### 431. 16:56:58 17/10/2026
+
+**Prompt:**
+
+Còn chờ: số 43/43 và trung vị 4,1 giây vẫn là lần đo lúc 15:13. Bộ thử đang chạy dùng tiêu chí chấm mới cho các ca bài lớp khác, nên số có thể đổi. Khi có kết quả, mình sẽ đối chiếu và sửa ở bảng số liệu, đoạn 5:00 và câu 2, sửa ở cả hai bản.
+
+chua xong à, nào xong sưa chỗ nào báo rõ để tô copy vô file đang xem ở máy nha
+
+
+
+## Claude Code · phien `89758c3e`
+
+### 432. 16:59:02 17/10/2026
+
+**Prompt:**
+
+cho tôi câu trả lời  để nếu bgk hoiir
+Luật rẻ chạy trước, chỉ khi không chắc mới hỏi Gemini là sao ?
+Hết lượt thì hệ thống tự chuyển sang mô hình dự phòng.?
+
+
+
+## Claude Code · phien `db2fd618`
+
+### 433. 17:06:20 17/10/2026
+
+**Prompt:**
+
+hoàn tất thư mục minh chứng có kèm  thư mục prompt log history chưa để tôi đem đi nộp
+
+### 434. 17:07:57 17/10/2026
+
+**Prompt:**
+
+[Request interrupted by user for tool use]
+
+### 435. 17:41:49 17/10/2026
+
+**Prompt:**
+
+tiếp tục đi
 
 
 

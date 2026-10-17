@@ -1,6 +1,6 @@
 # Các lần sửa sau 19/09/2026
 
-62 commit trên nhánh `main`, cũ trước mới sau.
+68 commit trên nhánh `main`, cũ trước mới sau.
 
 | Thời gian | Commit | Nội dung |
 |---|---|---|
@@ -66,3 +66,9 @@
 | 17/10/2026 15:17 | `44ce28e` | Đo lại 43 ca trên bản deploy cuối: 43/43; hồ sơ, kịch bản thi theo số mới; che email, tên học sinh trong nhật ký prompt |
 | 17/10/2026 15:25 | `02a387c` | Tài liệu khó khăn – giải pháp theo số mới: 43/43, lỗi hết tiền nạp Gemini, chi phí câu có ảnh, buổi dùng thử 34 bạn |
 | 17/10/2026 15:33 | `beb33cd` | Thư mục minh chứng cải tiến sau 19/09: tình trạng 5 yêu cầu của ban giám khảo, thầy cô chấm, buổi dùng thử, ảnh bản đang chạy |
+| 17/10/2026 15:46 | `4ddf648` | Kết quả Google Form 12 phiếu: tự làm tiếp 4,4/5, 2/12 thấy Mimo giải hộ; đưa vào minh chứng và kịch bản thi |
+| 17/10/2026 15:51 | `c77c376` | Bỏ nhật ký prompt khỏi git, chỉ giữ ở máy |
+| 17/10/2026 15:52 | `810a35e` | Dấu ≠ hiện đúng thay vì "/=": CSS KaTeX cùng phiên bản với bản rehype-katex dùng để vẽ |
+| 17/10/2026 15:54 | `1d87d17` | Chụp lại ảnh minh chứng sau khi sửa dấu ≠, chọn đúng bài Phương trình bậc nhất một ẩn |
+| 17/10/2026 16:01 | `4b95447` | Đưa nhật ký prompt trở lại repo, đã che email và tên học sinh |
+| 17/10/2026 16:17 | `0496ecf` | Nhận file PDF đề bài: PDF ≤ 5 MB, ≤ 10 trang gửi nguyên cho Gemini; PDF lớn hơn đổi trang đầu thành ảnh |

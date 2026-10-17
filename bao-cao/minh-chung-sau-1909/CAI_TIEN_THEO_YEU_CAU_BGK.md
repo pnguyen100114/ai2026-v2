@@ -33,10 +33,12 @@ Tài liệu này chỉ ghi việc nhóm làm **sau ngày nộp 19/09/2026**. M�
 |---|---|---|
 | Bản nộp 19/09 | Cũ, chỉ xét "có bịa nguồn không" | 27/28 |
 | 16/10, lần đầu chấm chặt | Mới | 37/43 |
-| 17/10 15:13, bản đang chạy | Mới | **43/43** |
+| 17/10 15:13, bản đang chạy | Mới | 43/43 |
+| 17/10 17:56, bản đang chạy, sau khi đổi cách xử lý bài lớp khác | Mới | **43/43** |
 
 - Nhóm từ chối (tích phân, đạo hàm, thuyết tương đối): **3/3**. Câu thời tiết: **1/1**, Mimo không còn tả thời tiết.
-- Trung vị thời gian trả lời 4,1 giây, chậm nhất 5,6 giây.
+- Nhóm ngoài sách: **4/4**. Bài nằm ở sách lớp khác thì Mimo không giảng và không trích trang nào, chỉ báo bài ở lớp nào và mời em chọn lại lớp.
+- Trung vị thời gian trả lời 3,8 giây, chậm nhất 5,3 giây.
 - Đạt máy chấm chưa đủ. Sáng 17/10 có một lần đo đạt 43/43, nhưng nhóm đọc lại thì thấy 5/6 ca năn nỉ trỏ sai trang sách. Nhóm không dùng con số đó, sửa lỗi rồi đo lại. Ở lần đo cuối, nhóm đọc lại trang trích của cả 43 câu.
 
 **Minh chứng:** `1_cham_chat_bo_thu/KET_QUA_TEST.md` có bảng từng ca, lý do đạt/trượt và thời gian trả lời. Danh sách câu hỏi và chuỗi cấm nằm ở `bao-cao/bo-test/cau_hoi.py` trong repo. Xem thêm ảnh `anh/5_tu_choi_kien_thuc_ngoai_chuong_trinh.png`.
@@ -54,7 +56,7 @@ Tài liệu này chỉ ghi việc nhóm làm **sau ngày nộp 19/09/2026**. M�
 | 28 câu của bản nộp 19/09 | Bản rút gọn câu trả lời | 25 đúng, 3 có chỗ sai |
 | 43 câu của lần đo 17/10 10:01 | **Nguyên văn** câu trả lời, kèm số trang Mimo trích | **41 đúng, 2 có chỗ sai, 0 sai** |
 
-- Lần 19/09 có 3 câu có chỗ sai, cả 3 vì **chưa bám sách**: câu thời tiết, câu hàm ý và câu bất phương trình. Nhóm sửa: bài nằm ở sách lớp khác thì Mimo báo lớp và chỉ giảng theo trang sách lớp đó; không sách nào có bài thì Mimo nói thật và không giảng.
+- Lần 19/09 có 3 câu có chỗ sai, cả 3 vì **chưa bám sách**: câu thời tiết, câu hàm ý và câu bất phương trình. Nhóm sửa: bài nằm ở sách lớp khác thì Mimo không giảng, chỉ báo bài ở lớp nào và mời em vào Trang chủ chọn lại lớp, môn; không sách nào có bài thì Mimo nói thật và không giảng.
 - Lần 17/10 có 2 câu có chỗ sai:
   - Câu 16 (ƯCLN) thiếu bước hướng dẫn phân tích ra thừa số nguyên tố.
   - Câu 27 ("(a+b)² = a² + b²?") chưa nêu thẳng công thức đúng và chưa trích sách.
@@ -181,3 +183,4 @@ Tài liệu này chỉ ghi việc nhóm làm **sau ngày nộp 19/09/2026**. M�
 
 - `6_nhat_ky/CAC_LAN_SUA_SAU_1909.md`: mọi lần sửa code và tài liệu từ 20/09 đến nay, kèm mã commit.
 - `6_nhat_ky/PROMPT_SAU_1909.md`: các câu lệnh nhóm dùng với AI lập trình trong giai đoạn này. Email và tên học sinh đã được che.
+- `7_prompt_log/`: nhật ký prompt đầy đủ từ đầu dự án, cả trước 19/09. `PROMPT_HISTORY.md` xếp theo phiên làm việc, `PROMPT_LOG.md` xếp theo thời gian. Email và tên học sinh đã được che.

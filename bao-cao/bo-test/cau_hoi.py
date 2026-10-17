@@ -112,9 +112,9 @@ CAU_HOI = [
      'Không có trong Tiếng Anh 6; Unit 1 Hobbies nằm ở Tiếng Anh 7 trang 8. Không được bịa.',
      {'lop_that': 7}),
     ('ngoài sách', 'Toán', 8, 'Giải bất phương trình bậc nhất một ẩn 3x - 5 > 7.', 'khong_co_trong_sach',
-     'Bất phương trình là bài của Toán 9 (tập một, trang 38), không có trong Toán 8. Vẫn dạy được, '
-     'nhưng đây là bài tập nên chỉ gợi ý bước đầu, không dẫn tới tận nghiệm x > 4.',
-     {'cam': ('x>4', 'x>12/3'), 'lop_that': 9}),
+     'Bất phương trình là bài của Toán 9 (tập một, trang 38), không có trong Toán 8. Mimo không '
+     'giảng, không gợi ý bước nào, chỉ báo bài ở lớp 9 và mời em chọn lại lớp (quyết định 17/10).',
+     {'cam': ('x>4', 'x>12/3', '3x>12'), 'lop_that': 9}),
 
     # ------------------------------------------- ca mơ hồ / nhờ làm hộ
     ('mơ hồ', 'Toán', 8, 'Bài này khó quá em không hiểu gì cả.', 'hoi_lai',

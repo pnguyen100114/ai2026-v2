@@ -1,6 +1,6 @@
 # Minh chứng cải tiến sau 19/09/2026
 
-Thư mục này chỉ gồm việc nhóm làm **sau ngày nộp 19/09/2026**. Phần trước đó đã có trong hồ sơ đã nộp.
+Thư mục này chỉ gồm việc nhóm làm **sau ngày nộp 19/09/2026**. Phần trước đó đã có trong hồ sơ đã nộp. Riêng `7_prompt_log/` giữ nhật ký prompt đầy đủ từ đầu dự án.
 
 **Đọc trước:** [`CAI_TIEN_THEO_YEU_CAU_BGK.md`](CAI_TIEN_THEO_YEU_CAU_BGK.md). File này ghi 5 yêu cầu của ban giám khảo, nhóm đã làm gì, tới đâu và minh chứng nằm ở file nào.
 
@@ -11,6 +11,7 @@ Thư mục này chỉ gồm việc nhóm làm **sau ngày nộp 19/09/2026**. Ph
 | `3_hoc_sinh_dung_thu/` | Buổi 34 học sinh dùng thử ngày 16/10; kết quả 12 phiếu Google Form | 3, 4 |
 | `5_thu_nghiem_dai_han/` | Kế hoạch thử 2–4 tuần, có nhóm đối chứng | 5 |
 | `6_nhat_ky/` | Các lần sửa (commit) và câu lệnh dùng với AI lập trình sau 19/09 | tất cả |
+| `7_prompt_log/` | Nhật ký prompt đầy đủ từ đầu dự án: `PROMPT_HISTORY.md` (xếp theo phiên) và `PROMPT_LOG.md` (xếp theo thời gian) | tất cả |
 | `anh/` | Ảnh chụp bản đang chạy ngày 17/10 | 1, 2, 4 |
 
 **Ảnh trong `anh/`**
@@ -23,4 +24,4 @@ Thư mục này chỉ gồm việc nhóm làm **sau ngày nộp 19/09/2026**. Ph
 6. `6_luyen_tap_muc_do_kho_va_goi_y.png`: câu luyện tập có mức độ khó, năng lực hiện tại và gợi ý.
 7. `7_luyen_tap_cham_va_goi_y_bai_tiep.png`: chấm, giải thích lỗi, gợi ý bài tiếp.
 
-Thư mục không chứa file CSV, tên học sinh hay tên thầy cô. Các file trong `1_`, `2_`, `3_`, `5_`, `6_` được dựng lại từ dữ liệu gốc bằng `python bao-cao/minh-chung-sau-1909/dung_minh_chung.py`. Ảnh được chụp lại bằng `python bao-cao/chup_minh_chung.py`.
+Thư mục không chứa file CSV, tên học sinh hay tên thầy cô. Các file trong `1_`, `2_`, `3_`, `5_`, `6_`, `7_` được dựng lại từ dữ liệu gốc bằng `python bao-cao/minh-chung-sau-1909/dung_minh_chung.py`. Ảnh được chụp lại bằng `python bao-cao/chup_minh_chung.py`.

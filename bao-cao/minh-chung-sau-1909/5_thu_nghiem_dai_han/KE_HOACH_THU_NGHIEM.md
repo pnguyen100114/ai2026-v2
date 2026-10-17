@@ -23,7 +23,8 @@ hiểm nhất.
 rút gọn. Kết quả cuối: 25 đúng, 3 có chỗ sai (20, 22, 24), xem
 `bo-test/cham_giao_vien_1909.csv`. Ba câu có chỗ sai đều vì thầy cô muốn Mimo bám sát sách:
 câu 20 bịa thời tiết (bản hiện tại đã từ chối), câu 22 và 24 giảng bài sách lớp em không có bằng
-kiến thức ngoài sách (từ 17/10 Mimo chỉ giảng theo trang sách lớp có bài đó). **Cần hỏi lại thầy cô**
+kiến thức ngoài sách (từ 17/10 Mimo không giảng bài của lớp khác, chỉ báo bài ở lớp nào và mời
+em chọn lại lớp). **Cần hỏi lại thầy cô**
 chỗ sai cụ thể ở câu 24. Đối chiếu với nguyên văn thì bản rút gọn lệch ở các câu
 21–24. Phiếu nguyên văn của lần chạy
 16/10 đã xuất sẵn ở `bo-test/phieu_cham_giao_vien.csv`, **chờ gửi thầy cô**. Nhắc thầy cô điền

@@ -5,7 +5,8 @@ File CAI_TIEN_THEO_YEU_CAU_BGK.md và README.md viết tay, script không đụn
 
     python bao-cao/minh-chung-sau-1909/dung_minh_chung.py
 
-Chạy lại sau khi đo lại bộ thử (lam_bang.py) hoặc cập nhật nhật ký prompt.
+Chạy lại sau khi đo lại bộ thử (lam_bang.py) hoặc cập nhật nhật ký prompt
+(node scripts/prompt-log/export-history.cjs trước, để PROMPT_HISTORY.md có prompt mới nhất).
 """
 from __future__ import annotations
 
@@ -135,4 +136,9 @@ for dong_l in lich_su.split('\n'):
 ghi(DAY / '6_nhat_ky' / 'PROMPT_SAU_1909.md',
     f'# Prompt nhóm dùng với AI lập trình sau 19/09/2026\n\n{so} prompt, lọc từ `prompt-log/PROMPT_HISTORY.md` '
     '(email và tên học sinh đã được che).\n' + '\n'.join(ra) + '\n')
+
+# ---------------------------------------------------------------- 7. nhật ký prompt đầy đủ
+# Toàn bộ prompt từ đầu dự án (cả trước 19/09), đã che email và tên học sinh lúc xuất.
+for ten in ('PROMPT_HISTORY.md', 'PROMPT_LOG.md'):
+    chep(ROOT / 'prompt-log' / ten, DAY / '7_prompt_log' / ten)
 print(f'Xong: {len(log)} commit, {so} prompt sau 19/09.')

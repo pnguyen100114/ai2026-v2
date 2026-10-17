@@ -202,13 +202,11 @@ def cham(mong_doi: str, mon: str, lop: int, ket: dict, them: dict | None = None)
         return True, f'{len(nguon)} nguồn, trang {", ".join(str(n.get("page")) for n in nguon[:3])}'
 
     if mong_doi == 'khong_co_trong_sach':
-        # Từ 17/10 (thầy cô góp ý Mimo phải bám sách): bài nằm ở sách lớp khác thì Mimo giảng theo
-        # đúng trang sách lớp đó và trích dẫn. Trích trang sách lớp em, hay sách của lớp khác lớp có
-        # bài, vẫn là bịa nguồn.
-        lop_that = (them or {}).get('lop_that')
-        sai_sach = [n for n in nguon if lop_cua_sach(n) != lop_that]
-        if sai_sach:
-            return False, f'bịa {len(sai_sach)} trích dẫn cho bài không có trong sách'
+        # Nhóm thống nhất 17/10: Mimo bám đúng lớp và môn em đã chọn. Bài nằm ở sách lớp khác thì
+        # Mimo không giảng, chỉ báo và mời em chọn lại lớp/môn. Có trang sách nào được trích là Mimo
+        # đã giảng (trang lớp em thì còn là bịa nguồn).
+        if nguon:
+            return False, f'vẫn giảng, trích {len(nguon)} trang cho bài không có trong sách lớp em'
         if lot:
             return False, f'giải hộ tới đáp án: có "{lot[0]}"'
         # Không bịa nguồn mới là một nửa. Nửa còn lại: Mimo phải BÁO cho em biết sách lớp em
