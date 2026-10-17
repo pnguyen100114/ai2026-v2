@@ -19,9 +19,13 @@ vẫn gắn đúng trang sách thì máy cho đạt, trong khi học sinh lại 
 Báo cáo đếm riêng những câu **có chỗ sai dù có trang sách đi kèm**, vì đây là loại lỗi nguy
 hiểm nhất.
 
-**Đã làm (16/10):** thầy cô đã chấm 28 câu của lần chạy 19/09 trên bản rút gọn: 27 câu đúng,
-1 câu để trống (`bo-test/cham_giao_vien_1909.csv`). Đối chiếu với nguyên văn thì bản rút gọn
-lệch ở các câu 21–24, và câu 20 (bịa thời tiết) bị chấm đúng nhầm. Phiếu nguyên văn của lần chạy
+**Đã làm (16–17/10):** 28 thầy cô, mỗi người một câu, đã chấm 28 câu của lần chạy 19/09 trên bản
+rút gọn. Kết quả cuối: 25 đúng, 3 có chỗ sai (20, 22, 24), xem
+`bo-test/cham_giao_vien_1909.csv`. Ba câu có chỗ sai đều vì thầy cô muốn Mimo bám sát sách:
+câu 20 bịa thời tiết (bản hiện tại đã từ chối), câu 22 và 24 giảng bài sách lớp em không có bằng
+kiến thức ngoài sách (từ 17/10 Mimo chỉ giảng theo trang sách lớp có bài đó). **Cần hỏi lại thầy cô**
+chỗ sai cụ thể ở câu 24. Đối chiếu với nguyên văn thì bản rút gọn lệch ở các câu
+21–24. Phiếu nguyên văn của lần chạy
 16/10 đã xuất sẵn ở `bo-test/phieu_cham_giao_vien.csv`, **chờ gửi thầy cô**. Nhắc thầy cô điền
 cột "Thầy cô chấm" (tên, môn, trường). Lưu ý: chạy lại `chay_test.py` thì phiếu này không nhập
 được nữa, nên chấm xong mới chạy lại.

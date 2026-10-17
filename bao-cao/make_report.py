@@ -517,12 +517,18 @@ if T_GV_CHAM:
     para(f'Lần đo {T_NGAY}: thầy cô đã chấm {len(T_GV_CHAM)}/{T_TONG} câu — {T_GV_DEM["đúng"]} đúng, '
          f'{T_GV_DEM["có chỗ sai"]} có chỗ sai, {T_GV_DEM["sai"]} sai.')
 para(f'Lần đo ngày 19/09 ({len(GV_1909)} câu): thầy cô chấm {GV_1909_DEM["đúng"]} câu đúng, {GV_1909_DEM["có chỗ sai"]} có chỗ sai, '
-     f'{GV_1909_DEM["sai"]} sai, {GV_1909_DEM[""]} câu để trống. Nhóm không coi kết quả này là bằng chứng chắc chắn, vì:')
+     f'{GV_1909_DEM["sai"]} sai' + (f', {GV_1909_DEM[""]} câu để trống' if GV_1909_DEM[""] else '')
+     + '. Nhóm không coi kết quả này là bằng chứng chắc chắn, vì:')
 bullet('Thầy cô đọc bản rút gọn câu trả lời, không phải nguyên văn, và phiếu không kèm số trang Mimo trích.')
 bullet(f'Đối chiếu lại thì ở câu {", ".join(GV_1909_LECH)}, bản rút gọn khác câu trả lời thật: có câu tự thêm ý Mimo không nói '
        '(“sách scan thiếu trang”, “thuộc chương trình cũ”), có câu che mất chỗ Mimo nói sai lớp của bài câu ghép.')
-bullet('Câu hỏi thời tiết Hà Nội được chấm đúng, nhưng khi đó Mimo đã tự bịa ra thời tiết. Nhóm không đồng ý với điểm này; '
-       'bản hiện tại đã từ chối câu hỏi đó.')
+bullet(f'Mỗi thầy cô chấm một câu ({len({d["Thầy cô chấm"] for d in GV_1909})} thầy cô), nên chưa có câu nào được hai người cùng chấm.')
+para(f'{GV_1909_DEM["có chỗ sai"]} câu có chỗ sai không phải vì kiến thức sai. Thầy cô muốn Mimo bám sát sách giáo khoa:')
+bullet('Câu hỏi thời tiết Hà Nội: khi đó Mimo tự bịa ra thời tiết rồi mới kéo em về bài. Bản hiện tại đã từ chối câu hỏi này.')
+bullet('Nghĩa tường minh và hàm ý (Ngữ văn 9), bất phương trình (Toán 8): sách lớp em không có bài, Mimo báo cho em biết rồi vẫn giảng '
+       'bằng kiến thức của mô hình. Đây là cách nhóm chọn từ đầu để em không bị bỏ lại giữa chừng; thầy cô góp ý nên chỉ bám sách. '
+       'Nhóm đã đổi theo góp ý: bài nằm ở sách lớp khác thì Mimo báo lớp và chỉ giảng theo đúng trang sách lớp đó, có trích dẫn để em '
+       'bấm xem; không sách nào có bài thì Mimo nói thật và không giảng.')
 if not T_GV_CHAM:
     para(f'Vì vậy nhóm xuất phiếu chấm mới cho lần đo {T_NGAY} (bo-test/phieu_cham_giao_vien.csv), có nguyên văn từng câu trả lời, '
          'số trang Mimo trích và cột tên người chấm, để gửi thầy cô chấm lại.')

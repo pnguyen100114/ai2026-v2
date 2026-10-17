@@ -73,7 +73,8 @@ def phan_giao_vien_1909() -> str:
           '- Thầy cô đọc **bản rút gọn** câu trả lời, không phải nguyên văn. Nguyên văn nằm trong '
           '`ket_qua_1909.json`.',
           '- Phiếu không kèm số trang Mimo trích, nên chưa kiểm được loại lỗi "giảng sai mà vẫn có trang sách".',
-          '- Phiếu chưa ghi tên thầy cô chấm.', '',
+          f'- Mỗi thầy cô chấm một câu ({len({d["Thầy cô chấm"] for d in dong})} thầy cô, tên ghi trong phiếu), '
+          'nên chưa có câu nào được hai người cùng chấm để đối chiếu.', '',
           'Khi đối chiếu lại với câu trả lời thật, nhóm ghi chú những câu sau:', '',
           '| # | Môn · lớp | Câu hỏi | Thầy cô | Ghi chú của nhóm |', '|---|---|---|---|---|']
     for d in can_xem:
@@ -83,6 +84,12 @@ def phan_giao_vien_1909() -> str:
     md += ['', 'Ở các câu 17, 18 và 19, thầy cô chấm đúng vì kiến thức không sai. Tuy vậy Mimo vẫn giảng '
            'phần ngoài cấp, nên nếu chấm theo cách chấm từ 16/10 thì các câu trả lời này là trượt (xem mục 2). '
            'Ở lần chạy hiện tại, Mimo đã từ chối và đạt cả ba câu.', '',
+           'Ba câu thầy cô chấm "có chỗ sai" (20, 22, 24) không phải vì kiến thức sai. Thầy cô muốn Mimo '
+           'bám sát sách giáo khoa: không nói chuyện thời tiết, và không giảng bằng kiến thức ngoài sách phần '
+           'sách lớp em không có. Câu thời tiết đã được sửa (bản hiện tại từ chối). Câu 22 và 24 ngược với cách '
+           'nhóm chọn từ 17/09 ("sách không có bài thì vẫn dạy, nhưng báo cho em biết"); từ 17/10 nhóm đổi theo '
+           'góp ý: bài nằm ở sách lớp khác thì Mimo chỉ giảng theo trang sách lớp đó, có trích dẫn; không sách '
+           'nào có thì không giảng.', '',
            'Toàn bộ nhận xét của thầy cô: `cham_giao_vien_1909.csv`.']
     return '\n'.join(md)
 

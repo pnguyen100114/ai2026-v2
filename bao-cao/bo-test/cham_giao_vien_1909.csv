@@ -1,29 +1,230 @@
-﻿STT,Môn,Lớp,Câu hỏi,Bản rút gọn gửi thầy cô,Đánh giá của thầy cô,Nhận xét của thầy cô,Ghi chú của nhóm khi đối chiếu câu trả lời thật
-1,Toán,8,Hằng đẳng thức bình phương của một tổng là gì?,"Để Mimo giúp em hiểu về hằng đẳng thức này nhé! Với hai biểu thức A và B bất kỳ, bình phương của một tổng được xác định bởi công thức: (A + B)² = A² + 2AB + B² [1]. Ví dụ: (x + 2)² = x² + 4x + 4. Em hãy thử khai triển biểu thức (2b + 1)² xem sao?",Đúng,"phần mềm dễ sử dụng, kết quả đưa ra chính xác",
-2,Toán,6,Thế nào là số nguyên tố?,"Số nguyên tố là số tự nhiên lớn hơn 1, chỉ có hai ước là 1 và chính nó [1]. Ví dụ: Số 2, 3 là số nguyên tố. Số 4 không phải là số nguyên tố vì có ba ước 1, 2, 4. Em thử kiểm tra xem số 7 có phải là số nguyên tố không nhé?",Đúng,"Định nghĩa ngắn gọn, chuẩn mực (nhấn mạnh được điều kiện là số tự nhiên lớn hơn 1). Phần Toán số giúp học sinh phân biệt rành mạch giữa số nguyên tố và hợp số. Câu hỏi gợi mở kiểm tra số 7 rất vừa sức với nhận thức của học sinh lớp 6, tạo hứng thú tương tác",
-3,KHTN,7,Quang hợp ở thực vật là gì?,"Quang hợp là quá trình thực vật tự tổng hợp các chất hữu cơ từ những nguyên liệu đơn giản để cung cấp năng lượng cho chính nó và nhiều sinh vật khác trên Trái Đất [1]. Quá trình này chủ yếu diễn ra ở lá cây, cụ thể là bên trong các lục lạp [1]. Em có muốn thử đoán xem cây cần lấy những nguyên liệu gì từ môi trường để thực hiện không?",Đúng,"Nội dung sinh học chính xác, ngôn ngữ diễn đạt trong sáng, phù hợp lứa tuổi. Phương pháp tiếp cận theo hình thức khám phá",
-4,KHTN,9,Định luật Ôm phát biểu như thế nào?,"Theo định luật Ohm, cường độ dòng điện chạy qua đoạn dây dẫn tỉ lệ thuận với hiệu điện thế giữa hai đầu đoạn dây và tỉ lệ nghịch với điện trở của nó [1]. Công thức: I = U / R. Trong đó I là cường độ dòng điện (A), U là hiệu điện thế (V), R là điện trở (Ω) [2].",Đúng,"Phát biểu định luật chuẩn xác, công thức và chú thích đơn vị đo rõ ràng, đầy đủ theo chuẩn kiến thức Vật lí THCS. Trình bày khoa học, dễ tiếp thu",
-5,Ngữ văn,8,Từ tượng hình và từ tượng thanh khác nhau thế nào?,"Từ tượng hình là từ gợi tả hình ảnh, dáng vẻ, trạng thái của sự vật [2] (lênh khênh, mập mạp...). Từ tượng thanh là từ mô phỏng âm thanh của tự nhiên hoặc con người [2] (xao xác, líu lo...). Một bên gợi hình cho mắt thấy, một bên gợi tiếng cho tai nghe.",Đúng,"Khái niệm chuẩn xác, ví dụ minh họa sinh động. Câu đúc kết so sánh trực quan (""Một bên gợi hình cho mắt thấy, một bên gợi tiếng cho tai nghe"") mang tính sư phạm rất cao, giúp học sinh khắc sâu và dễ dàng phân biệt",
-6,LSDL,8,Cách mạng tư sản Anh nổ ra vào thời gian nào?,"Cách mạng tư sản Anh bùng nổ vào tháng 8 năm 1642, khi vua Sác-lơ I tuyên chiến với Quốc hội em nhé [1]. Theo em, vì sao mâu thuẫn giữa nhà vua và Quốc hội lúc đó lại trở nên gay gắt đến mức dẫn tới nội chiến?",,Mốc thời gian và sự kiện lịch sử chính xác. Câu hỏi tư duy  giúp học sinh phát triển năng lực nhận thức lịch sử,Thầy cô chưa điền cột Đánh giá.
-7,Tiếng Anh,8,Unit 1 Leisure time học những từ vựng nào?,"Trong Unit 1: Leisure Time, chúng ta học về hoạt động tự làm DIY (knitting, making paper flowers [3]), các sở thích giải trí (boarding, origami, puzzle) và cách diễn đạt sở thích (be keen on, fancy, fond of, detest).",Đúng,"Bám sát chủ đề sách giáo khoa hiện hành, phân nhóm từ vựng và cấu trúc  khoa học, thực tế",
-8,Toán,9,Hệ hai phương trình bậc nhất hai ẩn là gì?,Hệ hai phương trình bậc nhất hai ẩn là cặp gồm hai phương trình ax + by = c và a'x + b'y = c' [1]. Nghiệm (x0; y0) là giá trị đồng thời thỏa mãn cả hai phương trình trong hệ.,Đúng,"Định nghĩa dạng tổng quát và nghiệm x, y chính xác tuyệt đối theo chuẩn Đại số 9. Diễn đạt rõ ràng về bản chất",
-9,Toán,8,Hình thoi và hình vuông khác nhau ở điểm nào?,Hình thoi là tứ giác có bốn cạnh bằng nhau [1]. Hình vuông không chỉ có bốn cạnh bằng nhau mà còn phải có bốn góc vuông [2]. Hình vuông là trường hợp đặc biệt của hình thoi khi có thêm góc vuông.,Đúng,"Định nghĩa hình học chính xác tuyệt đối theo chương trình Hình học 8. Giúp học sinh rèn luyện tư duy logic phân loại hình rất tốt,",
-10,Toán,8,Phân tích x² - 6x + 9 thành nhân tử và giải thích từng bước.,"Đa thức x² - 6x + 9 có 3 hạng tử: x² là bình phương của x, 9 là 3², hạng tử giữa là -2*x*3. Áp dụng hằng đẳng thức (a-b)² = a² - 2ab + b², em hãy viết kết quả xem sao nhé!",Đúng,Phương pháp sư phạm rất mẫu mực. AI không vội đưa ra kết quả cuối cùng mà phân tích chi tiết từng hạng tử để học sinh nhận diện cấu trúc hằng đẳng thức. Kích hoạt năng lực tự học và tư duy độc lập của học sinh đúng theo tinh thần đổi mới dạy học.,
-11,KHTN,8,"So sánh phản ứng toả nhiệt và phản ứng thu nhiệt, mỗi loại cho một ví dụ.",Phản ứng tỏa nhiệt là phản ứng giải phóng năng lượng ra môi trường (VD: đốt cồn) [1]. Phản ứng thu nhiệt là phản ứng nhận năng lượng từ môi trường trong suốt quá trình (VD: phân hủy Cu(OH)2 cần đun nóng liên tục) [1].,Đúng,"Khái niệm Hóa học chuẩn xác, phân biệt rõ ràng giữa ""giải phóng"" và ""nhận"" năng lượng. Việc đưa ví dụ thực tiễn sinh động (đốt cồn) và phản ứng hóa học cụ thể (Cu(OH)2) cần đun nóng liên tục) giúp học sinh hiểu sâu bản chất hiện tượng.",
-12,KHTN,9,Vì sao xuất hiện dòng điện cảm ứng? Điều đó liên quan gì tới máy phát điện?,"Dòng điện cảm ứng xuất hiện trong cuộn dây kín khi số đường sức từ xuyên qua tiết diện cuộn dây dẫn biến thiên [1][3]. Trong máy phát điện xoay chiều, cuộn dây hoặc nam châm quay liên tục làm số đường sức từ tăng giảm luân phiên, tạo dòng điện xoay chiều [1].",Đúng,"Kiến thức Vật lí chuẩn xác, nêu đúng điều kiện cốt lõi là sự ""Biến thiên số đường sức từ"". Phần liên hệ nguyên lý hoạt động của máy phát điện xoay chiều rất mạch lạc, liên kết chặt chẽ",
-13,Ngữ văn,9,Có mấy kiểu câu ghép? Phân biệt bằng ví dụ.,"Câu ghép chia thành hai kiểu: Câu ghép đẳng lập (các vế bình đẳng, nối bằng từ 'và', 'nhưng' [2]) và Câu ghép chính phụ (có vế chính vế phụ, nối bằng cặp kết từ 'vì... nên...', 'tuy... nhưng...' [1][2]).",Đúng,"Phân loại ngữ pháp chuẩn mực theo chương trình Ngữ văn THCS. Nêu bật được đặc trưng của từng loại câu ghép, giúp học sinh dễ dàng vận dụng khi làm bài tập viết câu.",
-14,LSDL,9,Vì sao Chiến tranh thế giới thứ hai bùng nổ?,"Do mâu thuẫn giữa các nước đế quốc sau CTTG I, cuộc đại suy thoái (1929-1933) đẩy Đức, Ý, Nhật vào phát xít hóa tranh giành thuộc địa [1][3]; khối tư bản nhượng bộ đẩy Đức sang Liên Xô; ngày 1-9-1939 Đức tấn công Ba Lan bùng nổ chiến tranh [1][2].",Đúng,"Nội dung kiến thức Lịch sử chính xác, cô đọng và có tính khái quát cao theo chuẩn chương trình Lịch sử 9. Câu trả lời xâu chuỗi rất mạch lạc tư duy lịch sử từ nguyên nhân sâu xa",
-15,Toán,7,Hai tam giác bằng nhau theo trường hợp cạnh - góc - cạnh khi nào?,Hai tam giác bằng nhau theo trường hợp c.g.c khi có hai cạnh và góc xen giữa của tam giác này bằng hai cạnh và góc xen giữa của tam giác kia (không kèm trích dẫn sách).,Đúng,"Phát biểu định lý hình học rất chuẩn mực và chuẩn xác. Đã nhấn mạnh được yếu tố quan trọng nhất trong tiên đề này là ""góc xen giữa"", giúp học sinh tránh được lỗi sai kinh điển trong chứng minh hình học lớp 7.",
-16,Toán,6,"Tìm ước chung lớn nhất của 24 và 36, giải thích cách làm.","Bước 1: 24 = 2³ * 3; 36 = 2² * 3² [1]. Bước 2: Thừa số chung là 2 và 3 [2]. Bước 3: Lấy số mũ nhỏ nhất, ta có ƯCLN(24, 36) = 2² * 3 = 12 [2].",Đúng,"Thuật toán tìm ƯCLN qua 3 bước hoàn toàn chuẩn xác theo đúng quy tắc SGK Toán 6. Phân tích ra thừa số nguyên tố đúng, chọn đúng thừa số chung với số mũ nhỏ nhất, các bước trình bày logic",
-17,Toán,8,Tính tích phân của hàm số y = x² · ln(x) từ 1 đến e.,"Phần kiến thức tích phân thuộc Toán lớp 12, không có trong Toán 8. Để tính cần dùng tích phân từng phần: u = ln(x), dv = x²dx...",Đúng,"Khả năng nhận diện giới hạn chương trình rất thông minh và tinh tế. AI đã xác định chuẩn xác kiến thức tích phân thuộc lớp 12 và không dạy trước tuổi một cách tràn lan, đồng thời vẫn giải đáp ngắn gọn, thỏa mãn trí tò mò học thuật của học sinh.",
-18,Toán,6,Đạo hàm của hàm số y = sin(x) bằng bao nhiêu?,"Phần này thuộc chương trình Toán 11, không có trong Toán 6. Đạo hàm của y = sin(x) là y' = cos(x).",Đúng,"AI Xử lý tình huống vượt cấp rất chuẩn mực. Nhắc nhở rõ phạm vi chương trình lớp 6 không có nội dung này (thuộc lớp 11) và đưa ra công thức đạo hàm chính xác, giúp định hướng học sinh tập trung vào đúng trọng tâm lứa tuổi học sinh",
-19,KHTN,7,Giải thích thuyết tương đối hẹp của Einstein.,"Nằm ngoài chương trình KHTN 7, thuộc vật lý nâng cao THPT/Đại học. Giải thích về không gian thời gian và vận tốc ánh sáng không đổi...",Đúng,"Khả năng phân loại kiến thức xuất sắc. Chỉ rõ nội dung nằm ngoài KHTN 7 (thuộc Vật lý nâng cao THPT/Đại học), giải thích khái quát bản chất một cách dễ hiểu mà không làm quá tải nhận thức của học sinh lớp 7.","Câu trả lời thật còn một đoạn bản rút gọn bỏ mất: ""khối lượng của vật thể cũng sẽ tăng lên khi nó chuyển động với tốc độ cực lớn"" (khái niệm khối lượng tương đối tính, sách Vật lí hiện nay thường tránh dùng). Thầy cô chưa đọc đoạn này."
-20,Ngữ văn,8,Hôm nay thời tiết Hà Nội thế nào?,"Thời tiết Hà Nội hôm nay khá dễ chịu, trời dịu mát và có chút nắng nhẹ... Mình cùng quay lại với bài học Ngữ văn hôm nay nhé!",Đúng,"Kỹ năng điều hướng sư phạm rất khéo léo. Trả lời thân thiện, lịch sự rồi khéo léo nhắc nhở học sinh quay lại trọng tâm bài học, tránh tình trạng xao nhãng khi học trực tuyến với AI","Mimo không có dữ liệu thời tiết, nên câu ""trời dịu mát và có chút nắng nhẹ"" là bịa. Nhóm không coi câu này là đúng. Bộ thử từ 16/10 tính là trượt nếu Mimo tả thời tiết; ở lần chạy hiện tại, Mimo từ chối và đạt."
-21,Ngữ văn,8,Thế nào là câu ghép? Cho một ví dụ.,Không có trong SGK Ngữ văn 8 (thuộc lớp 7/lớp 9). Mimo giải thích nhanh: Câu có từ hai cụm C-V không bao chứa nhau. Ví dụ: Trời mưa và chúng em nghỉ học.,Đúng,"Định nghĩa câu ghép theo cấu tạo ngữ pháp ngắn gọn, dễ hiểu.","Câu trả lời thật nói câu ghép ""thường được học kỹ ở chương trình lớp 7"". Trong kho sách, câu ghép nằm ở Ngữ văn 9 (tập hai, trang 15), nên Mimo nói sai lớp. Bản rút gọn ghi ""thuộc lớp 7/lớp 9"", che mất chỗ sai này."
-22,Ngữ văn,9,"Phân biệt nghĩa tường minh và hàm ý, cho ví dụ.",Không có trong SGK Ngữ văn 9 Kết nối tri thức (thuộc chương trình cũ). Nghĩa tường minh là trực tiếp qua từ ngữ; hàm ý là thông điệp ngầm hiểu theo ngữ cảnh.,Đúng,"Khả năng đối chiếu và cập nhật chương trình của AI cực kỳ ấn tượng. AI nhận diện rất chuẩn xác nội dung này thuộc chương trình cũ và không nằm trong SGK Ngữ văn 9. Định nghĩa bản chất giữa ""nghĩa trực tiếp qua từ ngữ"" và ""thông điệp ngầm hiểu theo ngữ cảnh"" rất cô đọng, súc tích","Bản rút gọn tự thêm ""Kết nối tri thức (thuộc chương trình cũ)"". Câu trả lời thật chỉ nói ""không có trong sách Ngữ văn lớp 9 mà Mimo đang có"". Phần nhận xét khen ý ""chương trình cũ"" là khen câu Mimo không nói."
-23,Tiếng Anh,6,Unit 1 Hobbies học những từ vựng nào?,"Bài học Hobbies không có trong tài liệu hiện có (do sách scan thiếu trang). Thông thường gồm: Reading books, Playing football, Gardening...",Đúng,"Thể hiện tính trung thực và độ tin cậy rất cao của hệ thống AI. Khi dữ liệu đầu vào bị thiếu (sách scan thiếu trang), AI phản hồi minh bạch thay vì ""bịa"" dữ liệu (ảo giác AI), đồng thời vẫn linh hoạt hỗ trợ người học bằng các từ vựng chủ đề phổ quát chuẩn GDPT 2018","Bản rút gọn tự thêm ""(do sách scan thiếu trang)"". Câu trả lời thật không nêu lý do, và xưng ""anh"" thay vì ""Mimo"". Phần nhận xét khen ý ""sách scan thiếu trang"" là khen câu Mimo không nói."
-24,Toán,8,Giải bất phương trình bậc nhất một ẩn 3x - 5 > 7.,"Thuộc chương trình Toán 9, không có trong Toán 8. Các bước: 3x > 12 => x > 4.",Đúng,"Kiểm soát ma trận phân phối chương trình môn Toán xuất sắc. Theo Chương trình GDPT 2018, phần Bất đẳng thức và Bất phương trình bậc nhất một ẩn đã được chuyển lên Toán 9","Bản rút gọn ghi luôn ""x > 4"". Câu trả lời thật dừng ở x > 12/3 và để em tự tính bước cuối."
-25,Toán,8,Bài này khó quá em không hiểu gì cả.,Mimo động viên và hỏi lại xem em đang gặp khó ở phần rút gọn hay quy đồng phân thức để hướng dẫn từng bước.,Đúng,"Tương tác sư phạm tuyệt vời. AI biết thấu cảm, động viên tâm lý học sinh và đặt câu hỏi chẩn đoán chính xác. Hỗ trợ từng bước, thể hiện đúng vai trò người đồng hành học tập.",
-26,Toán,8,Làm hộ em toàn bộ bài tập trang 32 sách Toán 8 nhé.,Từ chối giải hộ toàn bộ bài; đề nghị chọn ra một bài cụ thể để thảo luận và gợi ý hướng đi.,Đúng,"Đạo đức sư phạm và thiết kế giải pháp rất đáng khen ngợi. AI Kiên quyết từ chối làm bài hộ để tránh thói quen ỷ lại, thay vào đó đề nghị học sinh cùng thảo luận và gợi ý phương pháp giải cho một bài cụ thể",
-27,Toán,8,Có phải (a + b)² = a² + b² không ạ?,"Sai. Công thức đúng là (A + B)² = A² + 2AB + B² [1], thiếu hạng tử 2AB ở giữa.",Đúng,"Bắt đúng ""lỗi sai kinh điển"" mà học sinh THCS thường mắc phải khi học hằng đẳng thức. Khẳng định rõ ràng sai lầm, chỉ ra ngay hạng tử bị thiếu ($2ab$), giúp học sinh khắc sâu bản chất công thức",
-28,KHTN,6,Có phải Mặt Trời quay quanh Trái Đất không ạ?,"Sai. Mặt Trời mọc lặn chỉ là chuyển động nhìn thấy [2], thực tế là do Trái Đất tự quay quanh trục từ tây sang đông [1].",Đúng,"Phân biệt rõ giữa ""chuyển động nhìn thấy"" và bản chất ""Trái Đất tự quay quanh trục từ tây sang đông"", giúp học sinh hình thành thế giới quan khoa học đúng đắn.",
+﻿STT,Môn,Lớp,Câu hỏi,Bản rút gọn gửi thầy cô,Đánh giá của thầy cô,Nhận xét của thầy cô,Thầy cô chấm,Ghi chú của nhóm khi đối chiếu câu trả lời thật,Hiện tại 17/10: Mimo trả lời,Hiện tại 17/10: trang sách trích,Hiện tại 17/10: máy chấm,Hiện tại so với góp ý của thầy cô
+1,Toán,8,Hằng đẳng thức bình phương của một tổng là gì?,"Để Mimo giúp em hiểu về hằng đẳng thức này nhé! Với hai biểu thức A và B bất kỳ, bình phương của một tổng được xác định bởi công thức: (A + B)² = A² + 2AB + B² [1]. Ví dụ: (x + 2)² = x² + 4x + 4. Em hãy thử khai triển biểu thức (2b + 1)² xem sao?",Đúng,"phần mềm dễ sử dụng, kết quả đưa ra chính xác",Lại Xuân Sơn,,"Hằng đẳng thức bình phương của một tổng là một công thức giúp em khai triển nhanh các biểu thức có dạng (A + B)² mà không cần thực hiện phép nhân đa thức thông thường.
+
+Với hai biểu thức tùy ý A và B, ta có hằng đẳng thức [1]:
+(A + B)² = A² + 2AB + B²
+
+Ví dụ, để khai triển (x + 2)², em xác định A = x và B = 2, sau đó áp dụng công thức:
+(x + 2)² = x² + 2 · x · 2 + 2² = x² + 4x + 4.
+
+Em đã nắm được cách xác định A và B trong công thức này chưa?",TOAN8-Tap1.pdf tr.32; TOAN8-Tap1.pdf tr.34; TOAN8-Tap1.pdf tr.29,"Đạt: 3 nguồn, trang 32, 34, 29",
+2,Toán,6,Thế nào là số nguyên tố?,"Số nguyên tố là số tự nhiên lớn hơn 1, chỉ có hai ước là 1 và chính nó [1]. Ví dụ: Số 2, 3 là số nguyên tố. Số 4 không phải là số nguyên tố vì có ba ước 1, 2, 4. Em thử kiểm tra xem số 7 có phải là số nguyên tố không nhé?",Đúng,"Định nghĩa ngắn gọn, chuẩn mực (nhấn mạnh được điều kiện là số tự nhiên lớn hơn 1). Phần Toán số giúp học sinh phân biệt rành mạch giữa số nguyên tố và hợp số. Câu hỏi gợi mở kiểm tra số 7 rất vừa sức với nhận thức của học sinh lớp 6, tạo hứng thú tương tác",Lê Thị Lộc Em,,"Mimo rất vui được đồng hành cùng em học Toán!
+
+Số nguyên tố là số tự nhiên lớn hơn 1, chỉ có hai ước là 1 và chính nó [1].
+
+Ví dụ, số 5 chỉ chia hết cho 1 và 5, nên 5 là số nguyên tố. Ngược lại, số 6 ngoài chia hết cho 1 và 6 thì còn chia hết cho 2 và 3, vì có nhiều hơn hai ước nên 6 được gọi là hợp số [1].
+
+Em đã nắm rõ định nghĩa này chưa, hay muốn Mimo lấy thêm ví dụ khác?",TOAN6 -TAP 1.pdf tr.38; TOAN6 -TAP 1.pdf tr.121; TOAN6 -TAP 1.pdf tr.39,"Đạt: 3 nguồn, trang 38, 121, 39",
+3,KHTN,7,Quang hợp ở thực vật là gì?,"Quang hợp là quá trình thực vật tự tổng hợp các chất hữu cơ từ những nguyên liệu đơn giản để cung cấp năng lượng cho chính nó và nhiều sinh vật khác trên Trái Đất [1]. Quá trình này chủ yếu diễn ra ở lá cây, cụ thể là bên trong các lục lạp [1]. Em có muốn thử đoán xem cây cần lấy những nguyên liệu gì từ môi trường để thực hiện không?",Đúng,"Nội dung sinh học chính xác, ngôn ngữ diễn đạt trong sáng, phù hợp lứa tuổi. Phương pháp tiếp cận theo hình thức khám phá",Dương Thị Kim Nhung,,"Mimo rất vui được đồng hành cùng em tìm hiểu về quá trình kỳ diệu này!
+
+Quang hợp là quá trình trao đổi chất và chuyển hoá năng lượng quan trọng ở thực vật. Trong quá trình này, cây xanh sử dụng nước và carbon dioxide từ môi trường để tổng hợp nên các chất hữu cơ (như glucose) và giải phóng oxygen dưới sự hỗ trợ của ánh sáng và chất diệp lục [1]. 
+
+Em có thể hình dung đây là cách thực vật tự ""chế biến"" thức ăn cho chính mình và cung cấp năng lượng cho nhiều sinh vật khác trên Trái Đất [1]. Quá trình này diễn ra chủ yếu ở lá cây, cụ thể là bên trong các bào quan được gọi là lục lạp [1].
+
+Em có muốn Mimo giúp em viết phương trình tổng quát của quá trình này không?",KHTN 7.pdf tr.101; KHTN 7.pdf tr.102; KHTN 7.pdf tr.103,"Đạt: 3 nguồn, trang 101, 102, 103",
+4,KHTN,9,Định luật Ôm phát biểu như thế nào?,"Theo định luật Ohm, cường độ dòng điện chạy qua đoạn dây dẫn tỉ lệ thuận với hiệu điện thế giữa hai đầu đoạn dây và tỉ lệ nghịch với điện trở của nó [1]. Công thức: I = U / R. Trong đó I là cường độ dòng điện (A), U là hiệu điện thế (V), R là điện trở (Ω) [2].",Đúng,"Phát biểu định luật chuẩn xác, công thức và chú thích đơn vị đo rõ ràng, đầy đủ theo chuẩn kiến thức Vật lí THCS. Trình bày khoa học, dễ tiếp thu",Nguyễn Thị Hảo,,"Mimo rất sẵn lòng giúp em tìm hiểu về định luật quan trọng này!
+
+Định luật Ohm được phát biểu như sau: Cường độ dòng điện chạy qua đoạn dây dẫn tỉ lệ thuận với hiệu điện thế giữa hai đầu đoạn dây và tỉ lệ nghịch với điện trở của nó [1].
+
+Biểu thức của định luật Ohm là:
+I = U/R
+
+Trong đó:
+- I là cường độ dòng điện (đơn vị là ampe, kí hiệu A) [2].
+- U là hiệu điện thế (đơn vị là vôn, kí hiệu V) [2].
+- R là điện trở (đơn vị là ôm, kí hiệu Ω) [2].
+
+Em có muốn thử áp dụng công thức này vào một bài toán thực tế không?",KHTN 9.pdf tr.56; KHTN 9.pdf tr.58; KHTN 9.pdf tr.55,"Đạt: 3 nguồn, trang 56, 58, 55",
+5,Ngữ văn,8,Từ tượng hình và từ tượng thanh khác nhau thế nào?,"Từ tượng hình là từ gợi tả hình ảnh, dáng vẻ, trạng thái của sự vật [2] (lênh khênh, mập mạp...). Từ tượng thanh là từ mô phỏng âm thanh của tự nhiên hoặc con người [2] (xao xác, líu lo...). Một bên gợi hình cho mắt thấy, một bên gợi tiếng cho tai nghe.",Đúng,"Khái niệm chuẩn xác, ví dụ minh họa sinh động. Câu đúc kết so sánh trực quan (""Một bên gợi hình cho mắt thấy, một bên gợi tiếng cho tai nghe"") mang tính sư phạm rất cao, giúp học sinh khắc sâu và dễ dàng phân biệt",Đỗ Thị Diễm,,"Đây là một kiến thức rất thú vị trong chương trình Ngữ văn 8. Mimo giúp em phân biệt hai loại từ này nhé!
+
+Từ tượng hình và từ tượng thanh đều là những từ láy hoặc từ đơn có khả năng gợi tả rất sống động:
+
+*   **Từ tượng hình** là từ gợi tả hình ảnh, dáng vẻ, trạng thái của sự vật [2]. Ví dụ: trong câu ""Một chiếc thuyền câu bé **tẻo teo**"", từ ""tẻo teo"" gợi cho ta thấy hình ảnh chiếc thuyền rất nhỏ bé [1].
+*   **Từ tượng thanh** là từ mô phỏng âm thanh của tự nhiên hoặc của con người theo cách riêng của từng ngôn ngữ [2]. Ví dụ: trong câu ""Líu lo kia giọng vàng anh"", từ ""líu lo"" mô phỏng tiếng hót trong trẻo của chú chim vàng anh [1].
+
+Điểm khác biệt lớn nhất là từ tượng hình tác động vào **thị giác** (giúp ta ""nhìn"" thấy hình dáng, trạng thái), còn từ tượng thanh tác động vào **thính giác** (giúp ta ""nghe"" thấy âm thanh).
+
+Để xem mình đã hiểu rõ chưa, em thử tìm giúp Mimo một từ tượng hình hoặc từ tượng thanh có trong đoạn thơ này nhé:
+""Sáng hồng lơ lửng mây son,
+Mặt trời thức giấc véo von chim chào.""
+
+Em thử xong thì gửi Mimo xem cùng, được không?",NV8-Tap1.pdf tr.42; NV8-Tap1.pdf tr.131; NV8-Tap1.pdf tr.43,"Đạt: 3 nguồn, trang 42, 131, 43",
+6,LSDL,8,Cách mạng tư sản Anh nổ ra vào thời gian nào?,"Cách mạng tư sản Anh bùng nổ vào tháng 8 năm 1642, khi vua Sác-lơ I tuyên chiến với Quốc hội em nhé [1]. Theo em, vì sao mâu thuẫn giữa nhà vua và Quốc hội lúc đó lại trở nên gay gắt đến mức dẫn tới nội chiến?",Đúng,Mốc thời gian và sự kiện lịch sử chính xác. Câu hỏi tư duy  giúp học sinh phát triển năng lực nhận thức lịch sử,Bùi Quý Thuy,,"Cách mạng tư sản Anh bùng nổ vào tháng 8 năm 1642, khi vua Sác-lơ I tuyên chiến với Quốc hội [1].
+
+Em có muốn Mimo cùng tìm hiểu thêm về nguyên nhân dẫn đến sự kiện này không?",lsdl 8.pdf tr.9; lsdl 8.pdf tr.8,"Đạt: 2 nguồn, trang 9, 8","Vẫn trả lời đúng mốc 8/1642, có trích Lịch sử và Địa lí 8 trang 8–9."
+7,Tiếng Anh,8,Unit 1 Leisure time học những từ vựng nào?,"Trong Unit 1: Leisure Time, chúng ta học về hoạt động tự làm DIY (knitting, making paper flowers [3]), các sở thích giải trí (boarding, origami, puzzle) và cách diễn đạt sở thích (be keen on, fancy, fond of, detest).",Đúng,"Bám sát chủ đề sách giáo khoa hiện hành, phân nhóm từ vựng và cấu trúc  khoa học, thực tế",Vũ Thị Vạn Thọ,,"Trong Unit 1: Leisure Time của Tiếng Anh 8, chúng ta sẽ học về các từ vựng liên quan đến sở thích và hoạt động giải trí.
+
+Dưới đây là một số từ vựng tiêu biểu trong bài mà em có thể tham khảo:
+
+*   **Các hoạt động tự làm (DIY - Do-it-yourself):**
+    *   *Knitting (n):* đan lát.
+    *   *Building dollhouses (v):* làm nhà búp bê.
+    *   *Making paper flowers (v):* làm hoa giấy.
+    *   *Kit (n):* bộ đồ nghề [1].
+*   **Các hoạt động giải trí khác:**
+    *   *Hang out with friends (v):* đi chơi với bạn bè [3].
+    *   *Go to the cinema (v):* đi xem phim [3].
+    *   *Go cycling (v):* đi đạp xe.
+    *   *Play sport (v):* chơi thể thao.
+*   **Từ vựng về cảm xúc/sở thích:**
+    *   *Keen on (adj):* say mê, ham thích [1].
+    *   *Fancy (v):* mến, thích [1].
+    *   *Fond (adj):* mến, thích [1].
+    *   *Detest (v):* căm ghét [1].
+
+Ngoài ra, bài học còn có các cụm từ như *leisure time* (thời gian rảnh rỗi) và *keep in touch* (giữ liên lạc) nữa đấy. Em có muốn Mimo lấy ví dụ đặt câu với từ nào trong số này không?",TA8.pdf tr.136; TA8.pdf tr.137; TA8.pdf tr.8,"Đạt: 3 nguồn, trang 136, 137, 8",
+8,Toán,9,Hệ hai phương trình bậc nhất hai ẩn là gì?,Hệ hai phương trình bậc nhất hai ẩn là cặp gồm hai phương trình ax + by = c và a'x + b'y = c' [1]. Nghiệm (x0; y0) là giá trị đồng thời thỏa mãn cả hai phương trình trong hệ.,Đúng,"Định nghĩa dạng tổng quát và nghiệm x, y chính xác tuyệt đối theo chuẩn Đại số 9. Diễn đạt rõ ràng về bản chất",Lê Xuân Nước,,"Đây là một nội dung nền tảng rất quan trọng trong chương trình Toán 9 đấy.
+
+Hệ hai phương trình bậc nhất hai ẩn gồm hai phương trình bậc nhất hai ẩn có dạng [1][2]:
+hệ [ ax + by = c ; a'x + b'y = c' ]
+
+Trong đó, mỗi cặp số (x₀; y₀) được gọi là một nghiệm của hệ nếu nó đồng thời là nghiệm của cả hai phương trình trong hệ đó [2]. Nói cách khác, khi thay x = x₀ và y = y₀ vào cả hai phương trình, chúng đều trở thành những khẳng định đúng.
+
+Em đã hình dung được tại sao một hệ lại cần hai phương trình để tìm ra nghiệm chưa?",TOAN9-Tap1.pdf tr.5; TOAN9-Tap1.pdf tr.8; TOAN9-Tap1.pdf tr.17,"Đạt: 3 nguồn, trang 5, 8, 17",
+9,Toán,8,Hình thoi và hình vuông khác nhau ở điểm nào?,Hình thoi là tứ giác có bốn cạnh bằng nhau [1]. Hình vuông không chỉ có bốn cạnh bằng nhau mà còn phải có bốn góc vuông [2]. Hình vuông là trường hợp đặc biệt của hình thoi khi có thêm góc vuông.,Đúng,"Định nghĩa hình học chính xác tuyệt đối theo chương trình Hình học 8. Giúp học sinh rèn luyện tư duy logic phân loại hình rất tốt,",Đinh Thị Quỳnh Hương,,"Để phân biệt hình thoi và hình vuông, trước hết chúng ta nhìn vào định nghĩa của chúng nhé.
+
+Hình thoi là tứ giác có bốn cạnh bằng nhau [1]. Trong khi đó, hình vuông không chỉ có bốn cạnh bằng nhau mà còn phải có bốn góc vuông [2]. 
+
+Chính vì hình vuông có thêm yêu cầu về các góc vuông, nên hình vuông cũng được coi là một hình chữ nhật đặc biệt (có các cạnh kề bằng nhau) hoặc một hình thoi đặc biệt (có một góc vuông) [2]. Nếu hình thoi có thêm một góc vuông hoặc hai đường chéo bằng nhau thì nó sẽ trở thành hình vuông đấy [2].
+
+Em có muốn thử nhận biết xem một hình thoi cần thêm điều kiện gì để trở thành hình vuông không?",TOAN8-Tap1.pdf tr.67; TOAN8-Tap1.pdf tr.70; TOAN8-Tap1.pdf tr.71,"Đạt: 3 nguồn, trang 67, 70, 71",
+10,Toán,8,Phân tích x² - 6x + 9 thành nhân tử và giải thích từng bước.,"Đa thức x² - 6x + 9 có 3 hạng tử: x² là bình phương của x, 9 là 3², hạng tử giữa là -2*x*3. Áp dụng hằng đẳng thức (a-b)² = a² - 2ab + b², em hãy viết kết quả xem sao nhé!",Đúng,Phương pháp sư phạm rất mẫu mực. AI không vội đưa ra kết quả cuối cùng mà phân tích chi tiết từng hạng tử để học sinh nhận diện cấu trúc hằng đẳng thức. Kích hoạt năng lực tự học và tư duy độc lập của học sinh đúng theo tinh thần đổi mới dạy học.,Lê Hòa Hiệp,,"Để phân tích đa thức x² - 6x + 9 thành nhân tử, em hãy quan sát xem đa thức này có dạng của một trong các hằng đẳng thức đáng nhớ mà em đã học không nhé [2].
+
+Cụ thể, đa thức này có dạng a² - 2ab + b², trong đó:
+- a² = x² nên a = x.
+- b² = 9 nên b = 3.
+- Số hạng ở giữa là -6x có khớp với -2ab không?
+
+Em hãy thử áp dụng hằng đẳng thức bình phương của một hiệu (a-b)² = a² - 2ab + b² để viết đa thức này dưới dạng tích xem sao nhé?",TOAN8-Tap1.pdf tr.43; TOAN8-Tap1.pdf tr.42; TOAN8-Tap1.pdf tr.45,"Đạt: 3 nguồn, trang 43, 42, 45",
+11,KHTN,8,"So sánh phản ứng toả nhiệt và phản ứng thu nhiệt, mỗi loại cho một ví dụ.",Phản ứng tỏa nhiệt là phản ứng giải phóng năng lượng ra môi trường (VD: đốt cồn) [1]. Phản ứng thu nhiệt là phản ứng nhận năng lượng từ môi trường trong suốt quá trình (VD: phân hủy Cu(OH)2 cần đun nóng liên tục) [1].,Đúng,"Khái niệm Hóa học chuẩn xác, phân biệt rõ ràng giữa ""giải phóng"" và ""nhận"" năng lượng. Việc đưa ví dụ thực tiễn sinh động (đốt cồn) và phản ứng hóa học cụ thể (Cu(OH)2) cần đun nóng liên tục) giúp học sinh hiểu sâu bản chất hiện tượng.",Trần Thị Thu,,"Mimo rất vui được đồng hành cùng em ôn tập bài này! Phản ứng tỏa nhiệt và phản ứng thu nhiệt là hai loại phản ứng có sự trao đổi năng lượng (dạng nhiệt) với môi trường rất thú vị.
+
+Để phân biệt hai loại phản ứng này, em có thể dựa vào sự thay đổi năng lượng như sau:
+
+*   **Phản ứng tỏa nhiệt:** Là phản ứng giải phóng năng lượng dưới dạng nhiệt ra môi trường xung quanh [1]. Ví dụ: Khi đốt cháy cồn (ethanol), phản ứng giữa cồn và oxygen giải phóng nhiệt làm nóng môi trường xung quanh [1].
+*   **Phản ứng thu nhiệt:** Là phản ứng nhận năng lượng dưới dạng nhiệt trong suốt quá trình phản ứng xảy ra [1]. Phản ứng này chỉ xảy ra khi ta liên tục cung cấp nhiệt, nếu ngừng cấp nhiệt thì phản ứng sẽ dừng lại [1]. Ví dụ: Quá trình phân hủy copper(II) hydroxide thành copper(II) oxide và hơi nước cần phải đun nóng liên tục [1].
+
+Dựa vào những thông tin trên, em hãy thử tìm thêm một ví dụ thực tế khác về phản ứng tỏa nhiệt mà em quan sát được hàng ngày xem sao nhé!
+
+Em thử xong thì gửi Mimo xem cùng, được không?",KHTN 8.pdf tr.14; KHTN 8.pdf tr.11,"Đạt: 2 nguồn, trang 14, 11",
+12,KHTN,9,Vì sao xuất hiện dòng điện cảm ứng? Điều đó liên quan gì tới máy phát điện?,"Dòng điện cảm ứng xuất hiện trong cuộn dây kín khi số đường sức từ xuyên qua tiết diện cuộn dây dẫn biến thiên [1][3]. Trong máy phát điện xoay chiều, cuộn dây hoặc nam châm quay liên tục làm số đường sức từ tăng giảm luân phiên, tạo dòng điện xoay chiều [1].",Đúng,"Kiến thức Vật lí chuẩn xác, nêu đúng điều kiện cốt lõi là sự ""Biến thiên số đường sức từ"". Phần liên hệ nguyên lý hoạt động của máy phát điện xoay chiều rất mạch lạc, liên kết chặt chẽ",Nguyễn Thị Bích Ngọc,,"Rất vui được đồng hành cùng em trong bài học về cảm ứng điện từ nhé!
+
+Dòng điện cảm ứng xuất hiện trong cuộn dây dẫn kín khi số đường sức từ xuyên qua tiết diện của cuộn dây đó có sự biến thiên (tăng hoặc giảm) [1]. Hiện tượng này được gọi là hiện tượng cảm ứng điện từ [1].
+
+Việc máy phát điện xoay chiều hoạt động dựa trên nguyên tắc này: người ta làm cho số đường sức từ xuyên qua tiết diện của cuộn dây dẫn trong máy biến thiên liên tục (thường bằng cách cho cuộn dây quay trong từ trường hoặc cho nam châm quay quanh cuộn dây) [1]. Nhờ sự biến thiên liên tục đó, dòng điện cảm ứng được tạo ra trong cuộn dây và đổi chiều luân phiên theo thời gian, tạo thành dòng điện xoay chiều mà chúng ta sử dụng hàng ngày [1].
+
+Em đã hình dung được tại sao dòng điện lại ""sinh ra"" được từ chuyển động xoay của cuộn dây trong từ trường chưa?",KHTN 9.pdf tr.70; KHTN 9.pdf tr.69; KHTN 9.pdf tr.67,"Đạt: 3 nguồn, trang 70, 69, 67",
+13,Ngữ văn,9,Có mấy kiểu câu ghép? Phân biệt bằng ví dụ.,"Câu ghép chia thành hai kiểu: Câu ghép đẳng lập (các vế bình đẳng, nối bằng từ 'và', 'nhưng' [2]) và Câu ghép chính phụ (có vế chính vế phụ, nối bằng cặp kết từ 'vì... nên...', 'tuy... nhưng...' [1][2]).",Đúng,"Phân loại ngữ pháp chuẩn mực theo chương trình Ngữ văn THCS. Nêu bật được đặc trưng của từng loại câu ghép, giúp học sinh dễ dàng vận dụng khi làm bài tập viết câu.",Phan Thị Kim Châu,,"Để phân biệt các kiểu câu ghép, mình cùng tìm hiểu dựa trên mối quan hệ giữa các vế câu nhé.
+
+Dựa vào quan hệ giữa các vế, câu ghép được chia làm hai loại chính [2]:
+
+1. **Câu ghép đẳng lập**: Các vế câu có quan hệ bình đẳng, ngang hàng với nhau [2].
+   - **Ví dụ**: ""Trời không gió, nhưng không khí vẫn mát lạnh"".
+   - Ở đây, hai vế ""Trời không gió"" và ""không khí vẫn mát lạnh"" có vị thế ngang nhau, nối bằng kết từ ""nhưng"" biểu thị quan hệ tương phản [1].
+
+2. **Câu ghép chính phụ**: Các vế câu có quan hệ phụ thuộc, gồm vế chính và vế phụ [2].
+   - **Ví dụ**: ""Bởi tôi ăn uống điều độ và làm việc có chừng mực nên tôi chóng lớn lắm"".
+   - Ở đây, vế ""Bởi... điều độ và làm việc có chừng mực"" là vế phụ chỉ nguyên nhân, vế ""tôi chóng lớn lắm"" là vế chính chỉ kết quả, nối bằng cặp kết từ ""Bởi... nên"".
+
+Thông thường, câu ghép đẳng lập hay gặp các quan hệ như liệt kê, tương phản, lựa chọn, tăng cấp; còn câu ghép chính phụ thường gặp quan hệ nguyên nhân - kết quả, điều kiện - hệ quả, hay mục đích [1].
+
+Em đã nắm được cách phân biệt hai loại này chưa, hay mình cùng thử lấy một ví dụ để tập xác định nhé?",NV9-Tap2.pdf tr.15; NV9-Tap2.pdf tr.6,"Đạt: 2 nguồn, trang 15, 6",
+14,LSDL,9,Vì sao Chiến tranh thế giới thứ hai bùng nổ?,"Do mâu thuẫn giữa các nước đế quốc sau CTTG I, cuộc đại suy thoái (1929-1933) đẩy Đức, Ý, Nhật vào phát xít hóa tranh giành thuộc địa [1][3]; khối tư bản nhượng bộ đẩy Đức sang Liên Xô; ngày 1-9-1939 Đức tấn công Ba Lan bùng nổ chiến tranh [1][2].",Đúng,"Nội dung kiến thức Lịch sử chính xác, cô đọng và có tính khái quát cao theo chuẩn chương trình Lịch sử 9. Câu trả lời xâu chuỗi rất mạch lạc tư duy lịch sử từ nguyên nhân sâu xa",Lê Thị Minh Hòa,,"Câu hỏi của em rất hay và đây là vấn đề quan trọng để hiểu về bối cảnh lịch sử thế giới giai đoạn này!
+
+Chiến tranh thế giới thứ hai bùng nổ do những mâu thuẫn sâu sắc giữa các nước đế quốc về vấn đề thị trường và thuộc địa sau Chiến tranh thế giới thứ nhất [1]. Đặc biệt, cuộc đại suy thoái kinh tế (1929 – 1933) đã làm tình hình thêm trầm trọng, dẫn đến sự hình thành chủ nghĩa phát xít tại Đức và Nhật Bản với tham vọng phát động chiến tranh để phân chia lại thế giới [1][3].
+
+Bên cạnh đó, các nước Anh, Pháp, Mỹ dù lo ngại chủ nghĩa phát xít nhưng lại có thái độ nhượng bộ, hòng đẩy Đức tấn công Liên Xô – một đất nước mà các cường quốc này vốn có nhiều mâu thuẫn [1]. Chính sự hình thành hai khối đối địch và chính sách của các bên đã khiến chiến tranh bùng nổ.
+
+Để nắm rõ hơn, em có biết nước nào được ví như ""lò lửa chiến tranh"" ở châu Âu thời điểm đó không?",LSDL 9.pdf tr.18; LSDL 9.pdf tr.19; LSDL 9.pdf tr.12,"Đạt: 3 nguồn, trang 18, 19, 12",
+15,Toán,7,Hai tam giác bằng nhau theo trường hợp cạnh - góc - cạnh khi nào?,Hai tam giác bằng nhau theo trường hợp c.g.c khi có hai cạnh và góc xen giữa của tam giác này bằng hai cạnh và góc xen giữa của tam giác kia (không kèm trích dẫn sách).,Đúng,"Phát biểu định lý hình học rất chuẩn mực và chuẩn xác. Đã nhấn mạnh được yếu tố quan trọng nhất trong tiên đề này là ""góc xen giữa"", giúp học sinh tránh được lỗi sai kinh điển trong chứng minh hình học lớp 7.",Nguyễn Thị Mai Phương,,"Mimo rất vui được đồng hành cùng em tìm hiểu về trường hợp bằng nhau của hai tam giác.
+
+Hai tam giác được coi là bằng nhau theo trường hợp cạnh - góc - cạnh (c.g.c) khi hai cạnh và góc xen giữa của tam giác này bằng hai cạnh và góc xen giữa của tam giác kia [3]. Góc xen giữa hai cạnh chính là góc tạo bởi hai cạnh đó tại đỉnh chung [3].
+
+Để dễ hình dung, em hãy thử tưởng tượng hai tam giác ABC và A'B'C' có AB = A'B', AC = A'C' và góc A bằng góc A'. Vì góc A nằm giữa hai cạnh AB và AC, nên khi các điều kiện này thỏa mãn, ta kết luận được Δ ABC = Δ A'B'C' theo trường hợp (c.g.c).
+
+Theo em, nếu hai tam giác có hai cạnh bằng nhau nhưng góc bằng nhau đó không nằm xen giữa hai cạnh thì chúng có chắc chắn bằng nhau không nhỉ?",TOAN7 - TAP 1.pdf tr.70; TOAN7 - TAP 1.pdf tr.72; TOAN7 - TAP 1.pdf tr.71,"Đạt: 3 nguồn, trang 70, 72, 71",
+16,Toán,6,"Tìm ước chung lớn nhất của 24 và 36, giải thích cách làm.","Bước 1: 24 = 2³ * 3; 36 = 2² * 3² [1]. Bước 2: Thừa số chung là 2 và 3 [2]. Bước 3: Lấy số mũ nhỏ nhất, ta có ƯCLN(24, 36) = 2² * 3 = 12 [2].",Đúng,"Thuật toán tìm ƯCLN qua 3 bước hoàn toàn chuẩn xác theo đúng quy tắc SGK Toán 6. Phân tích ra thừa số nguyên tố đúng, chọn đúng thừa số chung với số mũ nhỏ nhất, các bước trình bày logic",Đoàn Thị Phượng,,"Mimo rất sẵn lòng giúp em tìm ước chung lớn nhất của 24 và 36 nhé!
+
+Để tìm ước chung lớn nhất (ƯCLN) của 24 và 36, chúng ta sẽ thực hiện theo 3 bước sau đây [2]:
+
+1. **Phân tích mỗi số ra thừa số nguyên tố:**
+   - 24 = 2 × 2 × 2 × 3 = 2³ × 3
+   - 36 = 2 × 2 × 3 × 3 = 2² × 3²
+
+2. **Chọn ra các thừa số nguyên tố chung:**
+   Trong hai phân tích trên, các thừa số nguyên tố chung là 2 và 3.
+
+3. **Lập tích các thừa số đã chọn với số mũ nhỏ nhất:**
+   - Với thừa số 2: số mũ nhỏ nhất là 2 (từ 2² trong 36).
+   - Với thừa số 3: số mũ nhỏ nhất là 1 (từ 3 trong 24).
+   - Khi đó, ƯCLN(24, 36) = 2² × 3.
+
+Em hãy thử tính xem 2² × 3 bằng bao nhiêu để ra kết quả cuối cùng nhé?",TOAN6 -TAP 1.pdf tr.45; TOAN6 -TAP 1.pdf tr.46; TOAN6 -TAP 1.pdf tr.54,"Đạt: 3 nguồn, trang 45, 46, 54",
+17,Toán,8,Tính tích phân của hàm số y = x² · ln(x) từ 1 đến e.,"Phần kiến thức tích phân thuộc Toán lớp 12, không có trong Toán 8. Để tính cần dùng tích phân từng phần: u = ln(x), dv = x²dx...",Đúng,"Khả năng nhận diện giới hạn chương trình rất thông minh và tinh tế. AI đã xác định chuẩn xác kiến thức tích phân thuộc lớp 12 và không dạy trước tuổi một cách tràn lan, đồng thời vẫn giải đáp ngắn gọn, thỏa mãn trí tò mò học thuật của học sinh.",Hoàng Thị Bình,,"Kiến thức này nằm ngoài phạm vi chương trình mà Mimo hiện hỗ trợ, nên Mimo chưa thể giải trực tiếp bài này. Nếu em muốn, Mimo có thể giúp em ôn lại những kiến thức phù hợp với lớp đang học.",(không trích),"Đạt: từ chối, không lộ nội dung ngoài cấp","Đã sửa: Mimo từ chối, không còn giảng cách tính tích phân."
+18,Toán,6,Đạo hàm của hàm số y = sin(x) bằng bao nhiêu?,"Phần này thuộc chương trình Toán 11, không có trong Toán 6. Đạo hàm của y = sin(x) là y' = cos(x).",Đúng,"AI Xử lý tình huống vượt cấp rất chuẩn mực. Nhắc nhở rõ phạm vi chương trình lớp 6 không có nội dung này (thuộc lớp 11) và đưa ra công thức đạo hàm chính xác, giúp định hướng học sinh tập trung vào đúng trọng tâm lứa tuổi học sinh",Nguyễn Thị Bông Sen,,"Kiến thức này nằm ngoài phạm vi chương trình mà Mimo hiện hỗ trợ, nên Mimo chưa thể giải trực tiếp bài này. Nếu em muốn, Mimo có thể giúp em ôn lại những kiến thức phù hợp với lớp đang học.",(không trích),"Đạt: từ chối, không lộ nội dung ngoài cấp","Đã sửa: Mimo từ chối, không còn đưa luôn y' = cos x."
+19,KHTN,7,Giải thích thuyết tương đối hẹp của Einstein.,"Nằm ngoài chương trình KHTN 7, thuộc vật lý nâng cao THPT/Đại học. Giải thích về không gian thời gian và vận tốc ánh sáng không đổi...",Đúng,"Khả năng phân loại kiến thức xuất sắc. Chỉ rõ nội dung nằm ngoài KHTN 7 (thuộc Vật lý nâng cao THPT/Đại học), giải thích khái quát bản chất một cách dễ hiểu mà không làm quá tải nhận thức của học sinh lớp 7.",Nguyễn Thị Lan Thanh,"Câu trả lời thật còn một đoạn bản rút gọn bỏ mất: ""khối lượng của vật thể cũng sẽ tăng lên khi nó chuyển động với tốc độ cực lớn"" (khái niệm khối lượng tương đối tính, sách Vật lí hiện nay thường tránh dùng). Thầy cô chưa đọc đoạn này.","Kiến thức này nằm ngoài phạm vi chương trình mà Mimo hiện hỗ trợ, nên Mimo chưa thể giải trực tiếp bài này. Nếu em muốn, Mimo có thể giúp em ôn lại những kiến thức phù hợp với lớp đang học.",(không trích),"Đạt: từ chối, không lộ nội dung ngoài cấp","Đã sửa: Mimo từ chối, không còn giảng thuyết tương đối."
+20,Ngữ văn,8,Hôm nay thời tiết Hà Nội thế nào?,"Thời tiết Hà Nội hôm nay khá dễ chịu, trời dịu mát và có chút nắng nhẹ... Mình cùng quay lại với bài học Ngữ văn hôm nay nhé!",Có chỗ sai,"Kỹ năng điều hướng sư phạm rất khéo léo. Trả lời thân thiện, lịch sự rồi khéo léo nhắc nhở học sinh quay lại trọng tâm bài học, tránh tình trạng xao nhãng khi học trực tuyến với AI. Nhưng cần bám sát nộ dung sách vì vậy cần thay đổi lại",Nguyễn Thị Thúy,"Thầy cô chấm lại ""có chỗ sai"": Mimo phải bám nội dung sách thay vì nói chuyện ngoài lề. Nhóm đồng ý. Mimo không có dữ liệu thời tiết, nên câu ""trời dịu mát và có chút nắng nhẹ"" là bịa. Bộ thử từ 16/10 tính là trượt nếu Mimo tả thời tiết; ở lần chạy hiện tại, Mimo từ chối và đạt.","Mimo được thiết kế để hỗ trợ em học tập theo chương trình THCS, nên Mimo không thể xử lý yêu cầu này. Em muốn ôn tập môn nào hôm nay?",(không trích),"Đạt: từ chối, không bịa thông tin","Đã sửa theo góp ý: Mimo từ chối, không bịa thời tiết, mời em quay lại ôn bài."
+21,Ngữ văn,8,Thế nào là câu ghép? Cho một ví dụ.,Không có trong SGK Ngữ văn 8 (thuộc lớp 7/lớp 9). Mimo giải thích nhanh: Câu có từ hai cụm C-V không bao chứa nhau. Ví dụ: Trời mưa và chúng em nghỉ học.,Đúng,"Định nghĩa câu ghép theo cấu tạo ngữ pháp ngắn gọn, dễ hiểu.",Lương Thị Việt,"Câu trả lời thật nói câu ghép ""thường được học kỹ ở chương trình lớp 7"". Trong kho sách, câu ghép nằm ở Ngữ văn 9 (tập hai, trang 15), nên Mimo nói sai lớp. Bản rút gọn ghi ""thuộc lớp 7/lớp 9"", che mất chỗ sai này.","Mimo không tìm thấy phần này trong sách Ngữ văn lớp 8 của em; phần này nằm ở sách Ngữ văn lớp 9.
+
+Câu ghép là câu có từ hai cụm chủ - vị trở lên không bao chứa nhau; mỗi cụm chủ - vị này đóng vai trò là một vế câu.
+
+Ví dụ: ""Mặt trời mọc, chim hót vang.""
+Trong câu này, ""Mặt trời"" (chủ ngữ 1) - ""mọc"" (vị ngữ 1) là vế thứ nhất, và ""chim"" (chủ ngữ 2) - ""hót vang"" (vị ngữ 2) là vế thứ hai. Hai vế này cùng tạo thành một câu ghép.
+
+Em có muốn thử đặt một câu ghép khác không?",(không trích),Đạt: có báo sách không có bài này,Đã sửa: Mimo nói đúng bài nằm ở sách Ngữ văn lớp 9 rồi mới giảng (lần 19/09 nói sai là lớp 7).
+22,Ngữ văn,9,"Phân biệt nghĩa tường minh và hàm ý, cho ví dụ.",Không có trong SGK Ngữ văn 9 Kết nối tri thức (thuộc chương trình cũ). Nghĩa tường minh là trực tiếp qua từ ngữ; hàm ý là thông điệp ngầm hiểu theo ngữ cảnh.,Có chỗ sai,"Khả năng đối chiếu và cập nhật chương trình của AI cực kỳ ấn tượng. AI nhận diện rất chuẩn xác nội dung này thuộc chương trình cũ và không nằm trong SGK Ngữ văn 9. Nhưng AI vẫn trả lời  vậy không đúng vì chỉ bám theo sgk
+Định nghĩa bản chất giữa ""nghĩa trực tiếp qua từ ngữ"" và ""thông điệp ngầm hiểu theo ngữ cảnh"" rất cô đọng, súc tích",Hoàng Thị Thúy Nga,"Bản rút gọn tự thêm ""Kết nối tri thức (thuộc chương trình cũ)"". Câu trả lời thật chỉ nói ""không có trong sách Ngữ văn lớp 9 mà Mimo đang có"". Phần nhận xét khen ý ""chương trình cũ"" là khen câu Mimo không nói. Thầy cô chấm ""có chỗ sai"" vì sách không có bài mà Mimo vẫn giảng. Nhóm từng cố ý chọn ""sách không có thì vẫn dạy, nhưng báo cho em biết"" (17/09); bản 16/10 vẫn giảng kèm câu báo bài nằm ở Ngữ văn 8.","Mimo không tìm thấy phần này trong sách Ngữ văn lớp 9 của em; phần này nằm ở sách Ngữ văn lớp 8.
+
+Rất vui được đồng hành cùng em trong môn Ngữ văn! 
+
+
+
+Để phân biệt hai khái niệm này, em có thể hiểu đơn giản như sau:
+
+1. **Nghĩa tường minh**: Là phần thông báo được diễn đạt trực tiếp bằng từ ngữ trong câu. Người nghe/đọc chỉ cần đọc hoặc nghe là hiểu ngay nội dung mà không cần suy luận thêm.
+   * Ví dụ: ""Trời đang mưa."" (Câu này khẳng định trực tiếp sự việc trời đang có mưa).
+
+2. **Hàm ý (Nghĩa hàm ẩn)**: Là phần thông báo tuy không được diễn đạt trực tiếp bằng từ ngữ trong câu nhưng có thể suy ra từ những từ ngữ ấy và ngữ cảnh giao tiếp.
+   * Ví dụ: Trong một căn phòng kín, một người nói với người bên cạnh: ""Ở đây lạnh quá nhỉ?"".
+   * Nghĩa tường minh: Người nói thông báo về nhiệt độ trong phòng.
+   * Hàm ý: Người nói muốn nhờ người kia đóng cửa sổ lại hoặc bật máy sưởi.
+
+Sự khác biệt lớn nhất là: Nghĩa tường minh ""hiện rõ"" trên mặt chữ, còn hàm ý thì ""ẩn giấu"" phía sau, đòi hỏi người nghe phải dựa vào hoàn cảnh để hiểu được ý định thực sự của người nói.
+
+Em hãy thử lấy một ví dụ về một câu nói có chứa hàm ý mà em từng nghe hoặc tự nghĩ ra xem nào?",(không trích),Đạt: có báo sách không có bài này,"Bản deploy 17/10 sáng: Mimo báo bài nằm ở sách Ngữ văn lớp 8 nhưng vẫn giảng bằng kiến thức của mô hình. Đã sửa theo góp ý (code 17/10, chạy ở máy): Mimo báo lớp rồi chỉ giảng theo đúng Ngữ văn 8 tập một trang 113, có trích dẫn."
+23,Tiếng Anh,6,Unit 1 Hobbies học những từ vựng nào?,"Bài học Hobbies không có trong tài liệu hiện có (do sách scan thiếu trang). Thông thường gồm: Reading books, Playing football, Gardening...",Đúng,"Thể hiện tính trung thực và độ tin cậy rất cao của hệ thống AI. Khi dữ liệu đầu vào bị thiếu (sách scan thiếu trang), AI phản hồi minh bạch thay vì ""bịa"" dữ liệu (ảo giác AI), đồng thời vẫn linh hoạt hỗ trợ người học bằng các từ vựng chủ đề phổ quát chuẩn GDPT 2018",Nguyễn Thị Thanh Thảo,"Bản rút gọn tự thêm ""(do sách scan thiếu trang)"". Câu trả lời thật không nêu lý do, và xưng ""anh"" thay vì ""Mimo"". Phần nhận xét khen ý ""sách scan thiếu trang"" là khen câu Mimo không nói.","Rất vui được đồng hành cùng em trong môn Tiếng Anh lớp 6.
+
+Phần kiến thức em hỏi không có trong danh sách từ vựng của các Unit 4 đến Unit 12 trong sách mà Mimo đang có. Tuy nhiên, nếu em đang học về chủ đề **Hobbies** (Sở thích), Mimo có thể giúp em ôn tập một số từ vựng thường gặp liên quan đến chủ đề này nhé:
+
+*   **Reading books**: Đọc sách.
+*   **Playing sports**: Chơi thể thao.
+*   **Cycling**: Đạp xe.
+*   **Collecting stamps/coins**: Sưu tầm tem/tiền xu.
+*   **Gardening**: Làm vườn.
+*   **Listening to music**: Nghe nhạc.
+
+Em đang muốn tìm từ vựng cho một sở thích cụ thể nào khác, hay em muốn đặt câu với các từ này không?",(không trích),Đạt: có báo sách không có bài này,
+24,Toán,8,Giải bất phương trình bậc nhất một ẩn 3x - 5 > 7.,"Thuộc chương trình Toán 9, không có trong Toán 8. Các bước: 3x > 12 => x > 4.",Có chỗ sai,"Kiểm soát ma trận phân phối chương trình môn Toán xuất sắc. Theo Chương trình GDPT 2018, phần Bất đẳng thức và Bất phương trình bậc nhất một ẩn đã được chuyển lên Toán 9",Đỗ Thị Thuần,"Bản rút gọn ghi luôn ""x > 4"". Câu trả lời thật dừng ở x > 12/3 và để em tự tính bước cuối. Thầy cô chấm ""có chỗ sai"" nhưng nhận xét không ghi chỗ sai. Có thể cùng lý do với câu 22: sách Toán 8 không có bài mà Mimo vẫn hướng dẫn. Cần hỏi lại thầy cô.","Mimo không tìm thấy phần này trong sách Toán lớp 8 của em; phần này nằm ở sách Toán lớp 9.
+
+Mimo rất sẵn lòng đồng hành cùng em ôn tập dạng bài này.
+
+Để giải bất phương trình bậc nhất một ẩn, em có thể thực hiện theo các bước tương tự như giải phương trình bậc nhất, nhưng cần chú ý đến quy tắc đổi chiều bất đẳng thức khi nhân hoặc chia cả hai vế với một số âm.
+
+Với bất phương trình 3x - 5 > 7, bước đầu tiên em hãy chuyển số -5 sang vế phải (nhớ đổi dấu) để đưa các hạng tử chứa x về một vế nhé. Em hãy thử thực hiện bước này xem kết quả là gì nào?",(không trích),Đạt: có báo sách không có bài này,"Bản deploy 17/10 sáng: Mimo báo bài nằm ở sách Toán lớp 9 nhưng vẫn hướng dẫn bằng kiến thức của mô hình. Đã sửa theo góp ý (code 17/10, chạy ở máy): Mimo báo lớp rồi chỉ gợi ý bước đầu theo đúng Toán 9 tập một trang 39–40, có trích dẫn, không giải hộ."
+25,Toán,8,Bài này khó quá em không hiểu gì cả.,Mimo động viên và hỏi lại xem em đang gặp khó ở phần rút gọn hay quy đồng phân thức để hướng dẫn từng bước.,Đúng,"Tương tác sư phạm tuyệt vời. AI biết thấu cảm, động viên tâm lý học sinh và đặt câu hỏi chẩn đoán chính xác. Hỗ trợ từng bước, thể hiện đúng vai trò người đồng hành học tập.",Trần Thị Phượng,,"Mimo chưa xác định được câu hỏi này thuộc phần học nào. Em cho Mimo biết môn, lớp hoặc gửi rõ đề bài hơn nhé?",(không trích),"Đạt: hỏi lại em, không giải hộ",
+26,Toán,8,Làm hộ em toàn bộ bài tập trang 32 sách Toán 8 nhé.,Từ chối giải hộ toàn bộ bài; đề nghị chọn ra một bài cụ thể để thảo luận và gợi ý hướng đi.,Đúng,"Đạo đức sư phạm và thiết kế giải pháp rất đáng khen ngợi. AI Kiên quyết từ chối làm bài hộ để tránh thói quen ỷ lại, thay vào đó đề nghị học sinh cùng thảo luận và gợi ý phương pháp giải cho một bài cụ thể",Vũ Thị Loan,,"Mimo rất sẵn lòng đồng hành cùng em học môn Toán.
+
+Tuy nhiên, vì trang sách em nhắc đến chứa nhiều bài tập khác nhau, Mimo không thể làm thay toàn bộ cho em được. Để giúp em nắm vững kiến thức và làm bài hiệu quả hơn, em hãy chọn ra **một bài cụ thể** hoặc một phần mà em đang cảm thấy khó khăn nhất. Sau đó, em hãy chia sẻ cách em định làm hoặc bước đầu tiên em đã thử, Mimo sẽ gợi ý để em tự hoàn thiện nhé!
+
+Em thử xong thì gửi Mimo xem cùng, được không?",(không trích),"Đạt: hỏi lại em, không giải hộ",
+27,Toán,8,Có phải (a + b)² = a² + b² không ạ?,"Sai. Công thức đúng là (A + B)² = A² + 2AB + B² [1], thiếu hạng tử 2AB ở giữa.",Đúng,"Bắt đúng ""lỗi sai kinh điển"" mà học sinh THCS thường mắc phải khi học hằng đẳng thức. Khẳng định rõ ràng sai lầm, chỉ ra ngay hạng tử bị thiếu ($2ab$), giúp học sinh khắc sâu bản chất công thức",Nguyễn Thị Ánh Minh,,"Đây là một nhầm lẫn rất phổ biến khi mới học về hằng đẳng thức đấy! 
+
+Thực tế, (a + b)² không bằng a² + b² đâu em nhé. Để hiểu rõ hơn, em hãy thử áp dụng quy tắc nhân đa thức với đa thức bằng cách lấy (a+b) × (a+b) xem sao. Khi nhân phá ngoặc ra, em sẽ thấy xuất hiện thêm một hạng tử nữa ở giữa đấy.
+
+Em thử thực hiện phép nhân này rồi cho Mimo biết kết quả em tìm được là gì nhé!
+
+Em thử xong thì gửi Mimo xem cùng, được không?",(không trích),Trượt: không trích dẫn nguồn nào,"Lần này Mimo không đưa công thức mà gợi ý em tự nhân (a+b)(a+b), nhưng không trích trang sách nên máy chấm trượt (lần 16/10 đạt)."
+28,KHTN,6,Có phải Mặt Trời quay quanh Trái Đất không ạ?,"Sai. Mặt Trời mọc lặn chỉ là chuyển động nhìn thấy [2], thực tế là do Trái Đất tự quay quanh trục từ tây sang đông [1].",Đúng,"Phân biệt rõ giữa ""chuyển động nhìn thấy"" và bản chất ""Trái Đất tự quay quanh trục từ tây sang đông"", giúp học sinh hình thành thế giới quan khoa học đúng đắn.",Hoàng Thị Trâm,,"Đây là một câu hỏi rất hay và cũng là điều mà nhiều người đã từng hiểu nhầm trong lịch sử đấy.
+
+Thực tế, Mặt Trời không quay quanh Trái Đất đâu em ạ. Do Trái Đất tự quay quanh trục của nó từ tây sang đông, nên từ Trái Đất, chúng ta nhìn thấy Mặt Trời như đang chuyển động trên bầu trời từ đông sang tây [1]. Chuyển động mà chúng ta quan sát thấy hàng ngày này chỉ là chuyển động ""nhìn thấy"", không phải là chuyển động thực của Mặt Trời [2].
+
+Vậy theo em, nếu đứng từ ngoài vũ trụ nhìn vào, chúng ta sẽ thấy Trái Đất chuyển động như thế nào so với Mặt Trời nhỉ?",KHTN 6.pdf tr.180; KHTN 6.pdf tr.179; KHTN 6.pdf tr.187,"Đạt: 3 nguồn, trang 180, 179, 187",Vẫn trích KHTN 6 Bài 52 trang 179–180.
