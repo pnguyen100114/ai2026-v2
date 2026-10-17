@@ -7252,3 +7252,22 @@ bạn đó dùng AI khác mà đâu nhất thiết claude
 xuat-cho-ban-khac.cjs đã che thông tin từ trước: nó chép nguyên logic của cheThongTin (email trừ @example.com, tên trong .che_ten.txt) chứ không require, vì script được gửi lẻ cho người khác. Mình vừa thêm đường dẫn prompt-log/.che_ten.txt của repo vào danh sách chỗ tìm file tên. Phiên này cũng chưa commit; chờ người dùng quyết định.
 </cross-session-message>
 
+---
+
+### 15:21:26 17/10/2026 · phien `adc86e13`
+
+tat file khó khăn rồi email thì Viết lại lịch sử git rồi force-push. Cách này khó hoàn tác.
+
+minh chứng tạo folder minh chứng sau ngày 19/09 trước đi,, nhớ là chỉ ghi những gì làm từ sau ngày đó nha, tại phần trước đã nộp rồi. bây giờ ban giám khảo chỉ muốn xem sau ngày đó, + file ghi cải tiến ban giám khảo yêu cầu mình đã làm gì tới đâu, chắc bỏ csv 
+
+tôi gửi lại 
+
+<pasted_content id="04f7">
+êu cầu cải tiến
+- Cách tự chấm bộ 28 câu còn dễ dãi: vài câu ngoài chương trình (tích phân, đạo hàm, thuyết tương đối) Mimo vẫn hướng dẫn mà lại được tính là "từ chối đạt", câu hỏi thời tiết còn được trả lời không có căn cứ. Hãy sửa cách chấm và kiểm tra lại những câu này.
+ - AI không thể đúng 100%: Mimo có thể giảng sai một ý dù có trang sách đi kèm (nguy hiểm hơn vì học sinh khó tự phát hiện), hoặc lỡ giải hộ khi học sinh năn nỉ. Hãy nhờ thầy cô bộ môn đánh dấu 28 câu trả lời "đúng / có chỗ sai / sai", thêm dòng nhắc "Mimo có thể nhầm, em đối chiếu với trang sách nhé", và thêm khoảng 10 câu năn nỉ vào bộ thử.
+ - Mời 10-15 bạn cùng lớp dùng Mimo khoảng 15-20 phút cho một bài đang học, rồi hỏi bằng Google Form: Mimo có giải hộ không, bạn có tự làm tiếp được không.
+ - Phần luyện tập thích ứng nên tính thêm độ khó của câu, số lần dùng gợi ý và dạng lỗi hay gặp, để gợi ý bài luyện sát với từng bạn hơn.
+ - Về lâu dài, thử 2-4 tuần với 1-2 lớp, làm bài kiểm tra ngắn trước và sau, so sánh nhóm dùng Mimo với nhóm không dùng.
+</pasted_content id="04f7">
+
